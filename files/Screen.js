@@ -1,8 +1,11 @@
 Base.write("Screen",()=>{
   var s = {};
+  var a = [];
+  s.add = (f)=>{
+    a.push(f);
+  };
   Render.loop(()=>{
-    Render.rect(0,0,Window.width,Window.height).fill(1,0.5,0);
-    Render.circle(Window.width/2,Window.height/2,100).stroke(3)(1,0,0);
+    for(var i=0;i<a.length;i++)a[i]();
   });
   return s;
 });
