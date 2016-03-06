@@ -52,14 +52,18 @@ Base.write("Render",()=>{
   };
   r.circle = (x,y,r)=>{
     var f = ()=>{};
-    if(r>0){
-      if(y==null)f = ()=>{
-        ctx.arc(0,0,r,0,Math.PI*2,1);
-      };else f = ()=>{
-        ctx.arc(x,y,r,0,Math.PI*2,1);
-      }
+    if(y==null)f = ()=>{
+      if(x>0)ctx.arc(0,0,x,0,Math.PI*2,1);
+    };else f = ()=>{
+      if(r>0)ctx.arc(x,y,r,0,Math.PI*2,1);
     }
     return component(f);
   };
+  r.translate = (x,y,f)=>{
+    ctx.save();
+    ctx.translate(x,y);
+    f();
+    ctx.restore();
+  }
   return r;
 });
