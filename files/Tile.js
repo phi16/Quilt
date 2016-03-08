@@ -88,6 +88,7 @@ Base.write("Tile",()=>{
   });
   Event.onHover(()=>{
     if(onDrag==null){
+      Mouse.cursor();
       if(!Mouse.pressing)onMouse = null;
       defaultFold((e,a,x,y,w,h)=>{
         e.onHover(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
@@ -98,6 +99,11 @@ Base.write("Tile",()=>{
         }
       },(e)=>(i,a,x,y,w,h)=>{
         return Mouse.in(x,y,w,h);
+      },(e,i,x,y,w,h,ex,ey,ew,eh)=>{
+        if(Mouse.in(x,y,w,h)){
+          if(e.type==1)Mouse.cursor(Mouse.Cur.hResize);
+          else if(e.type==2)Mouse.cursor(Mouse.Cur.vResize);
+        }
       });
     }else{
       if(onDrag.type==1){

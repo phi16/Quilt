@@ -15,5 +15,15 @@ Base.write("Mouse",()=>{
   m.in = (x,y,w,h)=>{
     return x<Mouse.x && Mouse.x<x+w && y<Mouse.y && Mouse.y<y+h;
   }
+  m.Cur = {
+    auto : "auto",
+    hResize : "col-resize",
+    vResize : "row-resize",
+    select : "pointer"
+  };
+  m.cursor = (e)=>{
+    if(e==null)document.body.style.cursor = m.Cur.auto;
+    document.body.style.cursor = e;
+  };
   return m;
 });
