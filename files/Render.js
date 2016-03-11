@@ -1,14 +1,10 @@
 Base.write("Render",()=>{
   var r = {};
+
   var cvs = document.getElementById("canvas");
   var ctx = cvs.getContext('2d');
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  var timer;
-  r.loop = (e)=>{
-    if(timer)clearInterval(timer);
-    timer = setInterval(e,16);
-  };
   var component = (f)=>{
     return {
       fill : Color.con((c)=>{
@@ -65,5 +61,24 @@ Base.write("Render",()=>{
     f();
     ctx.restore();
   }
+
+  var timer;
+  var draws = [];
+  r.add = (d)=>{
+    draws.push(d);
+  };
+  setInterval(()=>{
+    for(var i=0;i<draws.length;i++)draws[i]();
+  },16);
+
+  r.width = 0;
+  r.height = 0;
+  function resize(){
+    r.width = document.getElementById("canvas").width = document.getElementById("container").clientWidth;
+    r.height = document.getElementById("canvas").height = document.getElementById("container").clientHeight;
+  }
+  resize();
+  window.onresize = resize;
+
   return r;
 });

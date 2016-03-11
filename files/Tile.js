@@ -48,7 +48,7 @@ Base.write("Tile",()=>{
   function defaultFold(f,g,sp){
     var s = ()=>{};
     if(sp!=null)s = sp;
-    foldTiles(f,g,s,[],tiling,space,space,Window.width-2*space,Window.height-2*space);
+    foldTiles(f,g,s,[],tiling,space,space,Render.width-2*space,Render.height-2*space);
   }
   var onMouse=null;
   var onDrag=null,dragIndex=0,dragRange=[],dragArea=[];
@@ -204,8 +204,8 @@ Base.write("Tile",()=>{
   };
   t.dump = ()=>{console.log(tiling)};
   tiling = t.makeTile(poyo);
-  Screen.add(()=>{
-    Render.rect(0,0,Window.width,Window.height).fill(C.bg);
+  Render.add(()=>{
+    Render.rect(0,0,Render.width,Render.height).fill(C.bg);
     defaultFold((e,a,x,y,w,h)=>{
       if(e.color==null)e.color=0;
       if(e==onMouse)e.color += (1-e.color)/4.0;
