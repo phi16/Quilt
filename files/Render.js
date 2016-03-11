@@ -6,7 +6,7 @@ Base.write("Render",()=>{
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   var component = (f)=>{
-    return {
+    var c = {
       fill : Color.con((c)=>{
         ctx.beginPath();
         f();
@@ -31,7 +31,11 @@ Base.write("Render",()=>{
         h();
         ctx.restore();
       }
+    }
+    c.dup = (g)=>{
+      g(c);
     };
+    return c;
   };
   r.rect = (x,y,w,h)=>{
     var f = ()=>{};
@@ -55,12 +59,27 @@ Base.write("Render",()=>{
     }
     return component(f);
   };
+  r.polygon = (a)=>{
+    if(a.length<2)return component(()=>{});
+    return component(()=>{
+      ctx.moveTo(a[0],a[1]);
+      for(var i=0;i<a.length;i+=2){
+        ctx.lineTo(a[i],a[i+1]);
+      }
+    });
+  };
   r.translate = (x,y,f)=>{
     ctx.save();
     ctx.translate(x,y);
     f();
     ctx.restore();
   }
+  r.scale = (s,f)=>{
+    ctx.save();
+    ctx.scale(s,s);
+    f();
+    ctx.restore();
+  };
 
   var timer;
   var draws = [];

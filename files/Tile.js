@@ -7,6 +7,127 @@ Base.write("Tile",()=>{
     brown : Color(0.6,0.3,0)
   };
   var space = 10;
+  var menu = (()=>{
+    var m = {};
+    m.space = 20;
+    m.frameLen = 60;
+    var phi = (1 + Math.sqrt(5)) / 2;
+    var a=null,x,y,w,h,wM,hM;
+    var confTiles = [];
+    var confX = 0, confY = 0;
+    m.open = (a_,x_,y_,w_,h_)=>{
+      var wMax = confX*(m.frameLen+m.space)+m.space;
+      var hMax = confY*(m.frameLen+m.space)+m.space;
+      a=a_.concat([]);
+      x=x_,y=y_,w=wMax,h=hMax,wM=hM=m.space;
+    };
+    m.opening = ()=>{
+      return a!=null;
+    };
+    m.close = ()=>{
+      a=null;
+    };
+    var onMouse = -1;
+    m.draw = ()=>{
+      if(a){
+        wM += (w - wM) / 4.0;
+        hM += (h - hM) / 4.0;
+      }else{
+        wM += (0 - wM) / 4.0;
+        hM += (0 - hM) / 4.0;
+      }
+      if(!Mouse.in(x,y,wM,hM))a = null;
+      if(wM > 20 && hM > 20){
+        Render.rect(x-space/4,y+space/2,wM+space/2,hM).fill(C.brown,0.5);
+        Render.rect(x,y,wM,hM).dup((d)=>{
+          d.fill(Color.mix(C.def,C.frame,0.25));
+          d.stroke(2)(C.brown);
+          d.clip(()=>{
+            for(var j=0;j<confY;j++){
+              for(var i=0;i<confX;i++){
+                if(i+j*confX >= confTiles.length)break;
+                var obj = confTiles[i+j*confX];
+                var rx = x+m.space+i*(m.space+m.frameLen);
+                var ry = y+m.space+j*(m.space+m.frameLen);
+                if(onMouse==-1 && !Mouse.pressing && Mouse.in(rx,ry,m.frameLen,m.frameLen))obj.color += (1.0 - obj.color) / 4.0;
+                else if(onMouse == i+j*confX)obj.color += (2.0 - obj.color) / 4.0;
+                else obj.color += (0.0 - obj.color) / 4.0;
+                Render.rect(rx-space/4,ry+space/2,m.frameLen+space/2,m.frameLen).fill(Color.mix(C.frame,C.brown,0.5),0.5);
+                Render.rect(rx,ry,m.frameLen,m.frameLen).dup((di)=>{
+                  di.fill(Color.mix(C.def,C.frame,confTiles[i+j*confX].color/8));
+                  di.clip(()=>{
+                    Render.translate(rx,ry,()=>{Render.scale(m.frameLen,()=>{
+                      obj.icon();
+                    });});
+                  });
+                  di.stroke(2)(Color.mix(C.frame,C.brown,0.5));
+                });
+              }
+            }
+          });
+        });
+        Render.polygon([x,y,x+menu.space,y,x,y+menu.space]).stroke(2)(C.brown);
+      }
+    };
+    m.onPress = ()=>{if(a){
+      onMouse = -1;
+      for(var j=0;j<confY;j++){
+        for(var i=0;i<confX;i++){
+          if(i+j*confX >= confTiles.length)break;
+          var rx = x+m.space+i*(m.space+m.frameLen);
+          var ry = y+m.space+j*(m.space+m.frameLen);
+          if(Mouse.in(rx,ry,m.frameLen,m.frameLen)){
+            onMouse = i+j*confX;
+          }
+        }
+      }
+    }};
+    m.onHover = ()=>{if(a){
+      for(var j=0;j<confY;j++){
+        for(var i=0;i<confX;i++){
+          if(i+j*confX >= confTiles.length)break;
+          var rx = x+m.space+i*(m.space+m.frameLen);
+          var ry = y+m.space+j*(m.space+m.frameLen);
+          var b = Mouse.in(rx,ry,m.frameLen,m.frameLen);
+          if((onMouse == -1 && !Mouse.pressing || onMouse == i+j*confX) && b){
+            Mouse.cursor(Mouse.Cur.select);
+          }
+          if(onMouse == i+j*confX && !b){
+            onMouse = -1;
+          }
+        }
+      }
+      if(Mouse.x-x + Mouse.y-y <= menu.space){
+        Mouse.cursor(Mouse.Cur.select);
+      }
+    }};
+    m.onRelease = ()=>{if(a){
+      if(Mouse.x-x + Mouse.y-y <= menu.space){
+        m.close();
+      }
+      if(onMouse!=-1){
+        var n = confTiles[onMouse].tile;
+        if(typeof n === "function")t.rewriteTile(t.makeTile(n()),a);
+        else t.rewriteTile(t.makeTile(n),a);
+        m.close();
+      }
+    }};
+    m.configTile = (n,t,i)=>{
+      confTiles.push({
+        name : n,
+        tile : t,
+        icon : i,
+        color : 0
+      });
+      confX = Math.ceil(Math.sqrt(confTiles.length*phi));
+      confY = Math.ceil(confTiles.length / confX);
+    };
+    return m;
+  })();
+  t.registerTile = (n,t,i)=>{
+    menu.configTile(n,t,i);
+  };
+
   var tiling;
   function foldTiles(f,g,s,a,e,x,y,w,h){
     if(e.type==0){
@@ -54,57 +175,71 @@ Base.write("Tile",()=>{
   var onDrag=null,dragIndex=0,dragRange=[],dragArea=[];
   Event.onPress(()=>{
     onMouse=null;
-    defaultFold((e,a,x,y,w,h)=>{
-      e.onPress(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
-      if(Mouse.in(x,y,w,h))onMouse = e;
-    },(e)=>(i,a,x,y,w,h)=>{
-      return Mouse.in(x,y,w,h);
-    },(e,i,x,y,w,h,ex,ey,ew,eh)=>{
-      if(Mouse.in(x,y,w,h)){
-        onDrag = e;
-        dragIndex = i;
-        dragRange = [];
-        dragArea = [];
-        var fi = i>0, la = i+1<e.ratio.length;
-        if(fi)dragRange.push(e.ratio[i-1]);
-        else dragRange.push(0);
-        if(la)dragRange.push(e.ratio[i+1]);
-        else dragRange.push(1);
-        if(e.type==1){
-          var allW = ew - e.ratio.length * space;
-          if(fi)dragArea.push(ex + e.ratio[i-1] * allW + (i+0.5) * space);
-          else dragArea.push(ex);
-          if(la)dragArea.push(ex + e.ratio[i+1] * allW + (i+0.5) * space);
-          else dragArea.push(ex+ew);
-        }else if(e.type==2){
-          var allH = eh - e.ratio.length * space;
-          if(fi)dragArea.push(ey + e.ratio[i-1] * allH + (i+0.5) * space);
-          else dragArea.push(ey);
-          if(la)dragArea.push(ey + e.ratio[i+1] * allH + (i+0.5) * space);
-          else dragArea.push(ey+eh);
+    if(menu.opening()){
+      menu.onPress();
+    }else{
+      defaultFold((e,a,x,y,w,h)=>{
+        if(Mouse.x-x + Mouse.y-y > menu.space){
+          e.onPress(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
         }
-      }
-    });
+        if(Mouse.in(x,y,w,h))onMouse = e;
+      },(e)=>(i,a,x,y,w,h)=>{
+        return Mouse.in(x,y,w,h);
+      },(e,i,x,y,w,h,ex,ey,ew,eh)=>{
+        if(Mouse.in(x,y,w,h)){
+          onDrag = e;
+          dragIndex = i;
+          dragRange = [];
+          dragArea = [];
+          var fi = i>0, la = i+1<e.ratio.length;
+          if(fi)dragRange.push(e.ratio[i-1]);
+          else dragRange.push(0);
+          if(la)dragRange.push(e.ratio[i+1]);
+          else dragRange.push(1);
+          if(e.type==1){
+            var allW = ew - e.ratio.length * space;
+            if(fi)dragArea.push(ex + e.ratio[i-1] * allW + (i+0.5) * space);
+            else dragArea.push(ex);
+            if(la)dragArea.push(ex + e.ratio[i+1] * allW + (i+0.5) * space);
+            else dragArea.push(ex+ew);
+          }else if(e.type==2){
+            var allH = eh - e.ratio.length * space;
+            if(fi)dragArea.push(ey + e.ratio[i-1] * allH + (i+0.5) * space);
+            else dragArea.push(ey);
+            if(la)dragArea.push(ey + e.ratio[i+1] * allH + (i+0.5) * space);
+            else dragArea.push(ey+eh);
+          }
+        }
+      });
+    }
   });
   Event.onHover(()=>{
     if(onDrag==null){
       Mouse.cursor();
       if(!Mouse.pressing)onMouse = null;
-      defaultFold((e,a,x,y,w,h)=>{
-        e.onHover(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
-        if(Mouse.pressing){
-          if(Mouse.in(x,y,w,h) && onMouse!=e)onMouse = null;
-        }else{
-          if(Mouse.in(x,y,w,h))onMouse = e;
-        }
-      },(e)=>(i,a,x,y,w,h)=>{
-        return Mouse.in(x,y,w,h);
-      },(e,i,x,y,w,h,ex,ey,ew,eh)=>{
-        if(Mouse.in(x,y,w,h)){
-          if(e.type==1)Mouse.cursor(Mouse.Cur.hResize);
-          else if(e.type==2)Mouse.cursor(Mouse.Cur.vResize);
-        }
-      });
+      if(menu.opening()){
+        menu.onHover();
+      }else{
+        defaultFold((e,a,x,y,w,h)=>{
+          if(Mouse.x-x + Mouse.y-y > menu.space){
+            e.onHover(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
+          }else{
+            Mouse.cursor(Mouse.Cur.select);
+          }
+          if(Mouse.pressing){
+            if(Mouse.in(x,y,w,h) && onMouse!=e)onMouse = null;
+          }else{
+            if(Mouse.in(x,y,w,h))onMouse = e;
+          }
+        },(e)=>(i,a,x,y,w,h)=>{
+          return Mouse.in(x,y,w,h);
+        },(e,i,x,y,w,h,ex,ey,ew,eh)=>{
+          if(Mouse.in(x,y,w,h)){
+            if(e.type==1)Mouse.cursor(Mouse.Cur.hResize);
+            else if(e.type==2)Mouse.cursor(Mouse.Cur.vResize);
+          }
+        });
+      }
     }else{
       if(onDrag.type==1){
         var mx = (Mouse.x-dragArea[0]) / (dragArea[1]-dragArea[0]);
@@ -120,13 +255,25 @@ Base.write("Tile",()=>{
     }
   });
   Event.onRelease(()=>{
-    defaultFold((e,a,x,y,w,h)=>{
-      e.onRelease(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
-      if(onMouse==e)e.onClick(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
-      if(Mouse.in(x,y,w,h))onMouse = e;
-    },(e)=>(i,a,x,y,w,h)=>{
-      return Mouse.in(x,y,w,h);
-    });
+    if(menu.opening()){
+      menu.onRelease();
+    }else{
+      defaultFold((e,a,x,y,w,h)=>{
+        if(Mouse.x-x + Mouse.y-y > menu.space){
+          e.onRelease(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
+        }
+        if(onMouse==e){
+          if(Mouse.x-x + Mouse.y-y > menu.space){
+            e.onClick(Mouse.x-(x+w/2),Mouse.y-(y+h/2),a);
+          }else{
+            menu.open(a,x,y,w,h);
+          }
+        }
+        if(Mouse.in(x,y,w,h))onMouse = e;
+      },(e)=>(i,a,x,y,w,h)=>{
+        return Mouse.in(x,y,w,h);
+      });
+    }
     onDrag = onMouse = null;
   });
   function unifyTiling(e){
@@ -164,15 +311,15 @@ Base.write("Tile",()=>{
       }
     }
   }
-  t.makeTile = (obj)=>{ //can be used as clone
-    var u = {};
+  t.makeTile = (obj,dest)=>{ //can be used as clone, copy
+    var u = typeof dest === "undefined"?{}:dest;
     u.type = 0;
     u.parent = null;
-    u.onPress = obj.onPress==null?(x,y,a)=>{}:obj.onPress;
-    u.onHover = obj.onHover==null?(x,y,a)=>{}:obj.onHover;
-    u.onRelease = obj.onRelease==null?(x,y,a)=>{}:obj.onRelease;
-    u.onClick = obj.onClick==null?(x,y,a)=>{}:obj.onClick;
-    u.render = obj.render==null?(w,h)=>{}:obj.render;
+    u.onPress = !obj||obj.onPress==null?(x,y,a)=>{}:obj.onPress;
+    u.onHover = !obj||obj.onHover==null?(x,y,a)=>{}:obj.onHover;
+    u.onRelease = !obj||obj.onRelease==null?(x,y,a)=>{}:obj.onRelease;
+    u.onClick = !obj||obj.onClick==null?(x,y,a)=>{}:obj.onClick;
+    u.render = !obj||obj.render==null?(w,h)=>{}:obj.render;
     return u;
   };
   t.putTile = (obj,idx)=>{
@@ -193,17 +340,35 @@ Base.write("Tile",()=>{
       return b;
     });
   };
-  var poyo;
-  poyo = {
+  t.rewriteTile = (obj,idx)=>{
+    var par = null;
+    defaultFold((e,a,x,y,w,h)=>{
+      e.animated = 0;
+      e.animateRender = e.render;
+      t.makeTile(obj,e);
+      e.parent = par;
+    },(e)=>(i,a,x,y,w,h)=>{
+      var b = idx[a.length-1]==i;
+      if(b)par = e;
+      return b;
+    });
+  };
+  var dupTile;
+  dupTile = {
     onClick : (x,y,a)=>{
-      t.putTile(t.makeTile(poyo),a);
+      t.putTile(t.makeTile(dupTile),a);
     },
     render : (w,h)=>{
       Render.circle(w<h?w/2:h/2).fill(1,0.5,0);
     }
   };
-  t.dump = ()=>{console.log(tiling)};
-  tiling = t.makeTile(poyo);
+  t.registerTile("DupTile",dupTile,()=>{
+    Render.circle(0.5,0.5,0.5).fill(1,0.5,0);
+  });
+  t.registerTile("NoneTile",{},()=>{});
+
+  tiling = t.makeTile();
+
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(C.bg);
     defaultFold((e,a,x,y,w,h)=>{
@@ -212,18 +377,41 @@ Base.write("Tile",()=>{
       else e.color += (0-e.color)/4.0;
       Render.rect(x-space/4,y+space/2,w+space*2/4,h).fill(C.frame,0.5);
       Render.rect(x,y,w,h).fill(Color.mix(C.def,C.frame,e.color/8));
-      Render.rect(x,y,w,h).stroke(2)(Color.mix(C.frame,C.brown,e.color/4));
       Render.rect(x,y,w,h).clip(()=>{
         Render.translate(x+w/2,y+h/2,()=>{
-          e.render(w,h);
+          if(e.animateRender){
+            e.animateRender(w,h);
+            var l = Math.sqrt(w*w+h*h);
+            Render.circle(-w/2,-h/2,l*Math.pow(e.animated,3.2)).dup((d)=>{
+              d.clip(()=>{
+                Render.rect(-w/2,-h/2,w,h).fill(Color.mix(C.def,C.frame,e.color/8));
+                e.render(w,h);
+              });
+              d.stroke(4)(C.frame);
+            });
+            e.animated += 0.05;
+            if(e.animated > 1.0){
+              delete e.animated;
+              delete e.animatedVel;
+              delete e.animateRender;
+            }
+          }else{
+            e.render(w,h);
+          }
+        });
+        Render.polygon([x,y,x+menu.space,y,x,y+menu.space]).dup((r)=>{
+          r.fill(Color.mix(C.def,C.frame,e.color/4));
+          r.stroke(2)(Color.mix(C.frame,C.brown,e.color/4));
         });
       });
+      Render.rect(x,y,w,h).stroke(2)(Color.mix(C.frame,C.brown,e.color/4));
     },(e)=>{
       for(var i=0;i<e.ratio.length;i++){
         e.ratio[i] += (e.toRatio[i] - e.ratio[i]) / 4.0;
       }
       return ()=>true;
     });
+    menu.draw();
   });
   return t;
 });
