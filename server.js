@@ -7,6 +7,6 @@ var app = express();
 app.get('/',function(req,res){
   res.sendFile('/cygwin64/home/16/Quilt/files/main.html');
 });
-app.use(express.static('.'));
+app.use(express.static('files'));
 http.createServer(app).listen(3000);
 console.log(":)");
