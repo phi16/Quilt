@@ -12,9 +12,6 @@ Base.write("Mouse",()=>{
   Event.onRelease(()=>{
     m.pressing = false;
   });
-  m.in = (x,y,w,h)=>{
-    return x<Mouse.x && Mouse.x<x+w && y<Mouse.y && Mouse.y<y+h;
-  }
   m.Cur = {
     auto : "auto",
     hResize : "col-resize",
