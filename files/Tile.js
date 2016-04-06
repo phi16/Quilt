@@ -57,7 +57,7 @@ Base.write("Tile",()=>{
           }else{
             delete tTree.view;
             tTree.type = 0;
-            tTree.parent.children.splice(path[idx-1],0,{
+            tTree.parent.children.splice(path[idx-1]+1,0,{
               type : 0,
               parent : tTree.parent,
               tile : obj

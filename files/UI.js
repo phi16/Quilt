@@ -192,12 +192,12 @@ Base.write("UI",()=>{
       };
       v.insertAt = (idx,w)=>{
         w.parent = v;
-        v.children.splice(idx,0,w);
+        v.children.splice(idx+1,0,w);
         var ri = idx==0?0:ratio[idx-1];
-        var rx = idx==ratio.length-1?1:ratio[idx];
+        var rx = idx==ratio.length?1:ratio[idx];
+        var mx = idx==ratio.length?1:motRatio[idx];
         ratio.splice(idx,0,(ri+rx)/2);
-        //motRatio.splice(idx,0,motRatio[idx]);
-        motRatio.splice(idx,0,ri);
+        motRatio.splice(idx,0,mx);
       };
       if(draggable){
         var drag = false;
