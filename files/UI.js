@@ -26,7 +26,7 @@ Base.write("UI",()=>{
   - children :: [View]
   - addChild :: View -> ()
   ****/
-  function createView(f){
+  u.createView = (f)=>{
     var v = {};
     f(v);
     var defaultLayout = (w,h)=>{
@@ -61,7 +61,7 @@ Base.write("UI",()=>{
     return v;
   };
   u.button = (run)=>{
-    return createView((v)=>{
+    return u.createView((v)=>{
       v.full = false;
       v.shadow = true;
       v.clipped = true;
@@ -110,7 +110,7 @@ Base.write("UI",()=>{
       li = l, ti = t;
       wi = l+r, hi = t+b;
     }
-    return createView((v)=>{
+    return u.createView((v)=>{
       v.layout = (w,h)=>{
         v.rect.x = li;
         v.rect.y = ti;
@@ -127,7 +127,7 @@ Base.write("UI",()=>{
     });
   };
   u.frame = ()=>{
-    return createView((v)=>{
+    return u.createView((v)=>{
       v.shadow = true;
       v.clipped = true;
       v.render = ()=>{
@@ -142,7 +142,7 @@ Base.write("UI",()=>{
     var sp = typeof sp_ === "undefined" ? 0 : sp_;
     var draggable = typeof draggable_ === "undefined" ? 0 : draggable_;
     // dir?Horizontal:Vertical
-    return createView((v)=>{
+    return u.createView((v)=>{
       // ratio.length == v.children.length - 1
       // motRatio.length == v.children.length - 1
       var ratio = []; 
@@ -185,6 +185,10 @@ Base.write("UI",()=>{
         ratio = ratio.map((a)=>r*a);
         ratio.push(r);
         motRatio.push(1);
+      };
+      v.rewriteAt = (idx,w)=>{
+        w.parent = v;
+        v.children[idx] = w;
       };
       if(draggable){
         var drag = false;
@@ -232,8 +236,8 @@ Base.write("UI",()=>{
         v.onLeave = (x,y)=>{
           Mouse.cursor(Mouse.Cur.auto);
           if(drag){
-            v.hovering = true;
             adjust(x,y);
+            v.hovering = true;
             return true;
           }
           return false;
@@ -243,7 +247,6 @@ Base.write("UI",()=>{
             if(Base.in(idxRect(i))(x,y)){
               drag = true;
               idx = i;
-              console.log(i);
               return true;
             }
           }
@@ -287,7 +290,7 @@ Base.write("UI",()=>{
     });
   }
 
-  u.root = createView(Base.void);
+  u.root = u.createView(Base.void);
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(u.theme.bg);
     layoutView(u.root,Render.width,Render.height);
@@ -313,13 +316,15 @@ Base.write("UI",()=>{
       if(!vRes && !once)procChilds();
       return vRes || pChilds;
     }else{
-      if(ins=="onHover" || ins=="onLeave"){
+      if(ins=="onHover" || ins=="onLeave" || ins=="onRelease"){
         if(v.hovering){
           v.hovering = false;
-          v.onLeave(x-v.rect.x,y-v.rect.y);
+          if(ins!="onRelease")v.onLeave(x-v.rect.x,y-v.rect.y);
+          else v.onRelease(x-v.rect.x,y-v.rect.y);
         }
         v.children.forEach((c)=>{
-          processMouse("onLeave",x-v.rect.x,y-v.rect.y,c);
+          if(ins!="onRelease")processMouse("onLeave",x-v.rect.x,y-v.rect.y,c);
+          else processMouse("onRelease",x-v.rect.x,y-v.rect.y,c);
         });
       }
       return false;
