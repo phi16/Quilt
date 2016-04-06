@@ -8,7 +8,9 @@ Base.write("UI",()=>{
   };
   var space = 5;
   /**** View
+  - full :: Bool
   - shadow :: Bool
+  - clipped :: Bool
   - onHover :: (Float,Float) -> Bool
   - onPress :: (Float,Float) -> Bool
   - onRelease :: (Float,Float) -> Bool
@@ -26,7 +28,12 @@ Base.write("UI",()=>{
     var defaultLayout = (w,h)=>{
       v.rect.w = w;
       v.rect.h = h;
+      v.children.forEach((c)=>{
+        if(c.full)c.layout(w,h);
+        else c.layout(c.rect.w,c.rect.h);
+      });
     };
+    v.full = v.full==null ? true : v.full;
     v.clipped = v.clipped==null ? false : v.clipped;
     v.shadow = v.shadow==null ? false : v.shadow;
     v.onHover = v.onHover==null ? Base.const(false) : v.onHover;
@@ -50,6 +57,7 @@ Base.write("UI",()=>{
   };
   u.button = (run)=>{
     return createView((v)=>{
+      v.full = false;
       v.shadow = true;
       v.clipped = true;
       var state = 0; // Default, Hover, Press, Untouch
@@ -65,34 +73,90 @@ Base.write("UI",()=>{
           d.stroke(2)(u.theme.frame);
         });
       };
+      v.layout = (w,h)=>{
+        v.children.forEach((c)=>{
+          c.layout(c.rect.w,c.rect.h);
+        });
+      };
     });
   };
+  u.fullView = (l,r,t,b)=>{
+    var li,ti,wi,hi;
+    if(typeof r === "undefined"){
+      li = ti = l;
+      wi = hi = 2*l;
+    }else{ // 4 args required
+      li = l, ti = t;
+      wi = l+r, hi = t+b;
+    }
+    return createView((v)=>{
+      v.layout = (w,h)=>{
+        v.rect.x = li;
+        v.rect.y = ti;
+        v.rect.w = w-wi;
+        v.rect.h = h-hi;
+        v.children.forEach((c)=>{
+          if(c.full){
+            c.rect.x = 0;
+            c.rect.y = 0;
+            c.layout(w-wi,h-hi);
+          }
+        });
+      };
+    });
+  };
+  u.frame = ()=>{
+    return createView((v)=>{
+      v.shadow = true;
+      v.clipped = true;
+      v.render = ()=>{
+        Render.rect(0,0,v.rect.w,v.rect.h).dup((d)=>{
+          d.fill(u.theme.base);
+          d.stroke(2)(u.theme.frame);
+        });
+      };
+    });
+  };
+  u.horizontal = (sp,draggable)=>{
+    return createView((v)=>{
+      var ratio = [];
+      var motRatio = [];
+      v.layout = (w,h)=>{
+
+      };
+      v.addChild = (w)=>{
+        w.parent = v;
+        v.children.push(w);
+      };
+    });
+  }
 
   function layoutView(v,w,h){
     v.layout(w,h);
   }
   function renderView(v){
-    if(v.shadow){
-      Render.rect(-space/2,space,v.rect.w+space,v.rect.h).fill(u.theme.shadow);
-    }
-    v.render();
-    function f(){
-      v.children.forEach(function(w){
-        Render.translate(w.rect.x,w.rect.y,()=>{
+    Render.translate(v.rect.x,v.rect.y,()=>{
+      if(v.shadow){
+        Render.rect(-space/2,space,v.rect.w+space,v.rect.h).fill(u.theme.shadow);
+      }
+      v.render();
+      function f(){
+        v.children.forEach(function(w){
           renderView(w);
         });
-      });
-    }
-    if(v.clipped){
-      Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
+      }
+      if(v.clipped){
+        Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
+          f();
+        });
+      }else{
         f();
-      });
-    }else{
-      f();
-    }
+      }
+    });
   }
 
-  var rootView = createView(Base.void,null);
+  var rootView = u.fullView(10);
+  rootView.addChild(u.frame());
   rootView.addChild(u.button().place(100,100,100,100));
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(u.theme.bg);
