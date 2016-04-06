@@ -190,6 +190,15 @@ Base.write("UI",()=>{
         w.parent = v;
         v.children[idx] = w;
       };
+      v.insertAt = (idx,w)=>{
+        w.parent = v;
+        v.children.splice(idx,0,w);
+        var ri = idx==0?0:ratio[idx-1];
+        var rx = idx==ratio.length-1?1:ratio[idx];
+        ratio.splice(idx,0,(ri+rx)/2);
+        //motRatio.splice(idx,0,motRatio[idx]);
+        motRatio.splice(idx,0,ri);
+      };
       if(draggable){
         var drag = false;
         var idx = 0;
@@ -269,6 +278,7 @@ Base.write("UI",()=>{
     v.layout(w,h);
   }
   function renderView(v){
+    if(v.rect.w<0 || v.rect.h<0)return;
     Render.translate(v.rect.x,v.rect.y,()=>{
       if(v.shadow){
         var shD = shadowDepth;
