@@ -7,8 +7,19 @@ Base.write("UI",()=>{
     button : Color(1,0.9,0.7),
     shadow : Color(1,0.5,0,0.5),
     notify : Color(1,0.85,0.7),
-    impact : Color(1,0.8,0.7)
+    impact : Color(1,0.8,0.7),
+    def : Color(1,0.5,0)
   };
+  /*u.theme = {
+    bg : Color(0,0.1,0.1),
+    frame : Color(0,1,1),
+    base : Color(0,0.2,0.2),
+    button : Color(0,0.3,0.3),
+    shadow : Color(0,0.5,0.5),
+    notify : Color(0.1,0.35,0.35),
+    impact : Color(0.2,0.4,0.4),
+    def : Color(0,1,0.8)
+  };*/
   var shadowDepth = 5;
   /**** View
   - full :: Bool
@@ -19,7 +30,7 @@ Base.write("UI",()=>{
   - onLeave :: (Float,Float) -> ()
   - onPress :: (Float,Float) -> Bool
   - onRelease :: (Float,Float) -> Bool
-  - render :: () -> ()
+  - render :: (() -> ()) -> ()
   - layout :: (Float,Float) -> ()
   - rect :: (Float,Float,Float,Float)
   - parent :: View
@@ -54,6 +65,10 @@ Base.write("UI",()=>{
       w.parent = v;
       v.children.push(w);
     } : v.addChild;
+    v.rewriteAt = v.rewriteAt==null ? (idx,w)=>{
+      w.parent = v;
+      v.children[idx] = w;
+    } : v.rewriteAt;
     v.place = (x,y,w,h)=>{
       v.rect = {x:x,y:y,w:w,h:h};
       return v;
@@ -88,7 +103,7 @@ Base.write("UI",()=>{
       };
       v.render = ()=>{
         Render.rect(0,0,v.rect.w,v.rect.h).dup((d)=>{
-          if(state==0)d.fill(u.theme.button);
+          if(state==0 || state==3)d.fill(u.theme.button);
           else if(state==1)d.fill(u.theme.notify);
           else if(state==2)d.fill(u.theme.impact);
           d.stroke(2)(u.theme.frame);
@@ -130,9 +145,10 @@ Base.write("UI",()=>{
     return u.createView((v)=>{
       v.shadow = true;
       v.clipped = true;
-      v.render = ()=>{
+      v.render = (c)=>{
         Render.rect(0,0,v.rect.w,v.rect.h).dup((d)=>{
           d.fill(u.theme.base);
+          c();
           d.stroke(2)(u.theme.frame);
         });
       };
@@ -185,10 +201,6 @@ Base.write("UI",()=>{
         ratio = ratio.map((a)=>r*a);
         ratio.push(r);
         motRatio.push(1);
-      };
-      v.rewriteAt = (idx,w)=>{
-        w.parent = v;
-        v.children[idx] = w;
       };
       v.insertAt = (idx,w)=>{
         w.parent = v;
@@ -284,12 +296,15 @@ Base.write("UI",()=>{
         var shD = shadowDepth;
         Render.rect(-shD/2,shD,v.rect.w+shD,v.rect.h).fill(u.theme.shadow);
       }
-      v.render();
-      function f(){
+      var procChilds = false;
+      var f = ()=>{
+        if(procChilds)return;
+        procChilds = true;
         v.children.forEach(function(w){
           renderView(w);
         });
       }
+      v.render(f);
       if(v.clipped){
         Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
           f();

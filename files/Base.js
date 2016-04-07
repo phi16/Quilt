@@ -35,5 +35,8 @@ var Base = (()=>{
       return x<=p && p<=x+w && y<=q && q<=y+h;
     };
   };
+  b.clone = (a)=>{
+    return a.concat([]);
+  };
   return b;
 })();

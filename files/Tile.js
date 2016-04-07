@@ -2,37 +2,25 @@ Base.write("Tile",()=>{
   var t = {};
   var tileSpace = 10;
 
-  // Frame{0,view::View}
-  // Horizontal{1,children::[Tree]}
-  // Vertical{2,children::[Tree]}
-  /*var tileTree = {
-    type : 0,
-    view : UI.frame()
-  };*/
-  var tileTree = {
-    type : 1,
-    children : [
-      {type : 0, tile : UI.frame()},
-      {type : 2, children : [
-        {type : 0, tile : UI.frame()},
-        {type : 0, tile : UI.frame()}
-      ]},
-      {type : 0, tile : UI.frame()}
-    ]
-  };
+  // [Tree]
+  // - Frame{0,tile::View}[tile.index]
+  // - Horizontal{1,children::[Tree]}[view, view.index]
+  // - Vertical{2,children::[Tree]}[view, view.index]
+  var view = UI.fullView(tileSpace);
+
   t.makeTile = (f)=>{
     var fr = UI.frame();
-    fr.addChild(UI.createView(f));
+    fr.addChild(UI.createView((v)=>{
+      f(v,fr);
+    }));
     return fr;
   };
-  t.tt = tileTree;
   t.putTile = (obj,path)=>{
     function traverse(tTree,path,idx){
       if(!tTree)return;
       if(tTree.type==0 || idx >= path.length){
         if(tTree.type==0){
           var tile = tTree.tile;
-          var par = tTree.parent.view;
           if(tile.rect.w < tile.rect.h){
             tTree.type = 2;
             tTree.view = UI.vertical(tileSpace,true);
@@ -40,7 +28,15 @@ Base.write("Tile",()=>{
             tTree.type = 1;
             tTree.view = UI.horizontal(tileSpace,true);
           }
-          if(tTree.parent.type != tTree.type){
+          
+          if(tTree.parent==null || tTree.parent.type!=tTree.type){
+            delete tTree.tile;
+            var a0 = Base.clone(tile.index);
+            var a1 = Base.clone(tile.index);
+            var a2 = Base.clone(tile.index);
+            a1.push(0),a2.push(1);
+            tile.index = a1;
+            obj.index = a2;
             tTree.children = [{
               type : 0,
               parent : tTree,
@@ -52,8 +48,13 @@ Base.write("Tile",()=>{
             }];
             tTree.view.addChild(tile);
             tTree.view.addChild(obj);
-            delete tTree.tile;
-            par.rewriteAt(path[idx-1],tTree.view);
+            tTree.view.index = a0;
+            if(tTree.parent){
+              var par = tTree.parent.view;
+              par.rewriteAt(path[idx-1],tTree.view);
+            }else{
+              view.rewriteAt(0,tTree.view);
+            }
           }else{
             delete tTree.view;
             tTree.type = 0;
@@ -62,12 +63,27 @@ Base.write("Tile",()=>{
               parent : tTree.parent,
               tile : obj
             });
+            var par = tTree.parent.view;
             par.insertAt(path[idx-1],obj);
+            function indexing(tr,ix){
+              if(tr.type==0)return;
+              tr.children.forEach((v,i)=>{
+                var a = Base.clone(ix);
+                a.push(i);
+                if(v.type==0)v.tile.index = a;
+                else v.view.index = a;
+                indexing(v,a);
+              });
+            }
+            indexing(tTree.parent,tTree.parent.view.index);
           }
         }else{
+          var a = Base.clone(tTree.view.index);
+          a.push(tTree.children.length);
           tTree.children.push({
             type : 0,
             parent : tTree,
+            index : a,
             tile : obj
           });
           tTree.view.addChild(obj);
@@ -79,25 +95,46 @@ Base.write("Tile",()=>{
     traverse(tileTree,path,0);
   };
 
-  function makeTree(t,p,v){
+  var dupView = null;
+  dupView = ()=>{
+    return t.makeTile((v,w)=>{
+      v.onPress = (x,y)=>{
+        t.putTile(dupView(),w.index);
+      };
+      v.render = ()=>{
+        var r = Math.min(v.rect.w/2,v.rect.h/2);
+        Render.circle(v.rect.w/2,v.rect.h/2,r).fill(UI.theme.def);
+      }
+    });
+  }
+  var tileTree = {
+    type : 0,
+    tile : dupView()
+  };
+  function makeTree(t,p,v,a){
     if(t.type==0){
+      t.tile.index = Base.clone(a);
       v.addChild(t.tile);
       t.parent = p;
     }else{
       var s;
       if(t.type==1)s = UI.horizontal(tileSpace,true);
       else s = UI.vertical(tileSpace,true);
-      t.children.forEach((c)=>{
-        makeTree(c,t,s);
+      t.children.forEach((c,i)=>{
+        a.push(i);
+        makeTree(c,t,s,a);
+        a.pop();
       });
       v.addChild(s);
       t.view = s;
+      t.view.index = Base.clone(a);
       t.parent = p;
     }
   }
-  var view = UI.fullView(tileSpace);
   UI.root.addChild(view);
-  makeTree(tileTree,null,view);
+  makeTree(tileTree,null,view,[]);
+
+  t.tt = tileTree;
 
   return t;
 });
