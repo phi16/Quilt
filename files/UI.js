@@ -300,18 +300,21 @@ Base.write("UI",()=>{
       var f = ()=>{
         if(procChilds)return;
         procChilds = true;
-        v.children.forEach(function(w){
-          renderView(w);
-        });
+        function proc(){
+          v.children.forEach(function(w){
+            renderView(w);
+          });
+        }
+        if(v.clipped){
+          Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
+            proc();
+          });
+        }else{
+          proc();
+        }
       }
       v.render(f);
-      if(v.clipped){
-        Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
-          f();
-        });
-      }else{
-        f();
-      }
+      if(!procChilds)f();
     });
   }
 
