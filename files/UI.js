@@ -37,17 +37,19 @@ Base.write("UI",()=>{
   - children :: [View]
   - addChild :: View -> ()
   ****/
-  u.createView = (f)=>{
+  u.defaultLayout = (v,f)=>(w,h)=>{
+    v.rect.w = w;
+    v.rect.h = h;
+    v.children.forEach((c)=>{
+      if(c.full)c.layout(w,h);
+      else c.layout(c.rect.w,c.rect.h);
+    });
+    v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
+    if(typeof f !== "undefined")f(w,h);
+  };
+  u.create = (f)=>{
     var v = {};
     f(v);
-    var defaultLayout = (w,h)=>{
-      v.rect.w = w;
-      v.rect.h = h;
-      v.children.forEach((c)=>{
-        if(c.full)c.layout(w,h);
-        else c.layout(c.rect.w,c.rect.h);
-      });
-    };
     v.full = v.full==null ? true : v.full;
     v.clipped = v.clipped==null ? false : v.clipped;
     v.shadow = v.shadow==null ? false : v.shadow;
@@ -57,8 +59,9 @@ Base.write("UI",()=>{
     v.onPress = v.onPress==null ? Base.const(false) : v.onPress;
     v.onRelease = v.onRelease==null ? Base.const(false) : v.onRelease;
     v.render = v.render==null ? Base.void : v.render;
-    v.layout = v.layout==null ? defaultLayout : v.layout;
+    v.layout = v.layout==null ? u.defaultLayout(v) : v.layout;
     v.rect = v.rect==null ? {x:0,y:0,w:0,h:0} : v.rect;
+    v.shape = Render.rect(0,0,0,0);
     v.parent = null;
     v.children = v.children==null ? [] : v.children;
     v.addChild = v.addChild==null ? (w)=>{
@@ -76,7 +79,7 @@ Base.write("UI",()=>{
     return v;
   };
   u.button = (run)=>{
-    return u.createView((v)=>{
+    return (v)=>{
       v.full = false;
       v.shadow = true;
       v.clipped = true;
@@ -102,7 +105,7 @@ Base.write("UI",()=>{
         return true;
       };
       v.render = ()=>{
-        Render.rect(0,0,v.rect.w,v.rect.h).dup((d)=>{
+        v.shape.dup((d)=>{
           if(state==0 || state==3)d.fill(u.theme.button);
           else if(state==1)d.fill(u.theme.notify);
           else if(state==2)d.fill(u.theme.impact);
@@ -114,7 +117,7 @@ Base.write("UI",()=>{
           c.layout(c.rect.w,c.rect.h);
         });
       };
-    });
+    };
   };
   u.fullView = (l,r,t,b)=>{
     var li,ti,wi,hi;
@@ -125,7 +128,7 @@ Base.write("UI",()=>{
       li = l, ti = t;
       wi = l+r, hi = t+b;
     }
-    return u.createView((v)=>{
+    return (v)=>{
       v.layout = (w,h)=>{
         v.rect.x = li;
         v.rect.y = ti;
@@ -138,30 +141,37 @@ Base.write("UI",()=>{
             c.layout(w-wi,h-hi);
           }
         });
+        v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
-    });
+    };
   };
   u.frame = ()=>{
-    return u.createView((v)=>{
+    return (v)=>{
       v.shadow = true;
       v.clipped = true;
       v.render = (c)=>{
-        Render.rect(0,0,v.rect.w,v.rect.h).dup((d)=>{
+        v.shape.dup((d)=>{
           d.fill(u.theme.base);
           c();
           d.stroke(2)(u.theme.frame);
         });
       };
-    });
+    };
+  };
+  u.inherit = (b,f)=>{
+    return (v)=>{
+      b(v);
+      f(v);
+    };
   };
   var sequencialLayout = (dir)=>(sp_,draggable_)=>{
     var sp = typeof sp_ === "undefined" ? 0 : sp_;
     var draggable = typeof draggable_ === "undefined" ? 0 : draggable_;
     // dir?Horizontal:Vertical
-    return u.createView((v)=>{
+    return u.create((v)=>{
       // ratio.length == v.children.length - 1
       // motRatio.length == v.children.length - 1
-      var ratio = []; 
+      var ratio = [];
       var motRatio = [];
       v.layout = (w,h)=>{
         v.rect.w = w;
@@ -191,6 +201,7 @@ Base.write("UI",()=>{
             c.layout(w,allH*(bx-bi));
           }
         }
+        v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
       v.addChild = (w)=>{
         w.parent = v;
@@ -294,7 +305,14 @@ Base.write("UI",()=>{
     Render.translate(v.rect.x,v.rect.y,()=>{
       if(v.shadow){
         var shD = shadowDepth;
-        Render.rect(-shD/2,shD,v.rect.w+shD,v.rect.h).fill(u.theme.shadow);
+        var w2 = v.rect.w+shD/2;
+        Render.translate(v.rect.w/2,shD*0.7,()=>{
+          Render.scale(w2/v.rect.w,1.0,()=>{
+            Render.translate(-v.rect.w/2,0,()=>{
+              v.shape.fill(u.theme.shadow);
+            });
+          });
+        });
       }
       var procChilds = false;
       var f = ()=>{
@@ -306,7 +324,7 @@ Base.write("UI",()=>{
           });
         }
         if(v.clipped){
-          Render.rect(0,0,v.rect.w,v.rect.h).clip(()=>{
+          v.shape.clip(()=>{
             proc();
           });
         }else{
@@ -318,28 +336,30 @@ Base.write("UI",()=>{
     });
   }
 
-  u.root = u.createView(Base.void);
+  u.root = u.create(Base.void);
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(u.theme.bg);
     layoutView(u.root,Render.width,Render.height);
     renderView(u.root);
   });
   function processMouse(ins,x,y,v){
-    if(ins!="onLeave" && Base.in(v.rect)(x,y)){
+    var p = x-v.rect.x;
+    var q = y-v.rect.y;
+    if(ins!="onLeave" && Base.in(v.rect)(x,y) && v.shape.on(p,q)){
       var pChilds = false;
       var once = false;
       var procChilds = ()=>{
         if(once)return false;
         once = true;
         for(var i=v.children.length-1;i>-1;i--){
-          if(processMouse(ins,x-v.rect.x,y-v.rect.y,v.children[i])){
+          if(processMouse(ins,p,q,v.children[i])){
             pChilds = true;
             break;
           }
         }
         return pChilds;
       };
-      var vRes = v[ins](x-v.rect.x,y-v.rect.y,procChilds);
+      var vRes = v[ins](p,q,procChilds);
       v.hovering = true;
       if(!vRes && !once)procChilds();
       return vRes || pChilds;
@@ -347,12 +367,12 @@ Base.write("UI",()=>{
       if(ins=="onHover" || ins=="onLeave" || ins=="onRelease"){
         if(v.hovering){
           v.hovering = false;
-          if(ins!="onRelease")v.onLeave(x-v.rect.x,y-v.rect.y);
-          else v.onRelease(x-v.rect.x,y-v.rect.y);
+          if(ins!="onRelease")v.onLeave(p,q);
+          else v.onRelease(p,q);
         }
         v.children.forEach((c)=>{
-          if(ins!="onRelease")processMouse("onLeave",x-v.rect.x,y-v.rect.y,c);
-          else processMouse("onRelease",x-v.rect.x,y-v.rect.y,c);
+          if(ins!="onRelease")processMouse("onLeave",p,q,c);
+          else processMouse("onRelease",p,q,c);
         });
       }
       return false;

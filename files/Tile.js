@@ -6,13 +6,25 @@ Base.write("Tile",()=>{
   // - Frame{0,tile::View}[tile.index]
   // - Horizontal{1,children::[Tree]}[view, view.index]
   // - Vertical{2,children::[Tree]}[view, view.index]
-  var view = UI.fullView(tileSpace);
+  var view = UI.create(UI.fullView(tileSpace));
 
   t.makeTile = (f)=>{
-    var fr = UI.frame();
-    fr.addChild(UI.createView((v)=>{
+    var fr = UI.create(UI.frame());
+    fr.addChild(UI.create((v)=>{
       f(v,fr);
     }));
+    var menu = UI.create(UI.inherit(UI.button(()=>{
+      console.log("po");
+    }),(v)=>{
+      v.layout = UI.defaultLayout(v,(w,h)=>{
+        v.rect.w = v.rect.h = 40;
+        v.rect.x = w-v.rect.w;
+        v.rect.y = 0;
+        v.shape = Render.polygon([0,0,40,0,40,40,0,0]);
+      });
+    }));
+    menu.full = true;
+    fr.addChild(menu);
     return fr;
   };
   t.putTile = (obj,path)=>{

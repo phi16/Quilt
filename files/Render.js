@@ -5,7 +5,7 @@ Base.write("Render",()=>{
   var ctx = cvs.getContext('2d');
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  var component = (f)=>{
+  var component = (f,r)=>{
     var c = {
       fill : Color.con((c)=>{
         ctx.beginPath();
@@ -30,6 +30,9 @@ Base.write("Render",()=>{
         ctx.clip();
         h();
         ctx.restore();
+      },
+      on : (x,y)=>{
+        return r(x,y);
       }
     }
     c.dup = (g)=>{
@@ -48,7 +51,7 @@ Base.write("Render",()=>{
     };else f = ()=>{
       ctx.rect(x,y,w,h);
     }
-    return component(f);
+    return component(f,Base.in(x,y,w,h));
   };
   r.circle = (x,y,r)=>{
     var f = ()=>{};
@@ -57,15 +60,35 @@ Base.write("Render",()=>{
     };else f = ()=>{
       if(r>0)ctx.arc(x,y,r,0,Math.PI*2,1);
     }
-    return component(f);
+    return component(f,(p,q)=>{
+      return (p-x)*(p-x)+(q-y)*(q-y) <= r*r;
+    });
   };
   r.polygon = (a)=>{
-    if(a.length<2)return component(()=>{});
+    if(a.length<2)return component(()=>{},()=>false);
     return component(()=>{
       ctx.moveTo(a[0],a[1]);
       for(var i=0;i<a.length;i+=2){
         ctx.lineTo(a[i],a[i+1]);
       }
+    },(x,y)=>{
+      var b = false;
+      var x1 = 0;
+      var y1 = 0;
+      var x2 = a[0]-x;
+      var y2 = a[1]-y;
+      for(var i=0;i<a.length-2;i+=2){
+        x1 = x2;
+        y1 = y2;
+        x2 = a[i+2]-x;
+        y2 = a[i+3]-y;
+        var r = -y2/y1;
+        if(0 <= r){
+          var rx = (x1*r + x2*1)/(r+1);
+          if(rx >= 0)b = !b;
+        }
+      }
+      return b;
     });
   };
   r.translate = (x,y,f)=>{
@@ -74,9 +97,9 @@ Base.write("Render",()=>{
     f();
     ctx.restore();
   }
-  r.scale = (s,f)=>{
+  r.scale = (x,y,f)=>{
     ctx.save();
-    ctx.scale(s,s);
+    ctx.scale(x,y);
     f();
     ctx.restore();
   };
