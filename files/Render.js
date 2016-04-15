@@ -83,10 +83,15 @@ Base.write("Render",()=>{
         x2 = a[i+2]-x;
         y2 = a[i+3]-y;
         var r = -y2/y1;
-        if(0 <= r){
-          var rx = (x1*r + x2*1)/(r+1);
-          if(rx >= 0)b = !b;
+        var rx;
+        if(Math.abs(y1) < 0.0001){
+          rx = x1;
+        }else if(Math.abs(y2) < 0.0001){
+          rx = x2;
+        }else if(0 <= r){
+          rx = (x1*r + x2*1)/(r+1);
         }
+        if(rx >= 0)b = !b;
       }
       return b;
     });
