@@ -5,7 +5,7 @@ Base.write("UI",()=>{
     frame : Color(0.6,0.3,0),
     base : Color(1,0.97,0.8),
     button : Color(1,0.9,0.7),
-    shadow : Color(1,0.5,0,0.5),
+    shadow : Color(0.5,0.25,0),
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
     def : Color(1,0.5,0)
@@ -304,14 +304,8 @@ Base.write("UI",()=>{
     if(v.rect.w<0 || v.rect.h<0)return;
     Render.translate(v.rect.x,v.rect.y,()=>{
       if(v.shadow){
-        var shD = shadowDepth;
-        var w2 = v.rect.w+shD/2;
-        Render.translate(v.rect.w/2,shD*0.7,()=>{
-          Render.scale(w2/v.rect.w,1.0,()=>{
-            Render.translate(-v.rect.w/2,0,()=>{
-              v.shape.fill(u.theme.shadow);
-            });
-          });
+        Render.shadowed(shadowDepth,u.theme.shadow,()=>{
+          v.shape.fill(u.theme.shadow);
         });
       }
       var procChilds = false;

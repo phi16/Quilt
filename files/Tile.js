@@ -115,8 +115,9 @@ Base.write("Tile",()=>{
       };
       v.render = ()=>{
         var r = Math.min(v.rect.w/2,v.rect.h/2);
-        Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
-        Render.circle(v.rect.w/2,v.rect.h/2+5,r).stroke(4)(UI.theme.shadow);
+        Render.shadowed(5,UI.theme.shadow,()=>{
+	  Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
+	});
       }
     });
   }
