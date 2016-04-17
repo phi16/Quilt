@@ -9,7 +9,22 @@ Base.write("Tile",()=>{
   var view = UI.create(UI.fullView(tileSpace));
 
   t.makeTile = (f)=>{
-    var fr = UI.create(UI.frame());
+    var fr = UI.create(UI.inherit(UI.frame(),(v)=>{
+      var lev = 0, levM = 0;
+      v.onHover = (x,y)=>{
+        lev = 1;
+        return false;
+      };
+      v.onLeave = (x,y)=>{
+        lev = 0;
+        return false;
+      };
+      v.shadowDepth = ()=>{
+        if(levM<lev)levM += 0.2;
+        if(levM>lev)levM -= 0.2;
+        return tileSpace * (levM+1) / 2;
+      };
+    }));
     fr.addChild(UI.create((v)=>{
       f(v,fr);
     }));
@@ -116,8 +131,8 @@ Base.write("Tile",()=>{
       v.render = ()=>{
         var r = Math.min(v.rect.w/2,v.rect.h/2);
         Render.shadowed(5,UI.theme.shadow,()=>{
-	  Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
-	});
+          Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
+        });
       }
     });
   }

@@ -53,6 +53,7 @@ Base.write("UI",()=>{
     v.full = v.full==null ? true : v.full;
     v.clipped = v.clipped==null ? false : v.clipped;
     v.shadow = v.shadow==null ? false : v.shadow;
+    v.shadowDepth = v.shadowDepth==null ? ()=>shadowDepth : v.shadowDepth;
     v.hovering = false;
     v.onHover = v.onHover==null ? Base.const(false) : v.onHover;
     v.onLeave = v.onLeave==null ? Base.void : v.onLeave;
@@ -304,7 +305,7 @@ Base.write("UI",()=>{
     if(v.rect.w<0 || v.rect.h<0)return;
     Render.translate(v.rect.x,v.rect.y,()=>{
       if(v.shadow){
-        Render.shadowed(shadowDepth,u.theme.shadow,()=>{
+        Render.shadowed(v.shadowDepth(),u.theme.shadow,()=>{
           v.shape.fill(u.theme.shadow);
         });
       }
