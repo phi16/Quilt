@@ -4,6 +4,7 @@ Base.write("UI",()=>{
     bg : Color(1,1,0.9),
     frame : Color(0.6,0.3,0),
     base : Color(1,0.97,0.8),
+    front : Color(1,0.93,0.73),
     button : Color(1,0.9,0.7),
     shadow : Color(0.5,0.25,0),
     notify : Color(1,0.85,0.7),

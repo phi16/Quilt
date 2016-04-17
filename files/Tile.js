@@ -28,8 +28,47 @@ Base.write("Tile",()=>{
     fr.addChild(UI.create((v)=>{
       f(v,fr);
     }));
-    var menu = UI.create(UI.inherit(UI.button(()=>{
-      console.log("po");
+    var menuDisplay = false;
+    var menu = UI.create((v)=>{
+      v.shadow = true;
+      v.clipped = true;
+      v.layout = (w,h)=>{
+        v.children.forEach((c)=>{
+          if(c.full)c.layout(w,h);
+          else c.layout(c.rect.w,c.rect.h);
+        });
+        if(menuDisplay){
+          v.rect.w += (400 - v.rect.w) / 2.0;
+          v.rect.h += (200 - v.rect.h) / 2.0;
+        }else{
+          v.rect.w += (0 - v.rect.w) / 2.0;
+          v.rect.h += (0 - v.rect.h) / 2.0;
+        }
+        v.rect.x = w-v.rect.w;
+        v.rect.y = 0;
+        v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
+      };
+      v.onPress = (x,y)=>{
+        return true;
+      };
+      v.onRelease = (x,y)=>{
+        return true;
+      };
+      v.onLeave = (x,y)=>{
+        menuDisplay = false;
+        return false;
+      }
+      v.render = (c)=>{
+        v.shape.dup((d)=>{
+          d.fill(UI.theme.front);
+          c();
+          d.stroke(2)(UI.theme.frame);
+        });
+      };
+    });
+    var menuButton = UI.create(UI.inherit(UI.button(()=>{
+      menuDisplay = !menuDisplay;
+      menu.hovering = true;
     }),(v)=>{
       v.layout = UI.defaultLayout(v,(w,h)=>{
         v.rect.w = v.rect.h = 40;
@@ -39,7 +78,9 @@ Base.write("Tile",()=>{
       });
     }));
     menu.full = true;
+    menuButton.full = true;
     fr.addChild(menu);
+    fr.addChild(menuButton);
     return fr;
   };
   t.putTile = (obj,path)=>{
