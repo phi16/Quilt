@@ -118,6 +118,7 @@ Base.write("UI",()=>{
         v.children.forEach((c)=>{
           c.layout(c.rect.w,c.rect.h);
         });
+        v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
     };
   };
@@ -160,10 +161,14 @@ Base.write("UI",()=>{
       };
     };
   };
-  u.inherit = (b,f)=>{
+  u.image = (g)=>{
     return (v)=>{
-      b(v);
-      f(v);
+      v.full = false;
+      v.render = ()=>{
+        Render.scale(v.rect.w,v.rect.h,()=>{
+          g();
+        });
+      }
     };
   };
   var sequencialLayout = (dir)=>(sp_,draggable_)=>{
@@ -298,6 +303,12 @@ Base.write("UI",()=>{
   };
   u.horizontal = sequencialLayout(true);
   u.vertical = sequencialLayout(false);
+  u.inherit = (b,f)=>{
+    return (v)=>{
+      b(v);
+      f(v);
+    };
+  };
 
   function layoutView(v,w,h){
     v.layout(w,h);

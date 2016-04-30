@@ -7,6 +7,9 @@ Base.write("Tile",()=>{
   // - Horizontal{1,children::[Tree]}[view, view.index]
   // - Vertical{2,children::[Tree]}[view, view.index]
   var view = UI.create(UI.fullView(tileSpace));
+  Math.PHI = (1 + Math.sqrt(5)) / 2;
+  var confTiles = [];
+  var confX = 0, confY = 0;
 
   t.makeTile = (f)=>{
     var fr = UI.create(UI.inherit(UI.frame(),(v)=>{
@@ -29,6 +32,7 @@ Base.write("Tile",()=>{
       f(v,fr);
     }));
     var menuDisplay = false;
+    var menuWidth = confX*70+50, menuHeight = confY*70+30;
     var menu = UI.create((v)=>{
       v.shadow = true;
       v.clipped = true;
@@ -38,8 +42,8 @@ Base.write("Tile",()=>{
           else c.layout(c.rect.w,c.rect.h);
         });
         if(menuDisplay){
-          v.rect.w += (400 - v.rect.w) / 2.0;
-          v.rect.h += (200 - v.rect.h) / 2.0;
+          v.rect.w += (menuWidth - v.rect.w) / 2.0;
+          v.rect.h += (menuHeight - v.rect.h) / 2.0;
         }else{
           v.rect.w += (0 - v.rect.w) / 2.0;
           v.rect.h += (0 - v.rect.h) / 2.0;
@@ -48,10 +52,12 @@ Base.write("Tile",()=>{
         v.rect.y = 0;
         v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
-      v.onPress = (x,y)=>{
+      v.onPress = (x,y,c)=>{
+        c();
         return true;
       };
-      v.onRelease = (x,y)=>{
+      v.onRelease = (x,y,c)=>{
+        c();
         return true;
       };
       v.onLeave = (x,y)=>{
@@ -66,6 +72,31 @@ Base.write("Tile",()=>{
         });
       };
     });
+    for(var i=0;i<confTiles.length;i++){
+      Base.with(confTiles[i],(conf)=>{
+        var btn = UI.create(UI.button(()=>{
+          //fr.rewriteAt(0,t.makeTile(conf.tile).children[0]);
+          // fails handling onPress
+
+          /*var ti = t.makeTile(conf.tile);
+          ti.index = Base.clone(fr.index);
+          var j = 0;
+          if(fr.index.length != 0)j = fr.index[fr.index.length-1];
+          fr.parent.rewriteAt(j,ti);
+          
+          This cause crashing too*/
+
+          // Check the reference to parent?
+          // Firstly I should make object viewer 
+          console.log("nya!");
+        }));
+        btn.place((i%confX)*70+20,Math.floor(i/confX)*70+20,60,60);
+        btn.addChild(UI.create(UI.image(()=>{
+          conf.icon();
+        })).place(0,0,60,60));
+        menu.addChild(btn);
+      });
+    }
     var menuButton = UI.create(UI.inherit(UI.button(()=>{
       menuDisplay = !menuDisplay;
       menu.hovering = true;
@@ -162,24 +193,37 @@ Base.write("Tile",()=>{
     }
     traverse(tileTree,path,0);
   };
+  t.registerTile = (n,t,i)=>{
+    confTiles.push({
+      name : n,
+      tile : t,
+      icon : i
+    });
+    confX = Math.ceil(Math.sqrt(confTiles.length*Math.PHI));
+    confY = Math.ceil(confTiles.length / confX);
+  }
 
   var dupView = null;
-  dupView = ()=>{
-    return t.makeTile((v,w)=>{
-      v.onPress = (x,y)=>{
-        t.putTile(dupView(),w.index);
-      };
-      v.render = ()=>{
-        var r = Math.min(v.rect.w/2,v.rect.h/2);
-        Render.shadowed(5,UI.theme.shadow,()=>{
-          Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
-        });
-      }
+  dupView = (v,w)=>{
+    v.onPress = (x,y)=>{
+      t.putTile(t.makeTile(dupView),w.index);
+    };
+    v.render = ()=>{
+      var r = Math.min(v.rect.w/2,v.rect.h/2);
+      Render.shadowed(5,UI.theme.shadow,()=>{
+        Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
+      });
+    };
+  };
+  t.registerTile("DupTile",dupView,()=>{
+    Render.shadowed(4,Color(0.6,0.3,0),function(){
+      Render.circle(0.5,0.5,0.3).stroke(0.1)(1,0.5,0);
     });
-  }
+  });
+  t.registerTile("NoneTile",Base.void,Base.void);
   var tileTree = {
     type : 0,
-    tile : dupView()
+    tile : t.makeTile(dupView)
   };
   function makeTree(t,p,v,a){
     if(t.type==0){

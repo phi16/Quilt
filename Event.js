@@ -13,13 +13,20 @@ Base.write("Event",()=>{
     onrelease.push(f);
   }
   window.onmousedown = (e)=>{
-    for(var i=0;i<onpress.length;i++)onpress[i](e);
+    if(e.which==1){
+      for(var i=0;i<onpress.length;i++)onpress[i](e);
+    }else e.preventDefault();
   };
   window.onmousemove = (e)=>{
     for(var i=0;i<onhover.length;i++)onhover[i](e);
   };
   window.onmouseup = (e)=>{
-    for(var i=0;i<onrelease.length;i++)onrelease[i](e);
+    if(e.which==1){
+      for(var i=0;i<onrelease.length;i++)onrelease[i](e);
+    }else e.preventDefault();
   };
+  window.oncontextmenu = (e)=>{
+    return false;
+  }
   return e;
 });
