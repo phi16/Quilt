@@ -32,7 +32,7 @@ Base.write("Tile",()=>{
       f(v,fr);
     }));
     var menuDisplay = false;
-    var menuWidth = confX*70+50, menuHeight = confY*70+30;
+    var menuWidth = 0, menuHeight = 0;
     var menu = UI.create((v)=>{
       v.shadow = true;
       v.clipped = true;
@@ -87,25 +87,35 @@ Base.write("Tile",()=>{
           This cause crashing too*/
 
           // Check the reference to parent?
-          // Firstly I should make object viewer 
+          // Firstly I should make object viewer
           console.log("nya!");
         }));
-        btn.place((i%confX)*70+20,Math.floor(i/confX)*70+20,60,60);
         btn.addChild(UI.create(UI.image(()=>{
           conf.icon();
-        })).place(0,0,60,60));
+        })));
         menu.addChild(btn);
       });
     }
-    var menuButton = UI.create(UI.inherit(UI.button(()=>{
+    var menuButton = UI.create(UI.inherit(UI.button((v)=>{
+      var size = v.size;
       menuDisplay = !menuDisplay;
       menu.hovering = true;
+      menuWidth = (confX*1.75+1.25)*size;
+      menuHeight = (confY*1.75+0.75)*size;
+      menu.children.forEach(function(v,i){
+        var ix = i%confX, iy = Math.floor(i/confX);
+        var px = (ix*1.75+0.5)*size, py = (iy*1.75+0.5)*size;
+        v.place(px,py,1.5*size,1.5*size);
+        v.children[0].place(0,0,1.5*size,1.5*size);
+      });
     }),(v)=>{
       v.layout = UI.defaultLayout(v,(w,h)=>{
-        v.rect.w = v.rect.h = 40;
+        var size = Math.min(40,Math.min(w,h)/3);
+        v.rect.w = v.rect.h = size;
         v.rect.x = w-v.rect.w;
         v.rect.y = 0;
-        v.shape = Render.polygon([0,0,40,0,40,40,0,0]);
+        v.shape = Render.polygon([0,0,size,0,size,size,0,0]);
+        v.size = size;
       });
     }));
     menu.full = true;

@@ -102,7 +102,7 @@ Base.write("UI",()=>{
         return true;
       };
       v.onRelease = (x,y)=>{
-        if(state == 2)run();
+        if(state == 2)run(v);
         state = 0;
         return true;
       };
