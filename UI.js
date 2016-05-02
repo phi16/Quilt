@@ -51,6 +51,7 @@ Base.write("UI",()=>{
   u.create = (f)=>{
     var v = {};
     f(v);
+    v.name = v.name==null ? "unnamed" : v.name;
     v.full = v.full==null ? true : v.full;
     v.clipped = v.clipped==null ? false : v.clipped;
     v.shadow = v.shadow==null ? false : v.shadow;
@@ -82,6 +83,7 @@ Base.write("UI",()=>{
   };
   u.button = (run)=>{
     return (v)=>{
+      v.name = "button";
       v.full = false;
       v.shadow = true;
       v.clipped = true;
@@ -132,6 +134,7 @@ Base.write("UI",()=>{
       wi = l+r, hi = t+b;
     }
     return (v)=>{
+      v.name = "fullView";
       v.layout = (w,h)=>{
         v.rect.x = li;
         v.rect.y = ti;
@@ -150,6 +153,7 @@ Base.write("UI",()=>{
   };
   u.frame = ()=>{
     return (v)=>{
+      v.name = "frame";
       v.shadow = true;
       v.clipped = true;
       v.render = (c)=>{
@@ -163,6 +167,7 @@ Base.write("UI",()=>{
   };
   u.image = (g)=>{
     return (v)=>{
+      v.name = "image";
       v.full = false;
       v.render = ()=>{
         Render.scale(v.rect.w,v.rect.h,()=>{
@@ -180,6 +185,7 @@ Base.write("UI",()=>{
       // motRatio.length == v.children.length - 1
       var ratio = [];
       var motRatio = [];
+      v.name = dir ? "horizontal" : "vertical"
       v.layout = (w,h)=>{
         v.rect.w = w;
         v.rect.h = h;
@@ -344,6 +350,7 @@ Base.write("UI",()=>{
   }
 
   u.root = u.create(Base.void);
+  u.root.name = "root";
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(u.theme.bg);
     layoutView(u.root,Render.width,Render.height);
@@ -394,5 +401,28 @@ Base.write("UI",()=>{
   Event.onRelease(()=>{
     processMouse("onRelease",Mouse.x,Mouse.y,u.root);
   });
+  u.showTree = ()=>{
+    var ids = {};
+    var str = "";
+    function append(s){
+      str += s + "\n";
+    }
+    function f(v,u){
+      if(v.checked){
+        append(u + "[Circular]");
+        return;
+      }
+      if(ids[v.name]==null)ids[v.name] = 0;
+      v.checked = ids[v.name]++;
+      var par = v.parent ? v.parent.name + "[" + v.parent.checked + "]" : "none";
+      append(u + v.name + "[" + v.checked + "] / parent : " + par);
+      v.children.forEach((c)=>{
+        f(c,u+"| ");
+      });
+      delete v.checked;
+    }
+    f(u.root,"");
+    console.log(str);
+  };
   return u;
 });

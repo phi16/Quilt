@@ -29,11 +29,13 @@ Base.write("Tile",()=>{
       };
     }));
     fr.addChild(UI.create((v)=>{
+      v.name = "container";
       f(v,fr);
     }));
     var menuDisplay = false;
     var menuWidth = 0, menuHeight = 0;
     var menu = UI.create((v)=>{
+      v.name = "menu";
       v.shadow = true;
       v.clipped = true;
       v.layout = (w,h)=>{
@@ -86,8 +88,6 @@ Base.write("Tile",()=>{
           
           This cause crashing too*/
 
-          // Check the reference to parent?
-          // Firstly I should make object viewer
           console.log("nya!");
         }));
         btn.addChild(UI.create(UI.image(()=>{
@@ -100,9 +100,10 @@ Base.write("Tile",()=>{
       var size = v.size;
       menuDisplay = !menuDisplay;
       menu.hovering = true;
+      //configure menuSizes
       menuWidth = (confX*1.75+1.25)*size;
       menuHeight = (confY*1.75+0.75)*size;
-      menu.children.forEach(function(v,i){
+      menu.children.forEach((v,i)=>{
         var ix = i%confX, iy = Math.floor(i/confX);
         var px = (ix*1.75+0.5)*size, py = (iy*1.75+0.5)*size;
         v.place(px,py,1.5*size,1.5*size);
@@ -226,7 +227,7 @@ Base.write("Tile",()=>{
     };
   };
   t.registerTile("DupTile",dupView,()=>{
-    Render.shadowed(4,Color(0.6,0.3,0),function(){
+    Render.shadowed(4,Color(0.6,0.3,0),()=>{
       Render.circle(0.5,0.5,0.3).stroke(0.1)(1,0.5,0);
     });
   });
