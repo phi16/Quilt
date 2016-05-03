@@ -37,5 +37,6 @@ var Base = (()=>{
   };
   b.clone = (a)=>a.concat([]);
   b.with = (v,f)=>f(v);
+  Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;
 })();

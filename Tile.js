@@ -7,7 +7,6 @@ Base.write("Tile",()=>{
   // - Horizontal{1,children::[Tree]}[view, view.index]
   // - Vertical{2,children::[Tree]}[view, view.index]
   var view = UI.create(UI.fullView(tileSpace));
-  Math.PHI = (1 + Math.sqrt(5)) / 2;
   var confTiles = [];
   var confX = 0, confY = 0;
 
@@ -30,7 +29,7 @@ Base.write("Tile",()=>{
     }));
     fr.addChild(UI.create((v)=>{
       v.name = "container";
-      f(v,fr);
+      f(v);
     }));
     var menuDisplay = false;
     var menuWidth = 0, menuHeight = 0;
@@ -77,7 +76,7 @@ Base.write("Tile",()=>{
     for(var i=0;i<confTiles.length;i++){
       Base.with(confTiles[i],(conf)=>{
         var btn = UI.create(UI.button(()=>{
-          //fr.rewriteAt(0,t.makeTile(conf.tile).children[0]);
+          fr.rewriteAt(0,t.makeTile(conf.tile).children[0]);
           // fails handling onPress
 
           /*var ti = t.makeTile(conf.tile);
@@ -125,6 +124,29 @@ Base.write("Tile",()=>{
     fr.addChild(menuButton);
     return fr;
   };
+  function vanishTile(v,ix){
+    v.removeAt(ix); // TODO : true
+    var vx = Base.clone(v.index);
+    function traverse(t,i){
+      if(i == vx.length){
+        t.children.splice(ix,1);
+      }else{
+        traverse(t.children[vx[i]],i+1);
+      }
+    }
+    traverse(tileTree,0);
+    function f(e){
+      e.index[vx.length]--;
+      if(e.name!="frame"){
+        e.children.forEach((c)=>{
+          f(c);
+        });
+      }
+    }
+    v.children.forEach((e,i)=>{
+      if(i>=ix)f(e);
+    });
+  }
   t.putTile = (obj,path)=>{
     function traverse(tTree,path,idx){
       if(!tTree)return;
@@ -133,10 +155,10 @@ Base.write("Tile",()=>{
           var tile = tTree.tile;
           if(tile.rect.w < tile.rect.h){
             tTree.type = 2;
-            tTree.view = UI.vertical(tileSpace,true);
+            tTree.view = UI.vertical(tileSpace,true,vanishTile);
           }else{
             tTree.type = 1;
-            tTree.view = UI.horizontal(tileSpace,true);
+            tTree.view = UI.horizontal(tileSpace,true,vanishTile);
           }
           
           if(tTree.parent==null || tTree.parent.type!=tTree.type){
@@ -215,9 +237,9 @@ Base.write("Tile",()=>{
   }
 
   var dupView = null;
-  dupView = (v,w)=>{
+  dupView = (v)=>{
     v.onPress = (x,y)=>{
-      t.putTile(t.makeTile(dupView),w.index);
+      t.putTile(t.makeTile(dupView),v.parent.index);
     };
     v.render = ()=>{
       var r = Math.min(v.rect.w/2,v.rect.h/2);
@@ -243,8 +265,8 @@ Base.write("Tile",()=>{
       t.parent = p;
     }else{
       var s;
-      if(t.type==1)s = UI.horizontal(tileSpace,true);
-      else s = UI.vertical(tileSpace,true);
+      if(t.type==1)s = UI.horizontal(tileSpace,true,vanishTile);
+      else s = UI.vertical(tileSpace,true,vanishTile);
       t.children.forEach((c,i)=>{
         a.push(i);
         makeTree(c,t,s,a);

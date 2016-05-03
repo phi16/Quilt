@@ -75,6 +75,10 @@ Base.write("UI",()=>{
       w.parent = v;
       v.children[idx] = w;
     } : v.rewriteAt;
+    v.removeAt = v.removeAt==null ? (idx)=>{
+      v.children.splice(idx);
+      return false;
+    } : v.removeAt;
     v.place = (x,y,w,h)=>{
       v.rect = {x:x,y:y,w:w,h:h};
       return v;
@@ -176,7 +180,7 @@ Base.write("UI",()=>{
       }
     };
   };
-  var sequencialLayout = (dir)=>(sp_,draggable_)=>{
+  var sequencialLayout = (dir)=>(sp_,draggable_,vanish)=>{
     var sp = typeof sp_ === "undefined" ? 0 : sp_;
     var draggable = typeof draggable_ === "undefined" ? 0 : draggable_;
     // dir?Horizontal:Vertical
@@ -234,6 +238,20 @@ Base.write("UI",()=>{
         var mx = idx==ratio.length?1:motRatio[idx];
         ratio.splice(idx,0,(ri+rx)/2);
         motRatio.splice(idx,0,mx);
+      };
+      v.removeAt = (idx)=>{
+        v.children.splice(idx,1);
+        if(idx==0){
+          ratio.shift();
+          motRatio.shift();
+        }else if(idx==ratio.length){
+          ratio.pop();
+          motRatio.pop();
+        }else{
+          ratio.splice(idx,1);
+          motRatio.splice(idx,1);
+        }
+        return v.children.length == 1;
       };
       if(draggable){
         var drag = false;
@@ -299,6 +317,15 @@ Base.write("UI",()=>{
         };
         v.onRelease = (x,y)=>{
           if(drag){
+            if(ratio[idx]==0){
+              vanish(v,0);
+            }else if(idx-1>=0 && ratio[idx-1]==ratio[idx]){
+              vanish(v,idx);
+            }else if(idx+1<ratio.length && ratio[idx]==ratio[idx+1]){
+              vanish(v,idx+1);
+            }else if(ratio[idx]==1){
+              vanish(v,ratio.length);
+            }
             drag = false;
             return true;
           }
@@ -414,11 +441,19 @@ Base.write("UI",()=>{
       }
       if(ids[v.name]==null)ids[v.name] = 0;
       v.checked = ids[v.name]++;
-      var par = v.parent ? v.parent.name + "[" + v.parent.checked + "]" : "none";
-      append(u + v.name + "[" + v.checked + "] / parent : " + par);
-      v.children.forEach((c)=>{
-        f(c,u+"| ");
-      });
+      if(v.index){
+        append(u + v.name+ " / " + JSON.stringify(v.index));
+      }else{
+        append(u + v.name);
+      }
+      if(v.parent && v.parent.index){
+        append(u + JSON.stringify(v.parent.index));
+      }
+      if(v.name != "menu"){
+        v.children.forEach((c)=>{
+          f(c,u+"| ");
+        });
+      }
       delete v.checked;
     }
     f(u.root,"");
