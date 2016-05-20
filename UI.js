@@ -1,10 +1,10 @@
 Base.write("UI",()=>{
   var u = {};
   u.theme = {
-    bg : Color(1,1,0.9),
+    bg : Color(1,0.95,0.8),
     frame : Color(0.6,0.3,0),
-    base : Color(1,0.97,0.8),
-    front : Color(1,0.93,0.73),
+    base : Color(1,0.98,0.95),
+    front : Color(1,0.93,0.83),
     button : Color(1,0.9,0.7),
     shadow : Color(0.5,0.25,0),
     notify : Color(1,0.85,0.7),
