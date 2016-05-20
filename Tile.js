@@ -77,16 +77,6 @@ Base.write("Tile",()=>{
       Base.with(confTiles[i],(conf)=>{
         var btn = UI.create(UI.button(()=>{
           fr.rewriteAt(0,t.makeTile(conf.tile).children[0]);
-          // fails handling onPress
-
-          /*var ti = t.makeTile(conf.tile);
-          ti.index = Base.clone(fr.index);
-          var j = 0;
-          if(fr.index.length != 0)j = fr.index[fr.index.length-1];
-          fr.parent.rewriteAt(j,ti);
-          
-          This cause crashing too*/
-
           console.log("nya!");
         }));
         btn.addChild(UI.create(UI.image(()=>{
@@ -125,27 +115,53 @@ Base.write("Tile",()=>{
     return fr;
   };
   function vanishTile(v,ix){
-    v.removeAt(ix); // TODO : true
+    var b = v.removeAt(ix);
     var vx = Base.clone(v.index);
-    function traverse(t,i){
+    function obtain(t,i,f){
       if(i == vx.length){
-        t.children.splice(ix,1);
+        f(t);
       }else{
-        traverse(t.children[vx[i]],i+1);
+        obtain(t.children[vx[i]],i+1,f);
       }
     }
-    traverse(tileTree,0);
-    function f(e){
-      e.index[vx.length]--;
+    obtain(tileTree,0,(t)=>{
+      t.children.splice(ix,1);
+    });
+    function traverse(e,f){
+      f(e);
       if(e.name!="frame"){
         e.children.forEach((c)=>{
-          f(c);
+          traverse(c,f);
         });
       }
     }
     v.children.forEach((e,i)=>{
-      if(i>=ix)f(e);
+      if(i>=ix){
+        traverse(e,(u)=>{
+          u.index[vx.length]--;
+        });
+      }
     });
+    if(b){ // v.children.length == 1
+      var a = Base.clone(vx);
+      var i = vx.length==0 ? 0 : a.pop();
+      v.parent.rewriteAt(i,v.children[0]);
+      traverse(v.children[0],(u)=>{
+        u.index.splice(vx.length,1);
+      });
+      if(vx.length==0){
+        var t = tileTree.children[0];
+        t.parent = null;
+        tileTree = t;
+      }else{
+        function getTile(t,i){
+          if(i==a.length)return t;
+          else return getTile(t.children[a[i]],i+1);
+        }
+        var tu = getTile(tileTree,0);
+        tu.children[i] = tu.children[i].children[0];
+      }
+    }
   }
   t.putTile = (obj,path)=>{
     function traverse(tTree,path,idx){
@@ -281,7 +297,7 @@ Base.write("Tile",()=>{
   UI.root.addChild(view);
   makeTree(tileTree,null,view,[]);
 
-  t.tt = tileTree;
+  t.tt = ()=>tileTree;
 
   return t;
 });
