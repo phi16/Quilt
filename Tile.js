@@ -265,8 +265,24 @@ Base.write("Tile",()=>{
     };
   };
   t.registerTile("DupTile",dupView,()=>{
-    Render.shadowed(4,Color(0.6,0.3,0),()=>{
-      Render.circle(0.5,0.5,0.3).stroke(0.1)(1,0.5,0);
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.circle(0.5,0.5,0.3).stroke(0.1)(UI.theme.def);
+    });
+  });
+  t.registerTile("ScrollTile",(v)=>{
+    v.addChild(UI.create(UI.field((dx,dy,dz)=>{
+      var size = 80;
+      for(var i=-1;i<v.rect.h/size/dz;i++){
+        Render.line(-dx/dz,(i-Math.floor(dy/size/dz))*size,(v.rect.w-dx)/dz,(i-Math.floor(dy/size/dz))*size).stroke(1/dz)(UI.theme.shadow);
+      }
+      for(var i=-1;i<v.rect.w/size/dz;i++){
+        Render.line((i-Math.floor(dx/size/dz))*size,-dy/dz,(i-Math.floor(dx/size/dz))*size,(v.rect.h-dy)/dz).stroke(1/dz)(UI.theme.shadow);
+      }
+      Render.circle(0,0,10).fill(UI.theme.def);
+    })));
+  },()=>{
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
     });
   });
   t.registerTile("NoneTile",Base.void,Base.void);

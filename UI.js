@@ -1,6 +1,6 @@
 Base.write("UI",()=>{
   var u = {};
-  u.theme = {
+  /*u.theme = {
     bg : Color(1,0.95,0.8),
     frame : Color(0.6,0.3,0),
     base : Color(1,0.98,0.95),
@@ -10,8 +10,8 @@ Base.write("UI",()=>{
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
     def : Color(1,0.5,0)
-  };
-  /*u.theme = {
+  };*/
+  u.theme = {
     bg : Color(0,0.1,0.1),
     frame : Color(0,1,1),
     base : Color(0,0.2,0.2),
@@ -20,7 +20,7 @@ Base.write("UI",()=>{
     notify : Color(0.1,0.35,0.35),
     impact : Color(0.2,0.4,0.4),
     def : Color(0,1,0.8)
-  };*/
+  };
   var shadowDepth = 5;
   /**** View
   - full :: Bool
@@ -50,39 +50,41 @@ Base.write("UI",()=>{
   };
   u.create = (f)=>{
     var v = {};
-    f(v);
-    v.name = v.name==null ? "unnamed" : v.name;
-    v.full = v.full==null ? true : v.full;
-    v.clipped = v.clipped==null ? false : v.clipped;
-    v.shadow = v.shadow==null ? false : v.shadow;
-    v.shadowDepth = v.shadowDepth==null ? ()=>shadowDepth : v.shadowDepth;
+    v.name = "unnamed";
+    v.full = true;
+    v.clipped = false;
+    v.shadow = false;
+    v.shadowDepth = ()=>shadowDepth;
     v.hovering = false;
-    v.onHover = v.onHover==null ? Base.const(false) : v.onHover;
-    v.onLeave = v.onLeave==null ? Base.void : v.onLeave;
-    v.onPress = v.onPress==null ? Base.const(false) : v.onPress;
-    v.onRelease = v.onRelease==null ? Base.const(false) : v.onRelease;
-    v.render = v.render==null ? Base.void : v.render;
-    v.layout = v.layout==null ? u.defaultLayout(v) : v.layout;
-    v.rect = v.rect==null ? {x:0,y:0,w:0,h:0} : v.rect;
+    v.checkRightButton = false;
+    v.onHover = Base.const(false);
+    v.onLeave = Base.void;
+    v.onPress = Base.const(false);
+    v.onRelease = Base.const(false);
+    v.onWheel = Base.const(false);
+    v.render = Base.void;
+    v.layout = u.defaultLayout(v);
+    v.rect = {x:0,y:0,w:0,h:0};
     v.shape = Render.rect(0,0,0,0);
     v.parent = null;
-    v.children = v.children==null ? [] : v.children;
-    v.addChild = v.addChild==null ? (w)=>{
+    v.children = [];
+    v.addChild = (w)=>{
       w.parent = v;
       v.children.push(w);
-    } : v.addChild;
-    v.rewriteAt = v.rewriteAt==null ? (idx,w)=>{
+    };
+    v.rewriteAt = (idx,w)=>{
       w.parent = v;
       v.children[idx] = w;
-    } : v.rewriteAt;
-    v.removeAt = v.removeAt==null ? (idx)=>{
+    };
+    v.removeAt = (idx)=>{
       v.children.splice(idx);
       return false;
-    } : v.removeAt;
+    };
     v.place = (x,y,w,h)=>{
       v.rect = {x:x,y:y,w:w,h:h};
       return v;
     };
+    f(v);
     return v;
   };
   u.button = (run)=>{
@@ -254,7 +256,6 @@ Base.write("UI",()=>{
         return v.children.length == 1;
       };
       if(draggable){
-        var drag = false;
         var idx = 0;
         function idxRect(i){
           var bi = motRatio[i];
@@ -290,7 +291,7 @@ Base.write("UI",()=>{
               else Mouse.cursor(Mouse.Cur.vResize);
             }
           }
-          if(drag){
+          if(Mouse.drag == v){
             adjust(x,y);
             return true;
           }
@@ -298,7 +299,7 @@ Base.write("UI",()=>{
         };
         v.onLeave = (x,y)=>{
           Mouse.cursor(Mouse.Cur.auto);
-          if(drag){
+          if(Mouse.drag == v){
             adjust(x,y);
             v.hovering = true;
             return true;
@@ -308,7 +309,7 @@ Base.write("UI",()=>{
         v.onPress = (x,y)=>{
           for(var i=0;i<ratio.length;i++){
             if(Base.in(idxRect(i))(x,y)){
-              drag = true;
+              Mouse.drag = v;
               idx = i;
               return true;
             }
@@ -316,7 +317,7 @@ Base.write("UI",()=>{
           return false;
         };
         v.onRelease = (x,y)=>{
-          if(drag){
+          if(Mouse.drag == v){
             if(ratio[idx]==0){
               vanish(v,0);
             }else if(idx-1>=0 && ratio[idx-1]==ratio[idx]){
@@ -326,7 +327,7 @@ Base.write("UI",()=>{
             }else if(ratio[idx]==1){
               vanish(v,ratio.length);
             }
-            drag = false;
+            Mouse.drag = null;
             return true;
           }
           return false;
@@ -336,6 +337,59 @@ Base.write("UI",()=>{
   };
   u.horizontal = sequencialLayout(true);
   u.vertical = sequencialLayout(false);
+  u.field = (g)=>{
+    return (v)=>{
+      var cx,cy;
+      var dx=0,dy=0,dz=1;
+      v.name = "field";
+      v.full = true;
+      v.clipped = true;
+      v.checkRightButton = true;
+      v.onPress = (x,y)=>{
+        if(Mouse.right && !Mouse.drag){
+          cx = x,cy = y;
+          Mouse.drag = v;
+          return true;
+        }else return false;
+      };
+      v.onHover = (x,y)=>{
+        if(Mouse.drag == v){
+          dx += x-cx;
+          dy += y-cy;
+          cx = x;
+          cy = y;
+          return true;
+        }else return false;
+      };
+      v.onRelease = (x,y)=>{
+        if(Mouse.drag == v && Mouse.right){
+          Mouse.drag = null;
+          return true;
+        }else return false;
+      };
+      v.onWheel = (x,y)=>{
+        if(Mouse.wheel < 0)dz *= 1.1;
+        else if(Mouse.wheel > 0)dz /= 1.1;
+        if(dz < 0.25)dz = 0.25;
+        if(dz > 1)dz = 1;
+      };
+      v.render = ()=>{
+        Render.translate(dx,dy,()=>{
+          Render.scale(dz,dz,()=>{
+            g(dx,dy,dz);
+          });
+        });
+      };
+      v.layout = (w,h)=>{
+        v.rect.w = w;
+        v.rect.h = h;
+        v.children.forEach((c)=>{
+          c.layout(100,100);
+        });
+        v.shape = Render.rect(0,0,w,h);
+      };
+    };
+  };
   u.inherit = (b,f)=>{
     return (v)=>{
       b(v);
@@ -400,7 +454,10 @@ Base.write("UI",()=>{
         }
         return pChilds;
       };
-      var vRes = v[ins](p,q,procChilds);
+      var vRes = false;
+      if(Mouse.left || ins == "onHover" || ins == "onLeave" || ins == "onWheel" || v.checkRightButton){
+        vRes = v[ins](p,q,procChilds);
+      }
       v.hovering = true;
       if(!vRes && !once)procChilds();
       return vRes || pChilds;
@@ -427,6 +484,10 @@ Base.write("UI",()=>{
   });
   Event.onRelease(()=>{
     processMouse("onRelease",Mouse.x,Mouse.y,u.root);
+    Mouse.drag = null;
+  });
+  Event.onWheel(()=>{
+    processMouse("onWheel",Mouse.x,Mouse.y,u.root);
   });
   u.showTree = ()=>{
     var ids = {};

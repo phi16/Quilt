@@ -40,6 +40,14 @@ Base.write("Render",()=>{
     };
     return c;
   };
+  r.line = (x1,y1,x2,y2)=>{
+    return component(()=>{
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
+    },(p,q)=>{
+      return false; 
+    });
+  };
   r.rect = (x,y,w,h)=>{
     var f = ()=>{};
     if(y==null)f = ()=>{
