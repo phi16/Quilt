@@ -273,10 +273,10 @@ Base.write("Tile",()=>{
     v.addChild(UI.create(UI.field((dx,dy,dz)=>{
       var size = 80;
       for(var i=-1;i<v.rect.h/size/dz;i++){
-        Render.line(-dx/dz,(i-Math.floor(dy/size/dz))*size,(v.rect.w-dx)/dz,(i-Math.floor(dy/size/dz))*size).stroke(1/dz)(UI.theme.shadow);
+        Render.line(-dx/dz,(i-Math.floor(dy/size/dz))*size,(v.rect.w-dx)/dz,(i-Math.floor(dy/size/dz))*size).stroke(1/dz)(UI.theme.impact);
       }
       for(var i=-1;i<v.rect.w/size/dz;i++){
-        Render.line((i-Math.floor(dx/size/dz))*size,-dy/dz,(i-Math.floor(dx/size/dz))*size,(v.rect.h-dy)/dz).stroke(1/dz)(UI.theme.shadow);
+        Render.line((i-Math.floor(dx/size/dz))*size,-dy/dz,(i-Math.floor(dx/size/dz))*size,(v.rect.h-dy)/dz).stroke(1/dz)(UI.theme.impact);
       }
       Render.circle(0,0,10).fill(UI.theme.def);
     })));

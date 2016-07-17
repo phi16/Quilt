@@ -15,6 +15,7 @@ Base.write("UI",()=>{
     bg : Color(0,0.1,0.1),
     frame : Color(0,1,1),
     base : Color(0,0.2,0.2),
+    front : Color(0,0.23,0.23),
     button : Color(0,0.3,0.3),
     shadow : Color(0,0.5,0.5),
     notify : Color(0.1,0.35,0.35),
@@ -368,10 +369,12 @@ Base.write("UI",()=>{
         }else return false;
       };
       v.onWheel = (x,y)=>{
-        if(Mouse.wheel < 0)dz *= 1.1;
-        else if(Mouse.wheel > 0)dz /= 1.1;
+        var p=(x-dx)/dz, q=(y-dy)/dz;
+        if(Mouse.wheel > 0)dz *= 1.1;
+        else if(Mouse.wheel < 0)dz /= 1.1;
         if(dz < 0.25)dz = 0.25;
         if(dz > 1)dz = 1;
+        dx = x-dz*p, dy = y-dz*q;
       };
       v.render = ()=>{
         Render.translate(dx,dy,()=>{
