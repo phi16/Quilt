@@ -111,7 +111,7 @@ Base.write("UI",()=>{
         return true;
       };
       v.onRelease = (x,y)=>{
-        if(state == 2)run(v);
+        if(state == 2 && run)run(v);
         state = 0;
         return true;
       };
@@ -236,11 +236,15 @@ Base.write("UI",()=>{
       v.insertAt = (idx,w)=>{
         w.parent = v;
         v.children.splice(idx+1,0,w);
-        var ri = idx==0?0:ratio[idx-1];
-        var rx = idx==ratio.length?1:ratio[idx];
-        var mx = idx==ratio.length?1:motRatio[idx];
+        var ri = idx<=0?0:ratio[idx-1];
+        var rx = idx==ratio.length?1:idx==-1?ratio.length==0?1:ratio[0]:ratio[idx];
+        var mx = idx==ratio.length?1:idx==-1?0:motRatio[idx];
+        if(idx<0)idx=0;
         ratio.splice(idx,0,(ri+rx)/2);
         motRatio.splice(idx,0,mx);
+        return {noMotion : ()=>{
+          ratio[idx] = motRatio[idx];
+        }};
       };
       v.removeAt = (idx)=>{
         v.children.splice(idx,1);
@@ -258,6 +262,10 @@ Base.write("UI",()=>{
       };
       if(draggable){
         var idx = 0;
+        v.grab = (i)=>{
+          Mouse.drag = v;
+          idx = i;
+        };
         function idxRect(i){
           var bi = motRatio[i];
           if(dir){
@@ -310,8 +318,7 @@ Base.write("UI",()=>{
         v.onPress = (x,y)=>{
           for(var i=0;i<ratio.length;i++){
             if(Base.in(idxRect(i))(x,y)){
-              Mouse.drag = v;
-              idx = i;
+              v.grab(i);
               return true;
             }
           }
@@ -329,6 +336,7 @@ Base.write("UI",()=>{
               vanish(v,ratio.length);
             }
             Mouse.drag = null;
+            Mouse.cursor(Mouse.Cur.auto);
             return true;
           }
           return false;
@@ -338,19 +346,21 @@ Base.write("UI",()=>{
   };
   u.horizontal = sequencialLayout(true);
   u.vertical = sequencialLayout(false);
-  u.field = (g)=>{
+  u.field = (g,handler)=>{
     return (v)=>{
       var cx,cy;
       var dx=0,dy=0,dz=1;
       v.name = "field";
       v.full = true;
-      v.clipped = true;
+      v.clipped = false;
       v.checkRightButton = true;
       v.onPress = (x,y)=>{
         if(Mouse.right && !Mouse.drag){
           cx = x,cy = y;
           Mouse.drag = v;
           return true;
+        }else if(Mouse.left && handler.onPress){
+          handler.onPress((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
       v.onHover = (x,y)=>{
@@ -360,12 +370,16 @@ Base.write("UI",()=>{
           cx = x;
           cy = y;
           return true;
+        }else if(Mouse.left && handler.onHover){
+          handler.onHover((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
       v.onRelease = (x,y)=>{
         if(Mouse.drag == v && Mouse.right){
           Mouse.drag = null;
           return true;
+        }else if(Mouse.left && handler.onRelease){
+          handler.onRelease((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
       v.onWheel = (x,y)=>{
@@ -373,13 +387,16 @@ Base.write("UI",()=>{
         if(Mouse.wheel > 0)dz *= 1.1;
         else if(Mouse.wheel < 0)dz /= 1.1;
         if(dz < 0.25)dz = 0.25;
-        if(dz > 1)dz = 1;
+        if(dz > 2)dz = 2;
         dx = x-dz*p, dy = y-dz*q;
       };
-      v.render = ()=>{
-        Render.translate(dx,dy,()=>{
-          Render.scale(dz,dz,()=>{
-            g(dx,dy,dz);
+      v.render = (c)=>{
+        v.shape.clip(()=>{
+          Render.translate(dx,dy,()=>{
+            Render.scale(dz,dz,()=>{
+              g(dx,dy,dz);
+              c();
+            });
           });
         });
       };

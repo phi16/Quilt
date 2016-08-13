@@ -37,6 +37,9 @@ var Base = (()=>{
   };
   b.clone = (a)=>a.concat([]);
   b.with = (v,f)=>f(v);
+  b.distance = (x1,y1,x2,y2)=>{
+    return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+  };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;
 })();

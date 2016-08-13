@@ -9,19 +9,20 @@ import Control.Monad.Trans.State
 newtype Name = Name String
 
 data Kind = KStar | KArr Kind Kind
-data Data = Inductive [Name] [(Scheme,[Type])] | Coinductive [Name] [(Scheme,[Type])]
+data Data = Inductive Param [(Scheme,[Type])] | Coinductive Param [(Scheme,[Type])]
 data Type = Primitive Name | Variable Name | App Type Type -- Contains Any Kinds
 newtype Star = Star Type -- forces *
 newtype Arr = Arr Type   -- forces * -> *
 data Constraint = Constraint Name [Type]
 data Instacnce = Instance [Constraint] Constraint
-data Scheme = Scheme [Name] [Constraint]
+type Param = [Type]
+data Scheme = Scheme Param [Constraint]
 data Func = Func Scheme [(String,Star)] [(String,Star)]
 -- Name -> Data, Primitive, Constraint, Func
-data Environment = Env (Map String Data) (Map String Constraint) (Map String Func)
+data Environment = Env (Map String Func)
 
 data Dir = DirLU | DirU | DirRU | DirR | DirRD | DirD | DirLD | DirL deriving (Eq,Ord)
-data Wire = FlowIn (String,Star) | FlowOut (String,Star) | SheathIn Arr | SheathOut Arr | None
+data Wire = FlowIn (String,Star) | FlowOut (String,Star)
 data Button = Button Name (Map Dir Wire) | Empty
 type Point = (Int,Int)
 type Field = Array Point Button

@@ -110,6 +110,12 @@ Base.write("Render",()=>{
     f();
     ctx.restore();
   }
+  r.rotate = (a,f)=>{
+    ctx.save();
+    ctx.rotate(a);
+    f();
+    ctx.restore();
+  };
   r.scale = (x,y,f)=>{
     ctx.save();
     ctx.scale(x,y);

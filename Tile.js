@@ -100,7 +100,9 @@ Base.write("Tile",()=>{
       });
     }),(v)=>{
       v.layout = UI.defaultLayout(v,(w,h)=>{
-        var size = Math.min(40,Math.min(w,h)/3);
+        var wSz = w / (confX*1.75+1.25);
+        var hSz = h / (confY*1.75+0.75);
+        var size = Math.min(40,Math.min(wSz,hSz));
         v.rect.w = v.rect.h = size;
         v.rect.x = w-v.rect.w;
         v.rect.y = 0;
@@ -163,70 +165,135 @@ Base.write("Tile",()=>{
       }
     }
   }
-  t.putTile = (obj,path)=>{
-    function traverse(tTree,path,idx){
-      if(!tTree)return;
-      if(tTree.type==0 || idx >= path.length){
-        if(tTree.type==0){
-          var tile = tTree.tile;
-          if(tile.rect.w < tile.rect.h){
-            tTree.type = 2;
-            tTree.view = UI.vertical(tileSpace,true,vanishTile);
-          }else{
-            tTree.type = 1;
-            tTree.view = UI.horizontal(tileSpace,true,vanishTile);
-          }
-          
-          if(tTree.parent==null || tTree.parent.type!=tTree.type){
+  t.putTile = (obj,path,option)=>{
+    function indexing(tr,ix){
+      if(tr.type==0)return;
+      tr.children.forEach((v,i)=>{
+        var a = Base.clone(ix);
+        a.push(i);
+        if(v.type==0)v.tile.index = a;
+        else v.view.index = a;
+        indexing(v,a);
+      });
+    }
+    function insertTo(tTree,path,idx){
+      if(tTree.type==0 || option && (option.vertical && tTree.type!=2 || option.horizontal && tTree.type!=1)){
+        var type = tTree.type;
+        var old = {type : type, parent : tTree};
+        if(type==0)old.tile = tTree.tile;
+        else{
+          old.children = tTree.children;
+          old.children.forEach((c)=>{
+            c.parent = old;
+          });
+          old.view = tTree.view;
+        }
+
+        if(option && option.vertical){
+          tTree.type = 2;
+        }else if(option && option.horizontal){
+          tTree.type = 1;
+        }else if(old.tile && old.tile.rect.w < old.tile.rect.h){
+          tTree.type = 2;
+        }else if(old.tile && old.tile.rect.w > old.tile.rect.h){
+          tTree.type = 1;
+        }
+        if(tTree.type==1){
+          tTree.view = UI.horizontal(tileSpace,true,vanishTile);
+        }else{
+          tTree.view = UI.vertical(tileSpace,true,vanishTile);
+        }
+        if(tTree.parent==null || tTree.parent.type!=tTree.type){
+          if(type==0){
             delete tTree.tile;
-            var a0 = Base.clone(tile.index);
-            var a1 = Base.clone(tile.index);
-            var a2 = Base.clone(tile.index);
-            a1.push(0),a2.push(1);
-            tile.index = a1;
-            obj.index = a2;
+          }
+          var a0 = Base.clone(path);
+          var a1 = Base.clone(path);
+          var a2 = Base.clone(path);
+          a1.push(0),a2.push(1);
+          if(option && option.head){
+            if(type==0)old.tile.index = a2;
+            else old.view.index = a2;
+            obj.index = a1;
             tTree.children = [{
               type : 0,
               parent : tTree,
-              tile : tile
-            },{
+              tile : obj
+            },old];
+            tTree.view.addChild(type==0?old.tile:old.view);
+            tTree.view.insertAt(-1,obj).noMotion();
+          }else if(option && option.tail){
+            if(type==0)old.tile.index = a1;
+            else old.view.index = a1;
+            obj.index = a2;
+            tTree.children = [old,{
               type : 0,
               parent : tTree,
               tile : obj
             }];
-            tTree.view.addChild(tile);
-            tTree.view.addChild(obj);
-            tTree.view.index = a0;
-            if(tTree.parent){
-              var par = tTree.parent.view;
-              par.rewriteAt(path[idx-1],tTree.view);
-            }else{
-              view.rewriteAt(0,tTree.view);
-            }
+            tTree.view.addChild(type==0?old.tile:old.view);
+            tTree.view.insertAt(tTree.view.children.length-1,obj).noMotion();
           }else{
-            delete tTree.view;
-            tTree.type = 0;
+            if(type==0)old.tile.index = a1;
+            else old.view.index = a1;
+            obj.index = a2;
+            tTree.children = [old,{
+              type : 0,
+              parent : tTree,
+              tile : obj
+            }];
+            tTree.view.addChild(type==0?old.tile:old.view);
+            tTree.view.addChild(obj);
+          }
+          tTree.view.index = a0;
+          if(tTree.parent){
+            var par = tTree.parent.view;
+            par.rewriteAt(path[idx-1],tTree.view);
+          }else{
+            view.rewriteAt(0,tTree.view);
+          }
+        }else{
+          delete tTree.view;
+          tTree.type = 0;
+          if(option && option.head){
+            tTree.parent.children.splice(0,0,{
+              type : 0,
+              parent : tTree.parent,
+              tile : obj
+            });
+            var par = tTree.parent.view;
+            par.insertAt(-1,obj)();
+          }else{
             tTree.parent.children.splice(path[idx-1]+1,0,{
               type : 0,
               parent : tTree.parent,
               tile : obj
             });
             var par = tTree.parent.view;
-            par.insertAt(path[idx-1],obj);
-            function indexing(tr,ix){
-              if(tr.type==0)return;
-              tr.children.forEach((v,i)=>{
-                var a = Base.clone(ix);
-                a.push(i);
-                if(v.type==0)v.tile.index = a;
-                else v.view.index = a;
-                indexing(v,a);
-              });
-            }
-            indexing(tTree.parent,tTree.parent.view.index);
+            par.insertAt(path[idx-1],obj).noMotion();
           }
+        }
+      }else{
+        var a = Base.clone(tTree.view.index);
+        if(option && option.head){
+          a.push(0);
+          tTree.children.unshift({
+            type : 0,
+            parent : tTree,
+            index : a,
+            tile : obj
+          });
+          tTree.view.insertAt(-1,obj).noMotion();
+        }else if(option && option.tail){
+          a.push(0);
+          tTree.children.push({
+            type : 0,
+            parent : tTree,
+            index : a,
+            tile : obj
+          });
+          tTree.view.insertAt(tTree.view.children.length-1,obj).noMotion();
         }else{
-          var a = Base.clone(tTree.view.index);
           a.push(tTree.children.length);
           tTree.children.push({
             type : 0,
@@ -236,6 +303,14 @@ Base.write("Tile",()=>{
           });
           tTree.view.addChild(obj);
         }
+      }
+      if(tTree.parent)indexing(tTree.parent,tTree.parent.view.index);
+      else indexing(tileTree,[]);
+    }
+    function traverse(tTree,path,idx){
+      if(!tTree)return;
+      if(tTree.type==0 || idx >= path.length){
+        insertTo(tTree,path,idx);
       }else{
         traverse(tTree.children[path[idx]],path,idx+1);
       }
@@ -269,8 +344,8 @@ Base.write("Tile",()=>{
       Render.circle(0.5,0.5,0.3).stroke(0.1)(UI.theme.def);
     });
   });
-  t.registerTile("ScrollTile",(v)=>{
-    v.addChild(UI.create(UI.field((dx,dy,dz)=>{
+  t.registerTile("Field",(v)=>{
+    var c = UI.create(UI.field((dx,dy,dz)=>{
       var size = 80;
       for(var i=-1;i<v.rect.h/size/dz;i++){
         Render.line(-dx/dz,(i-Math.floor(dy/size/dz))*size,(v.rect.w-dx)/dz,(i-Math.floor(dy/size/dz))*size).stroke(1/dz)(UI.theme.impact);
@@ -278,17 +353,48 @@ Base.write("Tile",()=>{
       for(var i=-1;i<v.rect.w/size/dz;i++){
         Render.line((i-Math.floor(dx/size/dz))*size,-dy/dz,(i-Math.floor(dx/size/dz))*size,(v.rect.h-dy)/dz).stroke(1/dz)(UI.theme.impact);
       }
-      Render.circle(0,0,10).fill(UI.theme.def);
-    })));
+    },{
+      onPress : (x,y)=>{
+        var i = Math.floor(x/80+0.5), j = Math.floor(y/80+0.5);
+        if(Base.distance(x,y,i*80,j*80) < 15){
+          c.addChild(UI.create(UI.image(()=>{
+            Render.shadowed(4,UI.theme.frame,()=>{
+              Render.circle(0,0,0.1).fill(UI.theme.base);
+            });
+            Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
+          })).place(i*80,j*80,1,1));
+        }
+      }
+    }));
+    v.addChild(c);
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
     });
   });
+  t.registerTile("Control",(v)=>{
+    for(var i=0;i<3;i++){
+      var btn = UI.create(UI.button(()=>{
+        console.log("nya~");
+      })).place(i*70+10,10,60,60);
+      btn.addChild(UI.create(UI.image(()=>{
+        Render.circle(0,0,10).fill(UI.theme.def);
+      })));
+      v.addChild(btn);
+    }
+  },()=>{
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.translate(0.5,0.5,()=>{
+        Render.rotate(Math.PI/4,()=>{
+          Render.rect(-0.25,-0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
+        });
+      });
+    });
+  });
   t.registerTile("NoneTile",Base.void,Base.void);
   var tileTree = {
     type : 0,
-    tile : t.makeTile(dupView)
+    tile : t.makeTile(Base.void)
   };
   function makeTree(t,p,v,a){
     if(t.type==0){
@@ -310,7 +416,49 @@ Base.write("Tile",()=>{
       t.parent = p;
     }
   }
+  var borderView = UI.create((v)=>{
+    v.onPress = (x,y)=>{
+      var tile;
+      if(x < tileSpace){
+        t.putTile(tile = t.makeTile(Base.void),[],{horizontal:true,head:true});
+        tile.parent.grab(0);
+      }else if(x > v.rect.w - tileSpace){
+        t.putTile(tile = t.makeTile(Base.void),[],{horizontal:true,tail:true});
+        tile.parent.grab(tileTree.children.length-2);
+      }else if(y < tileSpace){
+        t.putTile(tile = t.makeTile(Base.void),[],{vertical:true,head:true});
+        tile.parent.grab(0);
+      }else if(y > v.rect.h - tileSpace){
+        t.putTile(tile = t.makeTile(Base.void),[],{vertical:true,tail:true});
+        tile.parent.grab(tileTree.children.length-2);
+      }
+      if(tile){
+        return true;
+      }else{
+        return false;
+      }
+    };
+    v.onHover = (x,y)=>{
+      if(x < tileSpace){
+        Mouse.cursor(Mouse.Cur.hResize);
+        return true;
+      }else if(x > v.rect.w - tileSpace){
+        Mouse.cursor(Mouse.Cur.hResize);
+        return true;
+      }else if(y < tileSpace){
+        Mouse.cursor(Mouse.Cur.vResize);
+        return true;
+      }else if(y > v.rect.h - tileSpace){
+        Mouse.cursor(Mouse.Cur.vResize);
+        return true;
+      }else{
+        Mouse.cursor(Mouse.Cur.auto);
+        return false;
+      }
+    };
+  });
   UI.root.addChild(view);
+  UI.root.addChild(borderView);
   makeTree(tileTree,null,view,[]);
 
   t.tt = ()=>tileTree;
