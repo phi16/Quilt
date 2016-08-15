@@ -40,6 +40,9 @@ var Base = (()=>{
   b.distance = (x1,y1,x2,y2)=>{
     return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
   };
+  b.equals = (x,y)=>{
+    return Math.abs(x,y) < 0.0001;
+  };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;
 })();

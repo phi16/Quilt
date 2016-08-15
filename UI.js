@@ -265,6 +265,7 @@ Base.write("UI",()=>{
         v.grab = (i)=>{
           Mouse.drag = v;
           idx = i;
+          v.hovering = true;
         };
         function idxRect(i){
           var bi = motRatio[i];

@@ -54,11 +54,11 @@ Base.write("Tile",()=>{
         v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
       v.onPress = (x,y,c)=>{
-        c();
+        if(c)c();
         return true;
       };
       v.onRelease = (x,y,c)=>{
-        c();
+        if(c)c();
         return true;
       };
       v.onLeave = (x,y)=>{
@@ -162,6 +162,7 @@ Base.write("Tile",()=>{
         }
         var tu = getTile(tileTree,0);
         tu.children[i] = tu.children[i].children[0];
+        tu.children[i].parent = tu;
       }
     }
   }
@@ -263,7 +264,7 @@ Base.write("Tile",()=>{
             });
             var par = tTree.parent.view;
             par.insertAt(-1,obj)();
-          }else{
+          }else if(option && option.tail){
             tTree.parent.children.splice(path[idx-1]+1,0,{
               type : 0,
               parent : tTree.parent,
@@ -271,6 +272,14 @@ Base.write("Tile",()=>{
             });
             var par = tTree.parent.view;
             par.insertAt(path[idx-1],obj).noMotion();
+          }else{
+            tTree.parent.children.splice(path[idx-1]+1,0,{
+              type : 0,
+              parent : tTree.parent,
+              tile : obj
+            });
+            var par = tTree.parent.view;
+            par.insertAt(path[idx-1],obj);
           }
         }
       }else{
@@ -417,6 +426,7 @@ Base.write("Tile",()=>{
     }
   }
   var borderView = UI.create((v)=>{
+    v.name = "border";
     v.onPress = (x,y)=>{
       var tile;
       if(x < tileSpace){
