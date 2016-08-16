@@ -187,7 +187,7 @@ Base.write("UI",()=>{
     var sp = typeof sp_ === "undefined" ? 0 : sp_;
     var draggable = typeof draggable_ === "undefined" ? 0 : draggable_;
     // dir?Horizontal:Vertical
-    return u.create((v)=>{
+    return (v)=>{
       // ratio.length == v.children.length - 1
       // motRatio.length == v.children.length - 1
       var ratio = [];
@@ -343,7 +343,7 @@ Base.write("UI",()=>{
           return false;
         };
       }
-    });
+    };
   };
   u.horizontal = sequencialLayout(true);
   u.vertical = sequencialLayout(false);
@@ -360,7 +360,7 @@ Base.write("UI",()=>{
           cx = x,cy = y;
           Mouse.drag = v;
           return true;
-        }else if(Mouse.left && handler.onPress){
+        }else if(Mouse.left && handler && handler.onPress){
           handler.onPress((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
@@ -371,7 +371,7 @@ Base.write("UI",()=>{
           cx = x;
           cy = y;
           return true;
-        }else if(Mouse.left && handler.onHover){
+        }else if(Mouse.left && handler && handler.onHover){
           handler.onHover((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
@@ -379,14 +379,14 @@ Base.write("UI",()=>{
         if(Mouse.drag == v && Mouse.right){
           Mouse.drag = null;
           return true;
-        }else if(Mouse.left && handler.onRelease){
+        }else if(Mouse.left && handler && handler.onRelease){
           handler.onRelease((x-dx)/dz,(y-dy)/dz);
         }else return false;
       };
       v.onWheel = (x,y)=>{
         var p=(x-dx)/dz, q=(y-dy)/dz;
-        if(Mouse.wheel > 0)dz *= 1.1;
-        else if(Mouse.wheel < 0)dz /= 1.1;
+        if(Mouse.wheel > 0)dz *= Math.sqrt(2);
+        else if(Mouse.wheel < 0)dz /= Math.sqrt(2);
         if(dz < 0.25)dz = 0.25;
         if(dz > 2)dz = 2;
         dx = x-dz*p, dy = y-dz*q;
@@ -408,6 +408,47 @@ Base.write("UI",()=>{
           c.layout(100,100);
         });
         v.shape = Render.rect(0,0,w,h);
+      };
+    };
+  };
+  u.scroll = (sh)=>{
+    return (v)=>{
+      var mx=0,my=0;
+      var dx=0,dy=0;
+      v.name = "scroll";
+      v.full = true;
+      v.clipped = true;
+      v.checkRightButton = false;
+      var main = UI.create(UI.frame());
+      var scroll = UI.create(UI.frame());
+      v.addChild(main);
+      v.addChild(scroll);
+      v.onWheel = (x,y)=>{
+        var p=x-dx, q=y-dy;
+        if(Mouse.wheel > 0)dy -= 50;
+        else if(Mouse.wheel < 0)dy += 50;
+        if(dy < 0)dy = 0;
+        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+        return false;
+      };
+      v.render = ()=>{
+        mx += (dx - mx) / 2;
+        my += (dy - my) / 2;
+      };
+      v.layout = (w,h)=>{
+        v.rect.w = w;
+        v.rect.h = h;
+        if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
+        var scrWidth = 20;
+        main.place(-mx,-my,w-scrWidth,sh);
+        scroll.place(w-scrWidth,0,scrWidth,h);
+        main.layout(main.rect.w,main.rect.h);
+        scroll.layout(scroll.rect.w,scroll.rect.h);
+        v.shape = Render.rect(0,0,w,h);
+      };
+      v.addChild = (w)=>{
+        w.parent = main;
+        main.children.push(w);
       };
     };
   };

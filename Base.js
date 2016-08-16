@@ -14,7 +14,8 @@ var Base = (()=>{
       "Mouse",
       "Render",
       "UI",
-      "Tile"
+      "Tile",
+      "System"
     ];
     loadSeq.forEach(function(n){
       window[n] = a[n]();
@@ -42,6 +43,9 @@ var Base = (()=>{
   };
   b.equals = (x,y)=>{
     return Math.abs(x,y) < 0.0001;
+  };
+  b.po = (d)=>{
+    console.log(d);
   };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;

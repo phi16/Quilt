@@ -9,6 +9,7 @@ Base.write("Tile",()=>{
   var view = UI.create(UI.fullView(tileSpace));
   var confTiles = [];
   var confX = 0, confY = 0;
+  var tileTree;
 
   t.makeTile = (f)=>{
     var fr = UI.create(UI.inherit(UI.frame(),(v)=>{
@@ -200,9 +201,9 @@ Base.write("Tile",()=>{
           tTree.type = 1;
         }
         if(tTree.type==1){
-          tTree.view = UI.horizontal(tileSpace,true,vanishTile);
+          tTree.view = UI.create(UI.horizontal(tileSpace,true,vanishTile));
         }else{
-          tTree.view = UI.vertical(tileSpace,true,vanishTile);
+          tTree.view = UI.create(UI.vertical(tileSpace,true,vanishTile));
         }
         if(tTree.parent==null || tTree.parent.type!=tTree.type){
           if(type==0){
@@ -334,77 +335,8 @@ Base.write("Tile",()=>{
     });
     confX = Math.ceil(Math.sqrt(confTiles.length*Math.PHI));
     confY = Math.ceil(confTiles.length / confX);
-  }
+  };
 
-  var dupView = null;
-  dupView = (v)=>{
-    v.onPress = (x,y)=>{
-      t.putTile(t.makeTile(dupView),v.parent.index);
-    };
-    v.render = ()=>{
-      var r = Math.min(v.rect.w/2,v.rect.h/2);
-      Render.shadowed(5,UI.theme.shadow,()=>{
-        Render.circle(v.rect.w/2,v.rect.h/2,r).stroke(4)(UI.theme.def);
-      });
-    };
-  };
-  t.registerTile("DupTile",dupView,()=>{
-    Render.shadowed(4,UI.theme.frame,()=>{
-      Render.circle(0.5,0.5,0.3).stroke(0.1)(UI.theme.def);
-    });
-  });
-  t.registerTile("Field",(v)=>{
-    var c = UI.create(UI.field((dx,dy,dz)=>{
-      var size = 80;
-      for(var i=-1;i<v.rect.h/size/dz;i++){
-        Render.line(-dx/dz,(i-Math.floor(dy/size/dz))*size,(v.rect.w-dx)/dz,(i-Math.floor(dy/size/dz))*size).stroke(1/dz)(UI.theme.impact);
-      }
-      for(var i=-1;i<v.rect.w/size/dz;i++){
-        Render.line((i-Math.floor(dx/size/dz))*size,-dy/dz,(i-Math.floor(dx/size/dz))*size,(v.rect.h-dy)/dz).stroke(1/dz)(UI.theme.impact);
-      }
-    },{
-      onPress : (x,y)=>{
-        var i = Math.floor(x/80+0.5), j = Math.floor(y/80+0.5);
-        if(Base.distance(x,y,i*80,j*80) < 15){
-          c.addChild(UI.create(UI.image(()=>{
-            Render.shadowed(4,UI.theme.frame,()=>{
-              Render.circle(0,0,0.1).fill(UI.theme.base);
-            });
-            Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
-          })).place(i*80,j*80,1,1));
-        }
-      }
-    }));
-    v.addChild(c);
-  },()=>{
-    Render.shadowed(4,UI.theme.frame,()=>{
-      Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
-    });
-  });
-  t.registerTile("Control",(v)=>{
-    for(var i=0;i<3;i++){
-      var btn = UI.create(UI.button(()=>{
-        console.log("nya~");
-      })).place(i*70+10,10,60,60);
-      btn.addChild(UI.create(UI.image(()=>{
-        Render.circle(0,0,10).fill(UI.theme.def);
-      })));
-      v.addChild(btn);
-    }
-  },()=>{
-    Render.shadowed(4,UI.theme.frame,()=>{
-      Render.translate(0.5,0.5,()=>{
-        Render.rotate(Math.PI/4,()=>{
-          Render.rect(-0.25,-0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
-        });
-      });
-    });
-  });
-  t.registerTile("NoneTile",Base.void,Base.void);
-  var tileTree = {
-    type : 0,
-    tile : t.makeTile(Base.void)
-  };
   function makeTree(t,p,v,a){
     if(t.type==0){
       t.tile.index = Base.clone(a);
@@ -412,8 +344,8 @@ Base.write("Tile",()=>{
       t.parent = p;
     }else{
       var s;
-      if(t.type==1)s = UI.horizontal(tileSpace,true,vanishTile);
-      else s = UI.vertical(tileSpace,true,vanishTile);
+      if(t.type==1)s = UI.create(UI.horizontal(tileSpace,true,vanishTile));
+      else s = UI.create(UI.vertical(tileSpace,true,vanishTile));
       t.children.forEach((c,i)=>{
         a.push(i);
         makeTree(c,t,s,a);
@@ -467,9 +399,15 @@ Base.write("Tile",()=>{
       }
     };
   });
-  UI.root.addChild(view);
-  UI.root.addChild(borderView);
-  makeTree(tileTree,null,view,[]);
+  t.initTile = ()=>{
+    tileTree = {
+      type : 0,
+      tile : t.makeTile(Base.void)
+    };
+    UI.root.addChild(view);
+    UI.root.addChild(borderView);
+    makeTree(tileTree,null,view,[]);
+  };
 
   t.tt = ()=>tileTree;
 
