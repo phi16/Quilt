@@ -1,6 +1,6 @@
 Base.write("Tile",()=>{
   var t = {};
-  var tileSpace = 10;
+  var tileSpace = 10, titleHeight = 20;
 
   // [Tree]
   // - Frame{0,tile::View}[tile.index]
@@ -12,6 +12,7 @@ Base.write("Tile",()=>{
   var tileTree;
 
   t.makeTile = (f)=>{
+    var titleBar,container,menu;
     var fr = UI.create(UI.inherit(UI.frame(),(v)=>{
       var lev = 0, levM = 0;
       v.onHover = (x,y)=>{
@@ -27,14 +28,38 @@ Base.write("Tile",()=>{
         if(levM>lev)levM -= 0.2;
         return tileSpace * (levM+1) / 2;
       };
+      v.layout = (w,h)=>{
+        container = v.children[0];
+        v.rect.w = w;
+        v.rect.h = h;
+        titleBar.place(0,0,w,titleHeight);
+        titleBar.layout(w,titleHeight);
+        container.layout(w,h-titleHeight);
+        menu.layout(w,h);
+        for(var i=3;i<v.children.length;i++){
+          v.children[i].layout(w,h);
+        }
+        v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
+      };
     }));
-    fr.addChild(UI.create((v)=>{
+    container = UI.create((v)=>{
       v.name = "container";
       f(v);
-    }));
+    }).place(0,titleHeight,0,0);
+    fr.addChild(container);
+    titleBar = UI.create(UI.inherit(UI.frame(),(v)=>{
+      v.name = "title";
+      v.render = ()=>{
+        v.shape.dup((d)=>{
+          d.fill(UI.theme.front);
+          d.stroke(2)(UI.theme.frame);
+        });
+      };
+    })).place(0,0,0,0);
+
     var menuDisplay = false;
     var menuWidth = 0, menuHeight = 0;
-    var menu = UI.create((v)=>{
+    menu = UI.create((v)=>{
       v.name = "menu";
       v.shadow = true;
       v.clipped = true;
@@ -45,13 +70,11 @@ Base.write("Tile",()=>{
         });
         if(menuDisplay){
           v.rect.w += (menuWidth - v.rect.w) / 2.0;
-          v.rect.h += (menuHeight - v.rect.h) / 2.0;
+          v.rect.h += (menuHeight + titleHeight - v.rect.h) / 2.0;
         }else{
           v.rect.w += (0 - v.rect.w) / 2.0;
-          v.rect.h += (0 - v.rect.h) / 2.0;
+          v.rect.h += (titleHeight - v.rect.h) / 2.0;
         }
-        v.rect.x = w-v.rect.w;
-        v.rect.y = 0;
         v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
       v.onPress = (x,y,c)=>{
@@ -73,11 +96,13 @@ Base.write("Tile",()=>{
           d.stroke(2)(UI.theme.frame);
         });
       };
-    });
+      v.shadowDepth = () => 10;
+    }).place(0,0,0,0);
     for(var i=0;i<confTiles.length;i++){
       Base.with(confTiles[i],(conf)=>{
         var btn = UI.create(UI.button(()=>{
-          fr.rewriteAt(0,t.makeTile(conf.tile).children[0]);
+          var cont = t.makeTile(conf.tile).children[0];
+          fr.rewriteAt(0,cont);
           console.log("nya!");
         }));
         btn.addChild(UI.create(UI.image(()=>{
@@ -86,8 +111,8 @@ Base.write("Tile",()=>{
         menu.addChild(btn);
       });
     }
-    var menuButton = UI.create(UI.inherit(UI.button((v)=>{
-      var size = v.size;
+    titleBar.addChild(UI.create(UI.button((v)=>{
+      var size = titleHeight * 2;
       menuDisplay = !menuDisplay;
       menu.hovering = true;
       //configure menuSizes
@@ -96,25 +121,12 @@ Base.write("Tile",()=>{
       menu.children.forEach((v,i)=>{
         var ix = i%confX, iy = Math.floor(i/confX);
         var px = (ix*1.75+0.5)*size, py = (iy*1.75+0.5)*size;
-        v.place(px,py,1.5*size,1.5*size);
+        v.place(px,py+titleHeight,1.5*size,1.5*size);
         v.children[0].place(0,0,1.5*size,1.5*size);
       });
-    }),(v)=>{
-      v.layout = UI.defaultLayout(v,(w,h)=>{
-        var wSz = w / (confX*1.75+1.25);
-        var hSz = h / (confY*1.75+0.75);
-        var size = Math.min(40,Math.min(wSz,hSz));
-        v.rect.w = v.rect.h = size;
-        v.rect.x = w-v.rect.w;
-        v.rect.y = 0;
-        v.shape = Render.polygon([0,0,size,0,size,size,0,0]);
-        v.size = size;
-      });
-    }));
-    menu.full = true;
-    menuButton.full = true;
+    })).place(0,0,titleHeight,titleHeight));
     fr.addChild(menu);
-    fr.addChild(menuButton);
+    fr.addChild(titleBar);
     return fr;
   };
   function vanishTile(v,ix){

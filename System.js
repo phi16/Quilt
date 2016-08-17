@@ -66,11 +66,11 @@ Base.write("System",()=>{
     });
   });
   Tile.registerTile("FunctionList",(v)=>{
-    var scroll = UI.create(UI.scroll(1000));
+    var scroll = UI.create(UI.scroll(500));
     var list = UI.create(UI.vertical(0));
     scroll.addChild(list);
     v.addChild(scroll);
-    for(var i=0;i<20;i++){
+    for(var i=0;i<10;i++){
       var row = UI.create(UI.frame());
       row.addChild(UI.create(UI.button(Base.void)).place(10,10,30,30));
       list.addChild(row);

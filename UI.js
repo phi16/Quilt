@@ -15,11 +15,11 @@ Base.write("UI",()=>{
     bg : Color(0,0.1,0.1),
     frame : Color(0,1,1),
     base : Color(0,0.2,0.2),
-    front : Color(0,0.23,0.23),
-    button : Color(0,0.3,0.3),
+    front : Color(0,0.23,0.28),
+    button : Color(0,0.3,0.35),
     shadow : Color(0,0.5,0.5),
-    notify : Color(0.1,0.35,0.35),
-    impact : Color(0.2,0.4,0.4),
+    notify : Color(0.1,0.35,0.46),
+    impact : Color(0.2,0.4,0.48),
     def : Color(0,1,0.8)
   };
   var shadowDepth = 5;
@@ -350,6 +350,7 @@ Base.write("UI",()=>{
   u.field = (g,handler)=>{
     return (v)=>{
       var cx,cy;
+      var mx=0,my=0,mz=0;
       var dx=0,dy=0,dz=1;
       v.name = "field";
       v.full = true;
@@ -392,10 +393,13 @@ Base.write("UI",()=>{
         dx = x-dz*p, dy = y-dz*q;
       };
       v.render = (c)=>{
+        mx += (dx - mx) / 2;
+        my += (dy - my) / 2;
+        mz += (dz - mz) / 2;
         v.shape.clip(()=>{
-          Render.translate(dx,dy,()=>{
-            Render.scale(dz,dz,()=>{
-              g(dx,dy,dz);
+          Render.translate(mx,my,()=>{
+            Render.scale(mz,mz,()=>{
+              g(mx,my,mz);
               c();
             });
           });
@@ -413,6 +417,7 @@ Base.write("UI",()=>{
   };
   u.scroll = (sh)=>{
     return (v)=>{
+      var scrWidth = 15;
       var mx=0,my=0;
       var dx=0,dy=0;
       v.name = "scroll";
@@ -420,9 +425,85 @@ Base.write("UI",()=>{
       v.clipped = true;
       v.checkRightButton = false;
       var main = UI.create(UI.frame());
-      var scroll = UI.create(UI.frame());
+      var scroll = UI.create(UI.inherit(UI.frame(),(v)=>{
+        v.layout = (w,h)=>{
+          v.rect.w = w;
+          v.rect.h = h;
+          v.children[0].place(0,0,scrWidth,scrWidth);
+          v.children[1].place(0,h-scrWidth,scrWidth,scrWidth);
+          if(h < sh){
+            var hei = h - scrWidth * 2;
+            var scrH = h / sh * hei;
+            var ratio = my / (sh - h);
+            v.children[2].place(0,scrWidth + ratio * (hei - scrH),scrWidth,scrH);
+          }else{
+            v.children[2].place(0,0,scrWidth,h);
+          }
+          v.children.forEach((c)=>{
+            if(c.full)c.layout(w,h);
+            else c.layout(c.rect.w,c.rect.h);
+          });
+          v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
+        };
+      }));
+      function adjust(diffY,baseDy){
+        var h = v.rect.h;
+        var hei = h - scrWidth * 2;
+        var scrH = h / sh * hei;
+        var pos = diffY / (hei - scrH) * (sh - h);
+        dy = baseDy + pos;
+        if(dy < 0)dy = 0;
+        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+      }
       v.addChild(main);
       v.addChild(scroll);
+      scroll.addChild(UI.create(UI.button(()=>{
+        dy -= 50;
+        if(dy < 0)dy = 0;
+      })));
+      scroll.addChild(UI.create(UI.button(()=>{
+        dy += 50;
+        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+      })));
+      scroll.addChild(UI.create(UI.inherit(UI.button(Base.void),(v)=>{
+        var onPress = v.onHover;
+        var onHover = v.onHover;
+        var onLeave = v.onLeave;
+        var onRelease = v.onRelease;
+        var baseY = 0, baseDy = dy;
+        v.onPress = (x,y)=>{
+          if(v.rect.h < sh){
+            baseY = y + v.rect.y, baseDy = dy;
+            Mouse.drag = v;
+            v.hovering = true;
+          }
+          return onPress(x,y);
+        };
+        v.onHover = (x,y)=>{
+          if(Mouse.drag == v){
+            adjust(y + v.rect.y - baseY, baseDy);
+          }
+          return onHover(x,y);
+        };
+        v.onLeave = (x,y)=>{
+          if(Mouse.drag == v){
+            adjust(y + v.rect.y - baseY, baseDy);
+            v.hovering = true;
+            return true;
+          }
+          return onLeave();
+        };
+        v.onRelease = (x,y)=>{
+          onRelease(x,y);
+          if(Mouse.drag == v){
+            adjust(y + v.rect.y - baseY, baseDy);
+            Mouse.drag = null;
+            v.hovering = false;
+            return true;
+          }
+          return false;
+        };
+      })));
       v.onWheel = (x,y)=>{
         var p=x-dx, q=y-dy;
         if(Mouse.wheel > 0)dy -= 50;
@@ -438,8 +519,8 @@ Base.write("UI",()=>{
       v.layout = (w,h)=>{
         v.rect.w = w;
         v.rect.h = h;
-        if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
-        var scrWidth = 20;
+        if(h > sh)my = dy = 0;
+        else if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
         main.place(-mx,-my,w-scrWidth,sh);
         scroll.place(w-scrWidth,0,scrWidth,h);
         main.layout(main.rect.w,main.rect.h);
@@ -564,18 +645,20 @@ Base.write("UI",()=>{
       }
       if(ids[v.name]==null)ids[v.name] = 0;
       v.checked = ids[v.name]++;
-      if(v.index){
-        append(u + v.name+ " / " + JSON.stringify(v.index));
-      }else{
+      // if(v.index){
+      //   append(u + v.name+ " / " + JSON.stringify(v.index));
+      // }else{
         append(u + v.name);
-      }
-      if(v.parent && v.parent.index){
-        append(u + JSON.stringify(v.parent.index));
-      }
-      if(v.name != "menu"){
+      // }
+      // if(v.parent && v.parent.index){
+      //   append(u + JSON.stringify(v.parent.index));
+      // }
+      if(v.name != "menu" && v.name != "title"){
         v.children.forEach((c)=>{
           f(c,u+"| ");
         });
+      }else{
+        append(u+"| ...");
       }
       delete v.checked;
     }
