@@ -44,9 +44,22 @@ Base.write("System",()=>{
     var sc = s.control;
     v.store = null;
     var ope = UI.create(UI.inherit(UI.frame(),(v)=>{v.full = false;})).place(10,10,60,60);
+    var oldName = sc.current, curName = sc.current;
+    var animate = 1;
     ope.addChild(UI.create(UI.image(()=>{
       Render.rect(0,0,1,1).fill(UI.theme.front);
-      sc.list[sc.current].draw();
+      var v = Math.cos(animate*Math.PI)*0.5+0.5;
+      Render.translate(0,1-v,()=>{
+        Render.scale(1,v,()=>{
+          sc.list[oldName].draw();
+        });
+      })
+      Render.scale(1,1-v,()=>{
+        sc.list[curName].draw();
+      });
+      Render.line(0,1-v,1,1-v).stroke(0.03)(UI.theme.def);
+      animate += 0.1;
+      if(animate > 1)animate = 1;
     })).place(0,0,60,60));
     v.addChild(ope);
     var bar = UI.create(UI.image(()=>{
@@ -57,7 +70,9 @@ Base.write("System",()=>{
     v.addChild(bar);
     sc.listener.on("change",()=>{
       if(!v.available)return true;
-      console.log("change");
+      oldName = curName;
+      curName = sc.current;
+      animate = 0;
     });
     v.layout = (w,h)=>{
       UI.defaultLayout(v)(w,h);
