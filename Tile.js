@@ -102,6 +102,7 @@ Base.write("Tile",()=>{
       Base.with(confTiles[i],(conf)=>{
         var btn = UI.create(UI.button(()=>{
           var cont = t.makeTile(conf.tile).children[0];
+          UI.dispose(fr.children[0]);
           fr.rewriteAt(0,cont);
           console.log("nya!");
         }));
@@ -130,6 +131,7 @@ Base.write("Tile",()=>{
     return fr;
   };
   function vanishTile(v,ix){
+    UI.dispose(v.children[ix]);
     var b = v.removeAt(ix);
     var vx = Base.clone(v.index);
     function obtain(t,i,f){

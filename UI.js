@@ -9,6 +9,7 @@ Base.write("UI",()=>{
     shadow : Color(0.5,0.25,0),
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
+    split : Color(0,0,0),
     def : Color(1,0.5,0)
   };*/
   u.theme = {
@@ -20,6 +21,7 @@ Base.write("UI",()=>{
     shadow : Color(0,0.5,0.5),
     notify : Color(0.1,0.35,0.46),
     impact : Color(0.2,0.4,0.48),
+    split : Color(0.3,0.8,1.0),
     def : Color(0,1,0.8)
   };
   var shadowDepth = 5;
@@ -85,6 +87,7 @@ Base.write("UI",()=>{
       v.rect = {x:x,y:y,w:w,h:h};
       return v;
     };
+    v.available = true;
     f(v);
     return v;
   };
@@ -648,7 +651,7 @@ Base.write("UI",()=>{
       // if(v.index){
       //   append(u + v.name+ " / " + JSON.stringify(v.index));
       // }else{
-        append(u + v.name);
+        append(u + v.name + (v.available?"":" *"));
       // }
       // if(v.parent && v.parent.index){
       //   append(u + JSON.stringify(v.parent.index));
@@ -664,6 +667,13 @@ Base.write("UI",()=>{
     }
     f(u.root,"");
     console.log(str);
+  };
+  u.dispose = (v)=>{
+    if(!v.available)return;
+    v.available = false;
+    v.children.forEach((c)=>{
+      u.dispose(c);
+    });
   };
   return u;
 });
