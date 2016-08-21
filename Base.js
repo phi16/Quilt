@@ -45,8 +45,23 @@ var Base = (()=>{
   b.equals = (x,y)=>{
     return Math.abs(x,y) < 0.0001;
   };
-  b.po = (d)=>{
-    console.log(d);
+  b.dir = (x,y)=>{
+    // Counter Clockwise
+    if(x==1){
+      if(y==0)return 0;
+      if(y==1)return 1;
+      if(y==-1)return 7;
+    }
+    if(x==0){
+      if(y==-1)return 2;
+      if(y==1)return 6;
+    }
+    if(x==-1){
+      if(y==-1)return 3;
+      if(y==0)return 4;
+      if(y==1)return 5;
+    }
+    return -1;
   };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;

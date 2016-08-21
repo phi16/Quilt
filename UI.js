@@ -9,7 +9,7 @@ Base.write("UI",()=>{
     shadow : Color(0.5,0.25,0),
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
-    split : Color(0,0,0),
+    split : Color(0.6,0.25,0),
     def : Color(1,0.5,0)
   };*/
   u.theme = {
@@ -369,7 +369,7 @@ Base.write("UI",()=>{
         }else return false;
       };
       v.onHover = (x,y)=>{
-        if(Mouse.drag == v){
+        if(Mouse.right && Mouse.drag == v){
           dx += x-cx;
           dy += y-cy;
           cx = x;
@@ -377,10 +377,15 @@ Base.write("UI",()=>{
           return true;
         }else if(Mouse.left && handler && handler.onHover){
           handler.onHover((x-dx)/dz,(y-dy)/dz);
+          return true;
         }else return false;
       };
+      v.onLeave = (x,y)=>{
+        v.hovering = true;
+        v.onHover(x,y);
+      };
       v.onRelease = (x,y)=>{
-        if(Mouse.drag == v && Mouse.right){
+        if(Mouse.right && Mouse.drag == v){
           Mouse.drag = null;
           return true;
         }else if(Mouse.left && handler && handler.onRelease){
@@ -416,6 +421,9 @@ Base.write("UI",()=>{
         });
         v.shape = Render.rect(0,0,w,h);
       };
+      v.scale = ()=>{
+        return mz;
+      }
     };
   };
   u.scroll = (sh)=>{
