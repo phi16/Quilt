@@ -182,6 +182,7 @@ Base.write("System",()=>{
         execute : ()=>function*(f,v){
           var p;
           while(p = yield)if(p.onPoint)break;
+          if(!p)return;
           f.place(p.x,p.y);
           c.set("Connect",p);
           f.rewriteAction(s.control.current.execute);
@@ -257,21 +258,65 @@ Base.write("System",()=>{
     var f = {};
     var map = {};
     var action = null;
-    var lastE,lastX,lastY;
-    var view = UI.create((v)=>{v.name="overlay";});
-    var viewIx = v.children.length;
-    v.addChild(view);
+    var lastE,lastX,lastY; 
+    function allDraw(f){
+      Render.scale(size,size,()=>{
+        for(var i in map){
+          var p = i.split(",").map((v)=>parseInt(v));
+          Render.translate(p[0],p[1],()=>{
+            f(p[0],p[1],map[i]);
+          });
+        }
+      });
+    }
+    v.addChild(UI.create(UI.inherit(UI.image(()=>{
+      Render.shadowed(2,UI.theme.frame,()=>{
+        allDraw((x,y,r)=>{
+          r.neighbor.forEach((e,i)=>{
+            if(e){
+              var p = Base.fromDir(i);
+              Render.line(0,0,p.x,p.y).dup((d)=>{
+                d.stroke(0.1)(UI.theme.def);
+              });
+            }
+          })
+        });
+      });
+    }),(v)=>{v.name="backLayer";})).place(0,0,1,1));
+    v.addChild(UI.create(UI.inherit(UI.image(()=>{
+      allDraw((x,y,r)=>{
+        r.neighbor.forEach((e,i)=>{
+          if(e){
+            var p = Base.fromDir(i);
+            Render.line(0,0,p.x,p.y).dup((d)=>{
+              d.stroke(0.07)(UI.theme.button);
+            });
+          }
+        })
+      });
+    }),(v)=>{v.name="middleLayer";})).place(0,0,1,1));
+    v.addChild(UI.create(UI.inherit(UI.image(()=>{
+      allDraw((x,y,r)=>{
+        Render.shadowed(4,UI.theme.frame,()=>{
+          Render.circle(0,0,0.1).fill(UI.theme.base);
+        });
+        Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
+      });
+    }),(v)=>{v.name="topLayer";})).place(0,0,1,1));
+    var overlay = UI.create((v)=>{v.name="overlay";});
+    var overlayIx = v.children.length;
+    v.addChild(overlay);
     function i(x){
       return Math.floor(x/size+0.5);
     }
     f.newView = ()=>{
-      view = UI.create((v)=>{v.name="overlay";});
-      UI.dispose(v.children[viewIx]);
-      v.rewriteAt(viewIx,view);
+      overlay = UI.create((v)=>{v.name="overlay";});
+      UI.dispose(v.children[overlayIx]);
+      v.rewriteAt(overlayIx,overlay);
     };
     f.begin = (inst,ux,uy)=>{
       f.newView();
-      action = inst(f,view);
+      action = inst(f,overlay);
       if(action.next().value)action = null;
       lastE = false;
       f.pass(ux,uy);
@@ -294,7 +339,7 @@ Base.write("System",()=>{
     };
     f.rewriteAction = (inst)=>{
       f.newView();
-      action = inst(f,view);
+      action = inst(f,overlay);
       if(action.next().value)action = null;
     };
     f.scale = ()=>{
@@ -305,16 +350,8 @@ Base.write("System",()=>{
     }
     f.place = (x,y,func)=>{
       if(map[[x,y]] != null)return false;
-      var e;
-      v.addChild(e = UI.create(UI.image(()=>{
-        Render.shadowed(4,UI.theme.frame,()=>{
-          Render.circle(0,0,0.1).fill(UI.theme.base);
-        });
-        Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
-      })).place(x*size,y*size,1,1));
       map[[x,y]] = {};
       map[[x,y]].func = func;
-      map[[x,y]].image = e;
       map[[x,y]].neighbor = [];
       for(var i=0;i<8;i++){
         map[[x,y]].neighbor.push(null);
@@ -327,27 +364,12 @@ Base.write("System",()=>{
       var di = Base.dir(x2-x1,y2-y1);
       var du = (di+4)%8;
       if(map[[x1,y1]].neighbor[di] || map[[x2,y2]].neighbor[du])return false;
-      var e1,e2;
-      v.addChild(e1 = UI.create(UI.image(()=>{
-        Render.line(0,0,xc-x1,yc-y1).dup((d)=>{
-          d.stroke(0.1)(UI.theme.def);
-          d.stroke(0.07)(UI.theme.front);
-        });
-      })).place(x1*size,y1*size,1,1));
-      v.addChild(e2 = UI.create(UI.image(()=>{
-        Render.line(0,0,xc-x2,yc-y2).dup((d)=>{
-          d.stroke(0.1)(UI.theme.def);
-          d.stroke(0.07)(UI.theme.front);
-        });
-      })).place(x2*size,y2*size,1,1));
       map[[x1,y1]].neighbor[di] = {};
-      map[[x2,y2]].neighbor[du] = {};
       map[[x1,y1]].neighbor[di].name = "Out";
       map[[x1,y1]].neighbor[di].type = true;
-      map[[x1,y1]].neighbor[di].image = e1;
+      map[[x2,y2]].neighbor[du] = {};
       map[[x2,y2]].neighbor[du].name = "In";
       map[[x2,y2]].neighbor[du].type = false;
-      map[[x2,y2]].neighbor[du].image = e2;
       return true;
     };
     return f;

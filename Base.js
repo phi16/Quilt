@@ -49,8 +49,8 @@ var Base = (()=>{
     // Counter Clockwise
     if(x==1){
       if(y==0)return 0;
-      if(y==1)return 1;
-      if(y==-1)return 7;
+      if(y==-1)return 1;
+      if(y==1)return 7;
     }
     if(x==0){
       if(y==-1)return 2;
@@ -62,6 +62,18 @@ var Base = (()=>{
       if(y==1)return 5;
     }
     return -1;
+  };
+  b.fromDir = (i)=>{
+    return [
+      {x:1,y:0},
+      {x:1,y:-1},
+      {x:0,y:-1},
+      {x:-1,y:-1},
+      {x:-1,y:0},
+      {x:-1,y:1},
+      {x:0,y:1},
+      {x:1,y:1}
+    ][i];
   };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;

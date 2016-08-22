@@ -417,7 +417,7 @@ Base.write("UI",()=>{
         v.rect.w = w;
         v.rect.h = h;
         v.children.forEach((c)=>{
-          c.layout(100,100);
+          c.layout(1,1);
         });
         v.shape = Render.rect(0,0,w,h);
       };
