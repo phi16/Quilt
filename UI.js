@@ -586,11 +586,14 @@ Base.write("UI",()=>{
 
   u.root = u.create(Base.void);
   u.root.name = "root";
+  var time = 0;
   Render.add(()=>{
     Render.rect(0,0,Render.width,Render.height).fill(u.theme.bg);
     layoutView(u.root,Render.width,Render.height);
     renderView(u.root);
+    time++;
   });
+  u.time = ()=>{return time;};
   function processMouse(ins,x,y,v){
     var p = x-v.rect.x;
     var q = y-v.rect.y;

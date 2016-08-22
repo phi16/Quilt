@@ -104,6 +104,39 @@ Base.write("Render",()=>{
       return b;
     });
   };
+  r.cycle = (a)=>{
+    return component(()=>{
+      ctx.moveTo(a[0],a[1]);
+      for(var i=0;i<a.length;i+=2){
+        ctx.lineTo(a[i],a[i+1]);
+      }
+      ctx.lineTo(a[0],a[1]);
+      ctx.closePath();
+    },(x,y)=>{
+      var b = false;
+      var x1 = 0;
+      var y1 = 0;
+      var x2 = a[0]-x;
+      var y2 = a[1]-y;
+      for(var i=0;i<a.length-2;i+=2){
+        x1 = x2;
+        y1 = y2;
+        x2 = a[i+2]-x;
+        y2 = a[i+3]-y;
+        var r = -y2/y1;
+        var rx;
+        if(Math.abs(y1) < 0.0001){
+          rx = x1;
+        }else if(Math.abs(y2) < 0.0001){
+          rx = x2;
+        }else if(0 <= r){
+          rx = (x1*r + x2*1)/(r+1);
+        }
+        if(rx >= 0)b = !b;
+      }
+      return b;
+    });
+  };
   r.translate = (x,y,f)=>{
     ctx.save();
     ctx.translate(x,y);
