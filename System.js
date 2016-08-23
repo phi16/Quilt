@@ -115,13 +115,11 @@ Base.write("System",()=>{
       var btn = UI.create(UI.button(()=>{
         s.control.set("Place",n);
       })).place(10,10,30,30);
-      var f = s.func.list[n].draw;
+      var f = s.func.list[n].icon;
       btn.addChild(UI.create(UI.image(()=>{
         Render.translate(15,15,()=>{
           Render.scale(15,15,()=>{
-            Render.shadowed(2,UI.theme.sharp,()=>{
-              f();
-            });
+            f();
           });
         });
       })).place(0,0,1,1));
@@ -140,64 +138,74 @@ Base.write("System",()=>{
 
   s.func = (()=>{
     var f = {};
-    f.list = {
-      Id : {
-        arity : ["In"],
-        coarity : ["Out"],
-        draw : ()=>{
-          Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(UI.theme.def);
-          Render.line(0,-0.6,0,0.6).stroke(0.2)(UI.theme.def);
-          Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(UI.theme.def);
-        }
-      },
-      Lambda : {
-        arity : ["y","f"],
-        coarity : ["x"],
-        draw : ()=>{
-          Render.meld([
-            Render.line(0,0,-0.4,0.7),
-            Render.line(-0.4,-0.7,0.4,0.7)
-          ]).stroke(0.2)(UI.theme.def);
-        }
-      },
-      Apply : {
-        arity : ["f","x"],
-        coarity : ["y"],
-        draw : ()=>{
-          Render.circle(0,0,0.4).stroke(0.2)(UI.theme.def);
-        }
-      },
-      Duplicate : {
-        arity : ["In"],
-        coarity : ["Out","Out"],
-        draw : ()=>{
-          Render.scale(0.7,0.7,()=>{
-            Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(UI.theme.def);
+    function make(ari,coari,icf,drf){
+      if(drf==null){
+        drf = (r,shadowSize)=>{
+          Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
+            Render.circle(0,0,0.2).fill(UI.theme.base);
+          });
+          Render.circle(0,0,0.2).stroke(0.02)(UI.theme.def);
+          Render.scale(0.2,0.2,()=>{
+            Render.shadowed(2/shadowSize,UI.theme.sharp,()=>{
+              icf();
+            });
           });
         }
-      },
-      Discard : {
-        arity : ["In"],
-        coarity : [],
-        draw : ()=>{
-          Render.line(0,0.2,0,-0.7).stroke(0.2)(UI.theme.def);
-          Render.line(0,0.5,0,0.7).stroke(0.2)(UI.theme.def);
-        }
-      },
-      In : {
-        arity : [],
-        coarity : ["Out"],
-        draw : ()=>{
-          Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(UI.theme.def);
-        }
-      },
-      Out : {
-        arity : ["In"],
-        coarity : [],
-        draw : ()=>{
-          Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(UI.theme.def);
-        }
       }
+      return {
+        arity : ari,
+        coarity : coari,
+        draw : (r,shadowSize)=>{
+          drf(r,shadowSize);
+        },
+        icon : ()=>{
+          Render.shadowed(2,UI.theme.sharp,()=>{
+            icf();
+          });
+        }
+      };
+    }
+    f.list = {
+      Id : make(["In"],["Out"],()=>{
+        Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(UI.theme.def);
+        Render.line(0,-0.6,0,0.6).stroke(0.2)(UI.theme.def);
+        Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(UI.theme.def);
+      },Base.void),
+      Lambda : make(["x","y"],["f"],()=>{
+        Render.meld([
+          Render.line(0,0,-0.4,0.7),
+          Render.line(-0.4,-0.7,0.4,0.7)
+        ]).stroke(0.2)(UI.theme.def);
+      }),
+      Apply : make(["f","x"],["y"],()=>{
+        Render.circle(0,0,0.4).stroke(0.2)(UI.theme.def);
+      }),
+      Duplicate : make(["In"],["Out","Out"],()=>{
+        Render.scale(0.7,0.7,()=>{
+          Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(UI.theme.def);
+        });
+      }),
+      Discard : make(["In"],[],()=>{
+        Render.line(0,0.2,0,-0.7).stroke(0.2)(UI.theme.def);
+        Render.line(0,0.5,0,0.7).stroke(0.2)(UI.theme.def);
+      }),
+      Swap : make(["In1","In2"],["Out1","Out2"],()=>{
+        Render.meld([
+          Render.line(-0.5,-0.5,0.5,0.5),
+          Render.line(-0.5,0.5,0.5,-0.5)
+        ]).stroke(0.2)(UI.theme.def);
+      },(r,shadowSize)=>{
+        Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
+          Render.circle(0,0,0.1).fill(UI.theme.base);
+        });
+        Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
+      }),
+      In : make([],["Out"],()=>{
+        Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(UI.theme.def);
+      }),
+      Out : make(["In"],[],()=>{
+        Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(UI.theme.def);
+      })
     };
     return f;
   })();
@@ -235,6 +243,7 @@ Base.write("System",()=>{
         }
       },
       Move : {
+        noButton : true,
         draw : ()=>{
           Render.meld([
             Render.line(0.5,0.2,0.5,0.8),
@@ -244,6 +253,7 @@ Base.write("System",()=>{
         execute : ()=>function*(f,v){}
       },
       Operate : {
+        noButton : true,
         draw : ()=>{
           Render.translate(0.5,0.5,()=>{
             Render.rotate(Math.PI/4,()=>{
@@ -263,20 +273,15 @@ Base.write("System",()=>{
           var p;
           while(p = yield)if(p.onPoint)break;
           if(!p)return;
-          if(f.place(p.x,p.y,e)){
-            c.set("Connect",p);
-            f.rewriteAction(s.control.current.execute);
-          }else if(f.at(p.x,p.y) === "Id"){
-            f.replace(p.x,p.y,e);
-            c.set("Connect",p);
-            f.rewriteAction(s.control.current.execute);
-          }
+          f.place(p.x,p.y,e);
+          c.set("Connect",p);
+          f.rewriteAction(s.control.current.execute);
         }
       },
       Connect : {
         draw : ()=>{
-          Render.line(0.2,0.35,0.8,0.35).stroke(0.1)(UI.theme.def);
-          Render.line(0.2,0.65,0.8,0.65).stroke(0.1)(UI.theme.def);
+          Render.line(0.2,0.37,0.8,0.37).stroke(0.1)(UI.theme.def);
+          Render.line(0.2,0.63,0.8,0.63).stroke(0.1)(UI.theme.def);
         },
         execute : (u)=>function*(f,v){
           var size = 80;
@@ -407,17 +412,7 @@ Base.write("System",()=>{
     }),(v)=>{v.name="layer2";})).place(0,0,1,1));
     v.addChild(UI.create(UI.inherit(UI.image(()=>{
       allDraw((x,y,r)=>{
-        if(r.name !== "Id"){
-          Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
-            Render.circle(0,0,0.2).fill(UI.theme.base);
-          });
-          Render.circle(0,0,0.2).stroke(0.02)(UI.theme.def);
-          Render.scale(0.2,0.2,()=>{
-            Render.shadowed(2/shadowSize,UI.theme.sharp,()=>{
-              r.func.draw();
-            });
-          });
-        }
+        r.func.draw(r,shadowSize);
       });
     }),(v)=>{v.name="layer3";})).place(0,0,1,1));
     var overlay = UI.create((v)=>{v.name="overlay";});
@@ -470,26 +465,28 @@ Base.write("System",()=>{
       return map[[x,y]].name;
     }
     f.place = (x,y,name)=>{
-      if(map[[x,y]] != null)return false;
-      map[[x,y]] = {};
+      if(!map[[x,y]]){
+        map[[x,y]] = {};
+      }
       map[[x,y]].name = name;
       map[[x,y]].func = s.func.list[name];
-      map[[x,y]].neighbor = [];
-      for(var i=0;i<8;i++){
-        map[[x,y]].neighbor.push(null);
+      if(!map[[x,y]].neighbor){
+        map[[x,y]].neighbor = [];
+        for(var i=0;i<8;i++){
+          map[[x,y]].neighbor.push(null);
+        }
       }
       return true;
-    };
-    f.replace = (x,y,name)=>{
-      map[[x,y]].name = name;
-      map[[x,y]].func = s.func.list[name];
     };
     f.connect = (x1,y1,x2,y2)=>{
       var xc = (x1+x2)/2;
       var yc = (y1+y2)/2;
       var di = Base.dir(x2-x1,y2-y1);
       var du = (di+4)%8;
-      if(map[[x1,y1]].neighbor[di] || map[[x2,y2]].neighbor[du])return false;
+      if(map[[x1,y1]].neighbor[di] || map[[x2,y2]].neighbor[du]){
+        map[[x1,y1]].neighbor[di] = null;
+        map[[x2,y2]].neighbor[du] = null;
+      }
       map[[x1,y1]].neighbor[di] = {};
       map[[x1,y1]].neighbor[di].name = "Out";
       map[[x1,y1]].neighbor[di].type = true;
