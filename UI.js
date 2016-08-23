@@ -22,7 +22,8 @@ Base.write("UI",()=>{
     notify : Color(0.1,0.35,0.46),
     impact : Color(0.2,0.4,0.48),
     split : Color(0.3,0.8,1.0),
-    def : Color(0,1,0.8)
+    def : Color(0,1,0.8),
+    sharp : Color(0,0.2,1)
   };
   var shadowDepth = 5;
   /**** View

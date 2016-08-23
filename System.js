@@ -26,7 +26,13 @@ Base.write("System",()=>{
     v.addChild(c);
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
-      Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
+      Render.meld([
+        Render.circle(0.5,0.5,0.2),
+        Render.line(0.3,0.5,0.1,0.5),
+        Render.line(0.7,0.5,0.9,0.5),
+        Render.line(0.5,0.3,0.5,0.1),
+        Render.line(0.5,0.7,0.5,0.9)
+      ]).stroke(0.1)(UI.theme.def);
     });
   });
   Tile.registerTile("Control",(v)=>{
@@ -39,11 +45,15 @@ Base.write("System",()=>{
       var v = Math.cos(animate*Math.PI)*0.5+0.5;
       Render.translate(0,1-v,()=>{
         Render.scale(1,v,()=>{
-          sc.list[oldName].draw();
+          Render.shadowed(4,UI.theme.shadow,()=>{
+            sc.list[oldName].draw();
+          });
         });
       })
       Render.scale(1,1-v,()=>{
-        sc.list[curName].draw();
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          sc.list[curName].draw();
+        });
       });
       Render.line(0,1-v,1,1-v).stroke(0.03)(UI.theme.def);
       animate += 0.1;
@@ -67,16 +77,22 @@ Base.write("System",()=>{
       UI.defaultLayout(v)(w,h);
       bar.rect.w = w - 8*2;
     };
+    var pos = 0;
     for(var i=0;i<sc.name.length;i++){
       ((j)=>{
         var name = sc.name[j];
-        var btn = UI.create(UI.button(()=>{
-          sc.set(name);
-        })).place(i*50+10,90,40,40);
-        btn.addChild(UI.create(UI.image(()=>{
-          sc.list[name].draw();
-        })).place(0,0,40,40));
-        v.addChild(btn);
+        if(!sc.list[name].noButton){
+          var btn = UI.create(UI.button(()=>{
+            sc.set(name);
+          })).place(pos*50+10,90,40,40);
+          btn.addChild(UI.create(UI.image(()=>{
+            Render.shadowed(4,UI.theme.shadow,()=>{
+              sc.list[name].draw();
+            });
+          })).place(0,0,40,40));
+          v.addChild(btn);
+          pos++;
+        }
       })(i);
     }
   },()=>{
@@ -103,7 +119,7 @@ Base.write("System",()=>{
       btn.addChild(UI.create(UI.image(()=>{
         Render.translate(15,15,()=>{
           Render.scale(15,15,()=>{
-            Render.shadowed(2,UI.theme.split,()=>{
+            Render.shadowed(2,UI.theme.sharp,()=>{
               f();
             });
           });
@@ -126,6 +142,8 @@ Base.write("System",()=>{
     var f = {};
     f.list = {
       Id : {
+        arity : ["In"],
+        coarity : ["Out"],
         draw : ()=>{
           Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(UI.theme.def);
           Render.line(0,-0.6,0,0.6).stroke(0.2)(UI.theme.def);
@@ -133,17 +151,25 @@ Base.write("System",()=>{
         }
       },
       Lambda : {
+        arity : ["y","f"],
+        coarity : ["x"],
         draw : ()=>{
-          Render.line(0,0,-0.4,0.7).stroke(0.2)(UI.theme.def);
-          Render.line(-0.4,-0.7,0.4,0.7).stroke(0.2)(UI.theme.def);
+          Render.meld([
+            Render.line(0,0,-0.4,0.7),
+            Render.line(-0.4,-0.7,0.4,0.7)
+          ]).stroke(0.2)(UI.theme.def);
         }
       },
       Apply : {
+        arity : ["f","x"],
+        coarity : ["y"],
         draw : ()=>{
           Render.circle(0,0,0.4).stroke(0.2)(UI.theme.def);
         }
       },
       Duplicate : {
+        arity : ["In"],
+        coarity : ["Out","Out"],
         draw : ()=>{
           Render.scale(0.7,0.7,()=>{
             Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(UI.theme.def);
@@ -151,17 +177,23 @@ Base.write("System",()=>{
         }
       },
       Discard : {
+        arity : ["In"],
+        coarity : [],
         draw : ()=>{
           Render.line(0,0.2,0,-0.7).stroke(0.2)(UI.theme.def);
           Render.line(0,0.5,0,0.7).stroke(0.2)(UI.theme.def);
         }
       },
       In : {
+        arity : [],
+        coarity : ["Out"],
         draw : ()=>{
           Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(UI.theme.def);
         }
       },
       Out : {
+        arity : ["In"],
+        coarity : [],
         draw : ()=>{
           Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(UI.theme.def);
         }
@@ -204,8 +236,10 @@ Base.write("System",()=>{
       },
       Move : {
         draw : ()=>{
-          Render.line(0.5,0.2,0.5,0.8).stroke(0.1)(UI.theme.def);
-          Render.line(0.2,0.5,0.8,0.5).stroke(0.1)(UI.theme.def);
+          Render.meld([
+            Render.line(0.5,0.2,0.5,0.8),
+            Render.line(0.2,0.5,0.8,0.5)
+          ]).stroke(0.1)(UI.theme.def);
         },
         execute : ()=>function*(f,v){}
       },
@@ -220,6 +254,7 @@ Base.write("System",()=>{
         execute : ()=>function*(f,v){}
       },
       Place : {
+        noButton : true,
         draw : ()=>{
           Render.circle(0.5,0.5,0.25).stroke(0.1)(UI.theme.def);
         },
@@ -229,6 +264,10 @@ Base.write("System",()=>{
           while(p = yield)if(p.onPoint)break;
           if(!p)return;
           if(f.place(p.x,p.y,e)){
+            c.set("Connect",p);
+            f.rewriteAction(s.control.current.execute);
+          }else if(f.at(p.x,p.y) === "Id"){
+            f.replace(p.x,p.y,e);
             c.set("Connect",p);
             f.rewriteAction(s.control.current.execute);
           }
@@ -374,7 +413,7 @@ Base.write("System",()=>{
           });
           Render.circle(0,0,0.2).stroke(0.02)(UI.theme.def);
           Render.scale(0.2,0.2,()=>{
-            Render.shadowed(2/shadowSize,UI.theme.split,()=>{
+            Render.shadowed(2/shadowSize,UI.theme.sharp,()=>{
               r.func.draw();
             });
           });
@@ -426,6 +465,10 @@ Base.write("System",()=>{
     f.exist = (x,y)=>{
       return map[[x,y]]!=null;
     }
+    f.at = (x,y)=>{
+      if(!f.exist(x,y))return null;
+      return map[[x,y]].name;
+    }
     f.place = (x,y,name)=>{
       if(map[[x,y]] != null)return false;
       map[[x,y]] = {};
@@ -436,6 +479,10 @@ Base.write("System",()=>{
         map[[x,y]].neighbor.push(null);
       }
       return true;
+    };
+    f.replace = (x,y,name)=>{
+      map[[x,y]].name = name;
+      map[[x,y]].func = s.func.list[name];
     };
     f.connect = (x1,y1,x2,y2)=>{
       var xc = (x1+x2)/2;

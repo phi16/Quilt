@@ -31,6 +31,7 @@ Base.write("Render",()=>{
         h();
         ctx.restore();
       },
+      raw : f,
       on : (x,y)=>{
         return r(x,y);
       }
@@ -137,12 +138,24 @@ Base.write("Render",()=>{
       return b;
     });
   };
+  r.meld = (xs)=>{
+    return component(()=>{
+      xs.forEach((x)=>{
+        x.raw();
+      });
+    },(x,y)=>{
+      for(var i=0;i<xs.length;i++){
+        if(xs.on(x,y))return true;
+      }
+      return false;
+    });
+  };
   r.translate = (x,y,f)=>{
     ctx.save();
     ctx.translate(x,y);
     f();
     ctx.restore();
-  }
+  };
   r.rotate = (a,f)=>{
     ctx.save();
     ctx.rotate(a);
