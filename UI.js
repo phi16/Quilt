@@ -10,7 +10,8 @@ Base.write("UI",()=>{
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
     split : Color(0.6,0.25,0),
-    def : Color(1,0.5,0)
+    def : Color(1,0.5,0),
+    sharp : Color(0.5,0,0)
   };*/
   u.theme = {
     bg : Color(0,0.1,0.1),
