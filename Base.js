@@ -9,6 +9,7 @@ var Base = (()=>{
   };
   window.onload = ()=>{
     var loadSeq = [
+      "Font",
       "Color",
       "Event",
       "Mouse",

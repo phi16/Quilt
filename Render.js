@@ -138,6 +138,28 @@ Base.write("Render",()=>{
       return b;
     });
   };
+  r.text = (text,s,x,y)=>{
+    if(!Font.available()){
+      return component(Base.void,(x,y)=>false);
+    }else{
+      var p = Font.make(text,s,x,y);
+      var ix = p.ix;
+      var vx = p.vx;
+      var ax = p.ax;
+      function kon(dx){
+        return component(()=>{
+          p.draw(ctx,dx,0);
+        },(x,y)=>false);
+      }
+      return {
+        left : kon(ix),
+        center : kon(vx),
+        right : kon(ax),
+        size : ax-ix
+      };
+    }
+  };
+
   r.meld = (xs)=>{
     return component(()=>{
       xs.forEach((x)=>{

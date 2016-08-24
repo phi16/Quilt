@@ -38,7 +38,8 @@ Base.write("System",()=>{
   Tile.registerTile("Control",(v)=>{
     var sc = s.control;
     var ope = UI.create(UI.inherit(UI.frame(),(v)=>{v.full = false;})).place(10,10,60,60);
-    var oldName = sc.current.name, curName = sc.current.name;
+    var oldName = sc.current.display, curName = sc.current.display;
+    var oldMode = sc.current.name, curMode = sc.current.name;
     var animate = 1;
     ope.addChild(UI.create(UI.image(()=>{
       Render.rect(0,0,1,1).fill(UI.theme.front);
@@ -46,13 +47,13 @@ Base.write("System",()=>{
       Render.translate(0,1-v,()=>{
         Render.scale(1,v,()=>{
           Render.shadowed(4,UI.theme.shadow,()=>{
-            sc.list[oldName].draw();
+            sc.list[oldMode].draw();
           });
         });
       })
       Render.scale(1,1-v,()=>{
         Render.shadowed(4,UI.theme.shadow,()=>{
-          sc.list[curName].draw();
+          sc.list[curMode].draw();
         });
       });
       Render.line(0,1-v,1,1-v).stroke(0.03)(UI.theme.def);
@@ -60,6 +61,21 @@ Base.write("System",()=>{
       if(animate > 1)animate = 1;
     })).place(0,0,60,60));
     v.addChild(ope);
+    v.addChild(UI.create(UI.image(()=>{
+      var v = Math.cos(animate*Math.PI)*0.5+0.5;
+      Render.translate(0,(1-v)*50,()=>{
+        Render.scale(1,v,()=>{
+          Render.shadowed(4,UI.theme.shadow,()=>{
+            Render.text(oldName,50,0,50).left.fill(UI.theme.def);
+          });
+        });
+      });
+      Render.scale(1,1-v,()=>{
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          Render.text(curName,50,0,50).left.fill(UI.theme.def);
+        });
+      });
+    })).place(80,10,1,1));
     var bar = UI.create(UI.image(()=>{
       Render.shadowed(3,UI.theme.shadow,()=>{
         Render.line(0,0,1,0).stroke(0.1)(UI.theme.split);
@@ -68,9 +84,11 @@ Base.write("System",()=>{
     v.addChild(bar);
     sc.listener.on("change",()=>{
       if(!v.available)return true;
-      if(curName == sc.current.name)return;
+      if(curName == sc.current.display)return;
       oldName = curName;
-      curName = sc.current.name;
+      curName = sc.current.display;
+      oldMode = curMode;
+      curMode = sc.current.name;
       animate = 0;
     });
     v.layout = (w,h)=>{
@@ -194,11 +212,6 @@ Base.write("System",()=>{
           Render.line(-0.5,-0.5,0.5,0.5),
           Render.line(-0.5,0.5,0.5,-0.5)
         ]).stroke(0.2)(UI.theme.def);
-      },(r,shadowSize)=>{
-        Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
-          Render.circle(0,0,0.1).fill(UI.theme.base);
-        });
-        Render.circle(0,0,0.1).stroke(0.02)(UI.theme.def);
       }),
       In : make([],["Out"],()=>{
         Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(UI.theme.def);
@@ -268,6 +281,7 @@ Base.write("System",()=>{
         draw : ()=>{
           Render.circle(0.5,0.5,0.25).stroke(0.1)(UI.theme.def);
         },
+        naming : (e)=>{return "Place : " + e;},
         execute : (e)=>function*(f,v){
           if(!e)return;
           var p;
@@ -336,11 +350,17 @@ Base.write("System",()=>{
     c.name = ["Select","Move","Operate","Place","Connect"];
     c.current = {
       name : "Select",
+      display : "Select",
       execute : c.list["Select"].execute()
     };
     c.listener = Listener();
     c.set = (n,opt)=>{
       c.current.name = n;
+      if(c.list[n].naming){
+        c.current.display = c.list[n].naming(opt);
+      }else{
+        c.current.display = n;
+      }
       c.current.execute = c.list[n].execute(opt);
       c.listener.push("change",null);
     };
@@ -400,9 +420,11 @@ Base.write("System",()=>{
               var p = Base.fromDir(i);
               var t = UI.time()%80/80;
               var sz = 0.03;
-              Render.translate(t*p.x,t*p.y,()=>{
-                Render.rotate(-i*Math.PI*2/8,()=>{
-                  Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
+              Render.shadowed(4,UI.theme.shadow,()=>{
+                Render.translate(t*p.x,t*p.y,()=>{
+                  Render.rotate(-i*Math.PI*2/8,()=>{
+                    Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
+                  });
                 });
               });
             }
