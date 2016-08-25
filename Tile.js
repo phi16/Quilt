@@ -55,6 +55,26 @@ Base.write("Tile",()=>{
           d.stroke(2)(UI.theme.frame);
         });
       };
+      var clicked=false,clickTime;
+      v.onPress = (x,y,c)=>{
+        if(c())return true;
+        var curTime = UI.time();
+        if(!clicked || clickTime+10 < curTime){
+          clicked = true;
+          clickTime = curTime;
+        }else if(clicked){
+          var ratio = x / v.rect.w;
+          if(ratio < 1.0/3){
+            t.putTile(t.makeTile(Base.void),v.parent.index,{horizontal:true});
+          }else if(ratio < 2.0/3){
+            t.putTile(t.makeTile(Base.void),v.parent.index,{vertical:true});
+          }else{
+            t.putTile(t.makeTile(Base.void),v.parent.index,{horizontal:true});
+          }
+          clicked = false;
+        }
+        return true;
+      };
     })).place(0,0,0,0);
 
     var menuDisplay = false;
@@ -110,6 +130,9 @@ Base.write("Tile",()=>{
           conf.icon();
         })));
         menu.addChild(btn);
+        menu.addChild(UI.create(UI.image(()=>{
+          Render.text(conf.name,0.3,0,0).center.fill(UI.theme.def);
+        })));
       });
     }
     titleBar.addChild(UI.create(UI.button((v)=>{
@@ -118,12 +141,17 @@ Base.write("Tile",()=>{
       menu.hovering = true;
       //configure menuSizes
       menuWidth = (confX*1.75+1.25)*size;
-      menuHeight = (confY*1.75+0.75)*size;
-      menu.children.forEach((v,i)=>{
+      menuHeight = (confY*2.25+0.75)*size;
+      menu.children.forEach((v,j)=>{
+        var i = Math.floor(j/2);
         var ix = i%confX, iy = Math.floor(i/confX);
-        var px = (ix*1.75+0.5)*size, py = (iy*1.75+0.5)*size;
-        v.place(px,py+titleHeight,1.5*size,1.5*size);
-        v.children[0].place(0,0,1.5*size,1.5*size);
+        var px = (ix*1.75+0.5)*size, py = (iy*2.25+0.5)*size;
+        if(j%2==0){
+          v.place(px,py+titleHeight,1.5*size,1.5*size);
+          v.children[0].place(0,0,1.5*size,1.5*size);
+        }else{
+          v.place(px+1.5*size/2,py+titleHeight+size*2,1.5*size,1.5*size);
+        }
       });
     })).place(0,0,titleHeight,titleHeight));
     fr.addChild(menu);

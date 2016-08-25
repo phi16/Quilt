@@ -122,7 +122,7 @@ Base.write("System",()=>{
       });
     });
   });
-  Tile.registerTile("FunctionList",(v)=>{
+  Tile.registerTile("Function",(v)=>{
     var names = Object.keys(s.func.list);
     var scroll = UI.create(UI.scroll(names.length*50));
     var list = UI.create(UI.vertical(0));
@@ -133,15 +133,28 @@ Base.write("System",()=>{
       var btn = UI.create(UI.button(()=>{
         s.control.set("Place",n);
       })).place(10,10,30,30);
-      var f = s.func.list[n].icon;
+      var f = s.func.list[n];
       btn.addChild(UI.create(UI.image(()=>{
         Render.translate(15,15,()=>{
           Render.scale(15,15,()=>{
-            f();
+            f.icon();
           });
         });
       })).place(0,0,1,1));
       row.addChild(btn);
+      {
+        var text = Render.text(n,40,0,30);
+        var i = "", o = "";
+        f.arity.forEach((s)=>{i += s + "   ";});
+        f.coarity.forEach((s)=>{o += s + "   ";});
+        var iText = Render.text(i,20,text.size+10,13);
+        var oText = Render.text(o,20,text.size+10,32);
+        row.addChild(UI.create(UI.image(()=>{
+          text.left.fill(UI.theme.def);
+          iText.left.fill(UI.theme.in);
+          oText.left.fill(UI.theme.out);
+        })).place(50,10,1,1));
+      }
       list.addChild(row);
     });
   },()=>{
@@ -156,8 +169,8 @@ Base.write("System",()=>{
 
   s.func = (()=>{
     var f = {};
-    function make(ari,coari,icf,drf){
-      if(drf==null){
+    function make(ari,coari,icf,drf,spf){
+      if(drf==null || drf===true){
         drf = (r,shadowSize)=>{
           Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
             Render.circle(0,0,0.2).fill(UI.theme.base);
@@ -170,11 +183,18 @@ Base.write("System",()=>{
           });
         }
       }
+      if(spf==null){
+        spf = drf;
+      }
       return {
         arity : ari,
         coarity : coari,
         draw : (r,shadowSize)=>{
-          drf(r,shadowSize);
+          if(true || r.valid()){
+            spf(r,shadowSize);
+          }else{
+            drf(r,shadowSize);
+          }
         },
         icon : ()=>{
           Render.shadowed(2,UI.theme.sharp,()=>{
@@ -188,14 +208,14 @@ Base.write("System",()=>{
         Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(UI.theme.def);
         Render.line(0,-0.6,0,0.6).stroke(0.2)(UI.theme.def);
         Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(UI.theme.def);
-      },Base.void),
-      Lambda : make(["x","y"],["f"],()=>{
+      }),
+      Lambda : make(["X","Y"],["F"],()=>{
         Render.meld([
           Render.line(0,0,-0.4,0.7),
           Render.line(-0.4,-0.7,0.4,0.7)
         ]).stroke(0.2)(UI.theme.def);
       }),
-      Apply : make(["f","x"],["y"],()=>{
+      Apply : make(["F","X"],["Y"],()=>{
         Render.circle(0,0,0.4).stroke(0.2)(UI.theme.def);
       }),
       Duplicate : make(["In"],["Out","Out"],()=>{

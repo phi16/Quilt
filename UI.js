@@ -24,7 +24,9 @@ Base.write("UI",()=>{
     impact : Color(0.2,0.4,0.48),
     split : Color(0.3,0.8,1.0),
     def : Color(0,1,0.8),
-    sharp : Color(0,0.2,1)
+    sharp : Color(0,0.2,1),
+    in : Color(0,0.8,0.6),
+    out : Color(0.2,0.8,1.0)
   };
   var shadowDepth = 5;
   /**** View
@@ -532,8 +534,13 @@ Base.write("UI",()=>{
       v.layout = (w,h)=>{
         v.rect.w = w;
         v.rect.h = h;
-        if(h > sh)my = dy = 0;
-        else if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
+        if(h > sh){
+          my = dy = 0;
+          scrWidth += (0 - scrWidth) / 2;
+        }else{
+          if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
+          scrWidth += (15 - scrWidth) / 2;
+        }
         main.place(-mx,-my,w-scrWidth,sh);
         scroll.place(w-scrWidth,0,scrWidth,h);
         main.layout(main.rect.w,main.rect.h);
