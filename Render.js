@@ -105,6 +105,20 @@ Base.write("Render",()=>{
       return b;
     });
   };
+  r.arc = (x,y,r,sa,fa)=>{
+    return component(()=>{
+      ctx.arc(x,y,r,-sa,-fa,1);
+    });
+  };
+  r.bezier = (a)=>{
+    if(a.length<8)return component(()=>{},()=>false);
+    return component(()=>{
+      ctx.moveTo(a[0],a[1]);
+      for(var i=2;i<a.length;i+=6){
+        ctx.bezierCurveTo(a[i+0],a[i+1],a[i+2],a[i+3],a[i+4],a[i+5]);
+      }
+    },(x,y)=>false);
+  };
   r.cycle = (a)=>{
     return component(()=>{
       ctx.moveTo(a[0],a[1]);

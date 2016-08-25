@@ -262,9 +262,24 @@ Base.write("System",()=>{
   s.control = (()=>{
     var c = {};
     c.list = {
+      Swap : {
+        draw : ()=>{
+          Render.bezier([0.2,0.8,0.2,0.1,0.8,0.1,0.8,0.8]).stroke(0.1)(UI.theme.split);
+        },
+        execute : ()=>function*(f,v){}
+      },
+      Duplicate : {
+        draw : ()=>{
+          Render.meld([
+            Render.rect(0.2,0.2,0.3,0.3),
+            Render.rect(0.5,0.5,0.3,0.3)
+          ]).stroke(0.1)(UI.theme.split);
+        },
+        execute : ()=>function*(f,v){}
+      },
       Select : {
         draw : ()=>{
-          Render.rect(0.3,0.3,0.4,0.4).stroke(0.1)(UI.theme.def);
+          Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
         },
         execute : ()=>function*(f,v){
           var start = {x:0,y:0},current = {x:0,y:0};
@@ -294,9 +309,18 @@ Base.write("System",()=>{
       Move : {
         draw : ()=>{
           Render.meld([
-            Render.line(0.5,0.2,0.5,0.8),
-            Render.line(0.2,0.5,0.8,0.5)
-          ]).stroke(0.1)(UI.theme.def);
+            Render.line(0.5,0.15,0.5,0.85),
+            Render.line(0.15,0.5,0.85,0.5)
+          ]).stroke(0.1)(UI.theme.split);
+        },
+        execute : ()=>function*(f,v){}
+      },
+      Rotate : {
+        draw : ()=>{
+          Render.meld([
+            Render.line(0.5,0.5,0.5,0.8),
+            Render.arc(0.5,0.5,0.3,Math.PI*3/2,Math.PI)
+          ]).stroke(0.1)(UI.theme.split);
         },
         execute : ()=>function*(f,v){}
       },
@@ -304,7 +328,7 @@ Base.write("System",()=>{
         draw : ()=>{
           Render.translate(0.5,0.5,()=>{
             Render.rotate(Math.PI/4,()=>{
-              Render.rect(-0.18,-0.18,0.36,0.36).stroke(0.1)(UI.theme.def);
+              Render.rect(-0.2,-0.2,0.4,0.4).stroke(0.1)(UI.theme.split);
             });
           });
         },
@@ -327,8 +351,8 @@ Base.write("System",()=>{
       },
       Connect : {
         draw : ()=>{
-          Render.line(0.2,0.37,0.8,0.37).stroke(0.1)(UI.theme.def);
-          Render.line(0.2,0.63,0.8,0.63).stroke(0.1)(UI.theme.def);
+          Render.line(0.15,0.37,0.85,0.37).stroke(0.1)(UI.theme.def);
+          Render.line(0.15,0.63,0.85,0.63).stroke(0.1)(UI.theme.def);
         },
         execute : (u)=>function*(f,v){
           var size = 80;
@@ -378,6 +402,29 @@ Base.write("System",()=>{
           state = 0;
           c.set("Connect");
         }
+      },
+      Name : {
+        draw : ()=>{
+          Render.meld([
+            Render.line(0.5,0.2,0.5,0.8),
+            Render.line(0.3,0.18,0.5,0.2),
+            Render.line(0.7,0.18,0.5,0.2),
+            Render.line(0.3,0.82,0.5,0.8),
+            Render.line(0.7,0.82,0.5,0.8),
+          ]).stroke(0.1)(UI.theme.split);
+        },
+        execute : ()=>function*(f,v){}
+      },
+      Delete : {
+        draw : ()=>{
+          var a = [];
+          for(var i=0;i<8;i++){
+            var x = Math.cos(i*Math.PI/4), y = Math.sin(i*Math.PI/4);
+            a.push(Render.line(x*0.2+0.5,y*0.2+0.5,x*0.38+0.5,y*0.38+0.5));
+          }
+          Render.meld(a).stroke(0.1)(UI.theme.split);
+        },
+        execute : ()=>function*(f,v){}
       }
     };
     c.name = {
