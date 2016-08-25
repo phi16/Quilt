@@ -430,29 +430,46 @@ Base.write("UI",()=>{
       }
     };
   };
-  u.scroll = (sh)=>{
+  u.scroll = (shx,shy,close)=>{
+    var dir = shx==-1 ? true : false;
+    if(close==null)close = true;
     return (v)=>{
       var scrWidth = 15;
       var mx=0,my=0;
       var dx=0,dy=0;
       v.name = "scroll";
       v.full = true;
-      v.clipped = true;
+      v.clipped = false;
       v.checkRightButton = false;
-      var main = UI.create(UI.frame());
+      var main = UI.create((v)=>{
+        v.name = "scrollContainer";
+      });
       var scroll = UI.create(UI.inherit(UI.frame(),(v)=>{
+        v.name = "scrollBar";
         v.layout = (w,h)=>{
           v.rect.w = w;
           v.rect.h = h;
           v.children[0].place(0,0,scrWidth,scrWidth);
-          v.children[1].place(0,h-scrWidth,scrWidth,scrWidth);
-          if(h < sh){
-            var hei = h - scrWidth * 2;
-            var scrH = h / sh * hei;
-            var ratio = my / (sh - h);
-            v.children[2].place(0,scrWidth + ratio * (hei - scrH),scrWidth,scrH);
+          if(dir){
+            v.children[1].place(0,h-scrWidth,scrWidth,scrWidth);
+            if(h < shy){
+              var hei = h - scrWidth * 2;
+              var scrH = h / shy * hei;
+              var ratio = my / (shy - h);
+              v.children[2].place(0,scrWidth + ratio * (hei - scrH),scrWidth,scrH);
+            }else{
+              v.children[2].place(0,0,scrWidth,h);
+            }
           }else{
-            v.children[2].place(0,0,scrWidth,h);
+            v.children[1].place(w-scrWidth,0,scrWidth,scrWidth);
+            if(w < shx){
+              var wid = w - scrWidth * 2;
+              var scrW = w / shx * wid;
+              var ratio = mx / (shx - w);
+              v.children[2].place(scrWidth + ratio * (wid - scrW),0,scrW,scrWidth);
+            }else{
+              v.children[2].place(0,0,w,scrWidth);
+            }
           }
           v.children.forEach((c)=>{
             if(c.full)c.layout(w,h);
@@ -461,33 +478,55 @@ Base.write("UI",()=>{
           v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
         };
       }));
-      function adjust(diffY,baseDy){
+      function adjustX(diffX,baseDx){
+        var w = v.rect.w;
+        var wid = w - scrWidth * 2;
+        var scrW = w / shx * wid;
+        var pos = diffX / (wid - scrW) * (shx - w);
+        dx = baseDx + pos;
+        if(dx < 0)dx = 0;
+        if(dx > shx-v.rect.w)dx = shx-v.rect.w;
+      }
+      function adjustY(diffY,baseDy){
         var h = v.rect.h;
         var hei = h - scrWidth * 2;
-        var scrH = h / sh * hei;
-        var pos = diffY / (hei - scrH) * (sh - h);
+        var scrH = h / shy * hei;
+        var pos = diffY / (hei - scrH) * (shy - h);
         dy = baseDy + pos;
         if(dy < 0)dy = 0;
-        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+        if(dy > shy-v.rect.h)dy = shy-v.rect.h;
       }
+      var adjust = dir ? adjustY : adjustX;
       v.addChild(main);
       v.addChild(scroll);
       scroll.addChild(UI.create(UI.button(()=>{
-        dy -= 50;
-        if(dy < 0)dy = 0;
+        if(dir){
+          dy -= 50;
+          if(dy < 0)dy = 0;
+        }else{
+          dx -= 50;
+          if(dx < 0)dx = 0;
+        }
       })));
       scroll.addChild(UI.create(UI.button(()=>{
-        dy += 50;
-        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+        if(dir){
+          dy += 50;
+          if(dy > shy-v.rect.h)dy = shy-v.rect.h;
+        }else{
+          dx += 50;
+          if(dx > shx-v.rect.w)dx = shx-v.rect.w;
+        }
       })));
       scroll.addChild(UI.create(UI.inherit(UI.button(Base.void),(v)=>{
         var onPress = v.onHover;
         var onHover = v.onHover;
         var onLeave = v.onLeave;
         var onRelease = v.onRelease;
+        var baseX = 0, baseDx = dx;
         var baseY = 0, baseDy = dy;
         v.onPress = (x,y)=>{
-          if(v.rect.h < sh){
+          if(dir && v.rect.h < shy || !dir && v.rect.w < shx){
+            baseX = x + v.rect.x, baseDx = dx;
             baseY = y + v.rect.y, baseDy = dy;
             Mouse.drag = v;
             v.hovering = true;
@@ -496,13 +535,21 @@ Base.write("UI",()=>{
         };
         v.onHover = (x,y)=>{
           if(Mouse.drag == v){
-            adjust(y + v.rect.y - baseY, baseDy);
+            if(dir){
+              adjust(y + v.rect.y - baseY, baseDy);
+            }else{
+              adjust(x + v.rect.x - baseX, baseDx);
+            }
           }
           return onHover(x,y);
         };
         v.onLeave = (x,y)=>{
           if(Mouse.drag == v){
-            adjust(y + v.rect.y - baseY, baseDy);
+            if(dir){
+              adjust(y + v.rect.y - baseY, baseDy);
+            }else{
+              adjust(x + v.rect.x - baseX, baseDx);
+            }
             v.hovering = true;
             return true;
           }
@@ -511,7 +558,11 @@ Base.write("UI",()=>{
         v.onRelease = (x,y)=>{
           onRelease(x,y);
           if(Mouse.drag == v){
-            adjust(y + v.rect.y - baseY, baseDy);
+            if(dir){
+              adjust(y + v.rect.y - baseY, baseDy);
+            }else{
+              adjust(x + v.rect.x - baseX, baseDx);
+            }
             Mouse.drag = null;
             v.hovering = false;
             return true;
@@ -521,10 +572,17 @@ Base.write("UI",()=>{
       })));
       v.onWheel = (x,y)=>{
         var p=x-dx, q=y-dy;
-        if(Mouse.wheel > 0)dy -= 50;
-        else if(Mouse.wheel < 0)dy += 50;
-        if(dy < 0)dy = 0;
-        if(dy > sh-v.rect.h)dy = sh-v.rect.h;
+        if(dir){
+          if(Mouse.wheel > 0)dy -= 50;
+          else if(Mouse.wheel < 0)dy += 50;
+          if(dy < 0)dy = 0;
+          if(dy > shy-v.rect.h)dy = shy-v.rect.h;
+        }else{
+          if(Mouse.wheel > 0)dx -= 50;
+          else if(Mouse.wheel < 0)dx += 50;
+          if(dx < 0)dx = 0;
+          if(dx > shx-v.rect.w)dx = shx-v.rect.w;
+        }
         return false;
       };
       v.render = ()=>{
@@ -534,15 +592,27 @@ Base.write("UI",()=>{
       v.layout = (w,h)=>{
         v.rect.w = w;
         v.rect.h = h;
-        if(h > sh){
-          my = dy = 0;
-          scrWidth += (0 - scrWidth) / 2;
+        if(dir){
+          if(h > shy){
+            my = dy = 0;
+            if(close)scrWidth += (0 - scrWidth) / 2;
+          }else{
+            if(dy > shy-v.rect.h && my > shy-v.rect.h)my = dy = shy-v.rect.h;
+            if(close)scrWidth += (15 - scrWidth) / 2;
+          }
+          main.place(-mx,-my,w-scrWidth,shy);
+          scroll.place(w-scrWidth,0,scrWidth,h);
         }else{
-          if(dy > sh-v.rect.h && my > sh-v.rect.h)my = dy = sh-v.rect.h;
-          scrWidth += (15 - scrWidth) / 2;
+          if(w > shx){
+            mx = dx = 0;
+            if(close)scrWidth += (0 - scrWidth) / 2;
+          }else{
+            if(dx > shx-v.rect.w && mx > shx-v.rect.w)mx = dx = shx-v.rect.w;
+            if(close)scrWidth += (15 - scrWidth) / 2;
+          }
+          main.place(-mx,-my,shx,h-scrWidth);
+          scroll.place(0,h-scrWidth,w,scrWidth);
         }
-        main.place(-mx,-my,w-scrWidth,sh);
-        scroll.place(w-scrWidth,0,scrWidth,h);
         main.layout(main.rect.w,main.rect.h);
         scroll.layout(scroll.rect.w,scroll.rect.h);
         v.shape = Render.rect(0,0,w,h);
@@ -550,6 +620,13 @@ Base.write("UI",()=>{
       v.addChild = (w)=>{
         w.parent = main;
         main.children.push(w);
+      };
+      v.resize = (u)=>{
+        if(dir){
+          shy = u;
+        }else{
+          shx = u;
+        }
       };
     };
   };

@@ -140,7 +140,13 @@ Base.write("Render",()=>{
   };
   r.text = (text,s,x,y)=>{
     if(!Font.available()){
-      return component(Base.void,(x,y)=>false);
+      var stub = component(Base.void,(x,y)=>false);
+      return {
+        left : stub,
+        center : stub,
+        right : stub,
+        size : 0,
+      };
     }else{
       var p = Font.make(text,s,x,y);
       var ix = p.ix;

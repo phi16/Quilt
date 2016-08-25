@@ -95,24 +95,40 @@ Base.write("System",()=>{
       UI.defaultLayout(v)(w,h);
       bar.rect.w = w - 8*2;
     };
+    var scr = UI.create(UI.scroll(1000,-1,false)).place(0,90,1,1);
+    var scrLayout = scr.layout;
+    scr.layout = (w,h)=>{
+      scrLayout(w,95);
+    };
+    v.addChild(scr);
     var pos = 0;
-    for(var i=0;i<sc.name.length;i++){
-      ((j)=>{
-        var name = sc.name[j];
-        if(!sc.list[name].noButton){
-          var btn = UI.create(UI.button(()=>{
-            sc.set(name);
-          })).place(pos*50+10,90,40,40);
-          btn.addChild(UI.create(UI.image(()=>{
-            Render.shadowed(4,UI.theme.shadow,()=>{
-              sc.list[name].draw();
-            });
-          })).place(0,0,40,40));
-          v.addChild(btn);
-          pos++;
-        }
-      })(i);
-    }
+    Object.keys(sc.name).forEach((g)=>{
+      var ns = sc.name[g];
+      var cnt = 0;
+      var plate = UI.create(UI.image(()=>{
+        Render.text(g,30,0,0).left.fill(UI.theme.def);
+      })).place(pos*50+10,70,1,1);
+      for(var i=0;i<ns.length;i++){
+        ((j)=>{
+          var name = ns[j];
+          if(sc.list[name]){
+            var btn = UI.create(UI.button(()=>{
+              sc.set(name);
+            })).place(pos*50+10,0,40,40);
+            btn.addChild(UI.create(UI.image(()=>{
+              Render.shadowed(4,UI.theme.shadow,()=>{
+                sc.list[name].draw();
+              });
+            })).place(0,0,40,40));
+            scr.addChild(btn);
+            pos++;
+            cnt++;
+          }
+        })(i);
+      }
+      if(cnt>0)scr.addChild(plate), pos += 0.2;
+    });
+    scr.resize(pos*50);
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.translate(0.5,0.5,()=>{
@@ -124,7 +140,7 @@ Base.write("System",()=>{
   });
   Tile.registerTile("Function",(v)=>{
     var names = Object.keys(s.func.list);
-    var scroll = UI.create(UI.scroll(names.length*50));
+    var scroll = UI.create(UI.scroll(-1,names.length*50));
     var list = UI.create(UI.vertical(0));
     scroll.addChild(list);
     v.addChild(scroll);
@@ -276,7 +292,6 @@ Base.write("System",()=>{
         }
       },
       Move : {
-        noButton : true,
         draw : ()=>{
           Render.meld([
             Render.line(0.5,0.2,0.5,0.8),
@@ -286,7 +301,6 @@ Base.write("System",()=>{
         execute : ()=>function*(f,v){}
       },
       Operate : {
-        noButton : true,
         draw : ()=>{
           Render.translate(0.5,0.5,()=>{
             Render.rotate(Math.PI/4,()=>{
@@ -297,7 +311,6 @@ Base.write("System",()=>{
         execute : ()=>function*(f,v){}
       },
       Place : {
-        noButton : true,
         draw : ()=>{
           Render.circle(0.5,0.5,0.25).stroke(0.1)(UI.theme.def);
         },
@@ -367,7 +380,12 @@ Base.write("System",()=>{
         }
       }
     };
-    c.name = ["Select","Move","Operate","Place","Connect"];
+    c.name = {
+      Tile : ["Swap","Duplicate"],
+      Field : ["Select","Connect"],
+      Select : ["Operate","Move","Rotate"],
+      Operate : ["Name","Delete"]
+    };
     c.current = {
       name : "Select",
       display : "Select",
