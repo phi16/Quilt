@@ -24,6 +24,7 @@ Base.write("System",()=>{
     }));
     v.store = s.field(c,size);
     v.addChild(c);
+    c.forceMotion();
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -173,6 +174,7 @@ Base.write("System",()=>{
       }
       list.addChild(row);
     });
+    list.forceMotion();
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.line(0.2,0.2+0.05,0.8,0.2+0.05).stroke(0.1)(UI.theme.def);

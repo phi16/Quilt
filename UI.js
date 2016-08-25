@@ -269,6 +269,11 @@ Base.write("UI",()=>{
         }
         return v.children.length == 1;
       };
+      v.forceMotion = ()=>{
+        for(var i=0;i<ratio.length;i++){
+          motRatio[i] = ratio[i];
+        }
+      };
       if(draggable){
         var idx = 0;
         v.grab = (i)=>{
@@ -429,7 +434,12 @@ Base.write("UI",()=>{
       };
       v.scale = ()=>{
         return mz;
-      }
+      };
+      v.forceMotion = ()=>{
+        mx = dx;
+        my = dy;
+        mz = dz;
+      };
     };
   };
   u.scroll = (shx,shy,close)=>{
@@ -651,9 +661,11 @@ Base.write("UI",()=>{
         });
       }
       var procChilds = false;
-      var f = ()=>{
-        if(procChilds)return;
-        procChilds = true;
+      var f = (force)=>{
+        if(!force){
+          if(procChilds)return;
+          procChilds = true;
+        }
         function proc(){
           v.children.forEach(function(w){
             renderView(w);

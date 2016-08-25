@@ -42,9 +42,32 @@ Base.write("Tile",()=>{
         v.shape = Render.rect(0,0,v.rect.w,v.rect.h);
       };
     }));
+    var value = Math.random();
     container = UI.create((v)=>{
       v.name = "container";
       f(v);
+      v.render = (c)=>{
+        if(v.previousRender){
+          v.previousRender(true);
+          var size = Base.distance(0,0,v.rect.w,v.rect.h);
+          v.previousMotion += (1.5 - v.previousMotion) / 48;
+          var r = v.previousMotion;
+          Render.circle(0,0,r*size).dup((d)=>{
+            Render.shadowed(20,UI.theme.shadow,()=>{
+              d.fill(UI.theme.def);
+            });
+            d.clip(()=>{
+              Render.rect(0,0,v.rect.w,v.rect.h).fill(UI.theme.base);
+              c();
+            });
+            d.stroke(4)(UI.theme.frame);
+          });
+          if(v.previousMotion > 1){
+            v.previousRender = null;
+          }
+        }
+        v.lastRender = c;
+      };
     }).place(0,titleHeight,0,0);
     fr.addChild(container);
     titleBar = UI.create(UI.inherit(UI.frame(),(v)=>{
@@ -121,9 +144,12 @@ Base.write("Tile",()=>{
     for(var i=0;i<confTiles.length;i++){
       Base.with(confTiles[i],(conf)=>{
         var btn = UI.create(UI.button(()=>{
+          var ll = fr.children[0].lastRender;
           var cont = t.makeTile(conf.tile).children[0];
           UI.dispose(fr.children[0]);
           fr.rewriteAt(0,cont);
+          fr.children[0].previousRender = ll;
+          fr.children[0].previousMotion = 0;
           console.log("nya!");
         }));
         btn.addChild(UI.create(UI.image(()=>{
