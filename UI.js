@@ -6,12 +6,14 @@ Base.write("UI",()=>{
     base : Color(1,0.98,0.95),
     front : Color(1,0.93,0.83),
     button : Color(1,0.9,0.7),
-    shadow : Color(0.5,0.25,0),
+    shadow : Color(0.7,0.35,0),
     notify : Color(1,0.85,0.7),
     impact : Color(1,0.8,0.7),
     split : Color(0.6,0.25,0),
     def : Color(1,0.5,0),
-    sharp : Color(0.5,0,0)
+    sharp : Color(0.5,0,0),
+    in : Color(0,0.7,0.3),
+    out : Color(0.2,0.6,0.9)
   };*/
   u.theme = {
     bg : Color(0,0.1,0.1),
