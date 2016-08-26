@@ -188,15 +188,16 @@ Base.write("System",()=>{
   s.func = (()=>{
     var f = {};
     function make(ari,coari,icf,drf,spf){
-      if(drf==null || drf===true){
+      if(drf==null){
         drf = (r,shadowSize)=>{
+          var col = r.valid ? UI.theme.def : UI.theme.invalid;
           Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
             Render.circle(0,0,0.2).fill(UI.theme.base);
           });
-          Render.circle(0,0,0.2).stroke(0.02)(UI.theme.def);
+          Render.circle(0,0,0.2).stroke(0.02)(col);
           Render.scale(0.2,0.2,()=>{
             Render.shadowed(2/shadowSize,UI.theme.sharp,()=>{
-              icf();
+              icf(col);
             });
           });
         }
@@ -208,7 +209,7 @@ Base.write("System",()=>{
         arity : ari,
         coarity : coari,
         draw : (r,shadowSize)=>{
-          if(true || r.valid()){
+          if(r.valid){
             spf(r,shadowSize);
           }else{
             drf(r,shadowSize);
@@ -216,46 +217,88 @@ Base.write("System",()=>{
         },
         icon : ()=>{
           Render.shadowed(2,UI.theme.sharp,()=>{
-            icf();
+            icf(UI.theme.def);
           });
         }
       };
     }
     f.list = {
-      Id : make(["In"],["Out"],()=>{
-        Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(UI.theme.def);
-        Render.line(0,-0.6,0,0.6).stroke(0.2)(UI.theme.def);
-        Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(UI.theme.def);
-      }),
-      Lambda : make(["X","Y"],["F"],()=>{
+      Id : make(["In"],["Out"],(col)=>{
+        Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
+        Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
+        Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
+      },null,Base.void),
+      Lambda : make(["Y"],["X","F"],(col)=>{
         Render.meld([
           Render.line(0,0,-0.4,0.7),
           Render.line(-0.4,-0.7,0.4,0.7)
-        ]).stroke(0.2)(UI.theme.def);
+        ]).stroke(0.2)(col);
       }),
-      Apply : make(["F","X"],["Y"],()=>{
-        Render.circle(0,0,0.4).stroke(0.2)(UI.theme.def);
+      Apply : make(["F","X"],["Y"],(col)=>{
+        Render.circle(0,0,0.4).stroke(0.2)(col);
       }),
-      Duplicate : make(["In"],["Out","Out"],()=>{
+      Duplicate : make(["In"],["Out","Out"],(col)=>{
         Render.scale(0.7,0.7,()=>{
-          Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(UI.theme.def);
+          Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
         });
       }),
-      Discard : make(["In"],[],()=>{
-        Render.line(0,0.2,0,-0.7).stroke(0.2)(UI.theme.def);
-        Render.line(0,0.5,0,0.7).stroke(0.2)(UI.theme.def);
+      Discard : make(["In"],[],(col)=>{
+        Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
+        Render.line(0,0.5,0,0.7).stroke(0.2)(col);
       }),
-      Swap : make(["In1","In2"],["Out1","Out2"],()=>{
+      Swap : make(["In1","In2"],["Out1","Out2"],(col)=>{
         Render.meld([
           Render.line(-0.5,-0.5,0.5,0.5),
           Render.line(-0.5,0.5,0.5,-0.5)
-        ]).stroke(0.2)(UI.theme.def);
+        ]).stroke(0.2)(col);
+      },null,(r,shadowSize)=>{
+        var n = r.neighbor;
+        var i1,o1,i2,o2;
+        for(var i=0;i<8;i++){
+          if(n[i]){
+            if(n[i].type){
+              if(!i1)i1 = i;
+              else i2 = i;
+            }else{
+              if(!o1)o1 = i;
+              else o2 = i;
+            }
+          }
+        }
+        var pi1 = Base.fromDir(i1);
+        var po1 = Base.fromDir(o1);
+        var pi2 = Base.fromDir(i2);
+        var po2 = Base.fromDir(o2);
+        Render.shadowed(2/shadowSize,UI.theme.frame,()=>{
+          Render.line(0,0,pi1.x*0.4,pi1.y*0.4).stroke(0.1)(UI.theme.def);
+          Render.line(0,0,po1.x*0.4,po1.y*0.4).stroke(0.1)(UI.theme.def);
+          Render.circle(0,0,0.05).fill(UI.theme.def);
+        });
+        Render.line(0,0,pi1.x/2,pi1.y/2).stroke(0.07)(UI.theme.button);
+        Render.line(0,0,po1.x/2,po1.y/2).stroke(0.07)(UI.theme.button);
+        Render.circle(0,0,0.035).fill(UI.theme.button);
+        var t = UI.time()%80/80;
+        var sz = 0.03;
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          Render.translate(t*pi1.x,t*pi1.y,()=>{
+            Render.rotate(-i1*Math.PI*2/8,()=>{
+              Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
+            });
+          })
+        });
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          Render.translate((1-t)*po1.x,(1-t)*po1.y,()=>{
+            Render.rotate(-o1*Math.PI*2/8,()=>{
+              Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
+            });
+          })
+        });
       }),
-      In : make([],["Out"],()=>{
-        Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(UI.theme.def);
+      In : make([],["Out"],(col)=>{
+        Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
       }),
-      Out : make(["In"],[],()=>{
-        Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(UI.theme.def);
+      Out : make(["In"],[],(col)=>{
+        Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
       })
     };
     return f;
@@ -585,6 +628,8 @@ Base.write("System",()=>{
           map[[x,y]].neighbor.push(null);
         }
       }
+      map[[x,y]].valid = false;
+      f.validate(x,y);
       return true;
     };
     f.connect = (x1,y1,x2,y2)=>{
@@ -602,7 +647,23 @@ Base.write("System",()=>{
       map[[x2,y2]].neighbor[du] = {};
       map[[x2,y2]].neighbor[du].name = "In";
       map[[x2,y2]].neighbor[du].type = false;
+      f.validate(x1,y1);
+      f.validate(x2,y2);
       return true;
+    };
+    f.validate = (x,y)=>{
+      var m = map[[x,y]];
+      m.valid = false;
+      var iCnt = 0, oCnt = 0;
+      for(var i=0;i<8;i++){
+        if(m.neighbor[i]){
+          if(m.neighbor[i].type)oCnt++;
+          else iCnt++;
+        }
+      }
+      if(m.func.arity.length == iCnt && m.func.coarity.length == oCnt){
+        m.valid = true;
+      }
     };
     return f;
   };
