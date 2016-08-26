@@ -269,6 +269,11 @@ Base.write("System",()=>{
         var po1 = Base.fromDir(o1);
         var pi2 = Base.fromDir(i2);
         var po2 = Base.fromDir(o2);
+        Render.shadowed(10/shadowSize,UI.theme.base,()=>{
+          Render.line(0,0,pi1.x*0.2,pi1.y*0.2).stroke(0.1)(UI.theme.base);
+          Render.line(0,0,po1.x*0.2,po1.y*0.2).stroke(0.1)(UI.theme.base);
+          Render.circle(0,0,0.05).fill(UI.theme.base);
+        });
         Render.shadowed(2/shadowSize,UI.theme.frame,()=>{
           Render.line(0,0,pi1.x*0.4,pi1.y*0.4).stroke(0.1)(UI.theme.def);
           Render.line(0,0,po1.x*0.4,po1.y*0.4).stroke(0.1)(UI.theme.def);
