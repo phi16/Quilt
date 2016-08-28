@@ -76,6 +76,33 @@ var Base = (()=>{
       {x:1,y:1}
     ][i];
   };
+  b.reverse = (a,i,j)=>{
+    var u = a.slice(i,j).reverse();
+    return a.slice(0,i).concat(u).concat(a.slice(j));
+  };
+  b.nextPermutation = (a_)=>{
+    var a = Base.clone(a_);
+    var first = 0, last = a.length;
+    if(first==last)return null;
+    var i = first;
+    ++i;
+    if(i==last)return null;
+    i=last;
+    --i;
+    while(1){
+      var ii = i;
+      --i;
+      if(a[i] < a[ii]){
+        var j = last;
+        while(!(a[i] < a[--j]));
+        [a[i],a[j]] = [a[j],a[i]];
+        return Base.reverse(a,ii,last);
+      }
+      if(i == first){
+        return null;
+      }
+    }
+  };
   Math.PHI = (1 + Math.sqrt(5)) / 2;
   return b;
 })();

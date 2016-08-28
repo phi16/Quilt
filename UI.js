@@ -14,7 +14,8 @@ Base.write("UI",()=>{
     sharp : Color(0.5,0,0),
     in : Color(0,0.7,0.3),
     out : Color(0.2,0.6,0.9),
-    invalid : Color(1,0.3,0)
+    invalid : Color(1,0.3,0),
+    select : Color(1,1,1)
   };*/
   u.theme = {
     bg : Color(0,0.1,0.1),
@@ -30,7 +31,8 @@ Base.write("UI",()=>{
     sharp : Color(0,0.2,1),
     in : Color(0,0.8,0.6),
     out : Color(0.2,0.8,1.0),
-    invalid : Color(1,0.5,0)
+    invalid : Color(1,0.5,0),
+    select : Color(1,1,1)
   };
   var shadowDepth = 5;
   /**** View

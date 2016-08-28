@@ -50,7 +50,7 @@ Base.write("Tile",()=>{
         if(v.previousRender){
           v.previousRender(true);
           var size = Base.distance(0,0,v.rect.w,v.rect.h);
-          v.previousMotion += (1.5 - v.previousMotion) / 48;
+          v.previousMotion += (1.2 - v.previousMotion) / 16;
           var r = v.previousMotion;
           Render.circle(0,0,r*size).dup((d)=>{
             Render.shadowed(20,UI.theme.shadow,()=>{
@@ -149,7 +149,7 @@ Base.write("Tile",()=>{
           UI.dispose(fr.children[0]);
           fr.rewriteAt(0,cont);
           fr.children[0].previousRender = ll;
-          fr.children[0].previousMotion = 0;
+          fr.children[0].previousMotion = 0.1;
           console.log("nya!");
         }));
         btn.addChild(UI.create(UI.image(()=>{
@@ -405,26 +405,6 @@ Base.write("Tile",()=>{
     confY = Math.ceil(confTiles.length / confX);
   };
 
-  function makeTree(t,p,v,a){
-    if(t.type==0){
-      t.tile.index = Base.clone(a);
-      v.addChild(t.tile);
-      t.parent = p;
-    }else{
-      var s;
-      if(t.type==1)s = UI.create(UI.horizontal(tileSpace,true,vanishTile));
-      else s = UI.create(UI.vertical(tileSpace,true,vanishTile));
-      t.children.forEach((c,i)=>{
-        a.push(i);
-        makeTree(c,t,s,a);
-        a.pop();
-      });
-      v.addChild(s);
-      t.view = s;
-      t.view.index = Base.clone(a);
-      t.parent = p;
-    }
-  }
   var borderView = UI.create((v)=>{
     v.name = "border";
     v.onPress = (x,y)=>{
@@ -467,11 +447,36 @@ Base.write("Tile",()=>{
       }
     };
   });
-  t.initTile = ()=>{
-    tileTree = {
-      type : 0,
-      tile : t.makeTile(Base.void)
-    };
+  function makeTree(t,p,v,a){
+    if(t.type==0){
+      var f = Base.void;
+      for(var i=0;i<confTiles.length;i++){
+        if(confTiles[i].name == t.name){
+          f = confTiles[i].tile;
+        }
+      }
+      t.tile = Tile.makeTile(f);
+      t.tile.index = Base.clone(a);
+      v.addChild(t.tile);
+      t.parent = p;
+      delete t.name;
+    }else{
+      var s;
+      if(t.type==1)s = UI.create(UI.horizontal(tileSpace,true,vanishTile));
+      else s = UI.create(UI.vertical(tileSpace,true,vanishTile));
+      t.children.forEach((c,i)=>{
+        a.push(i);
+        makeTree(c,t,s,a);
+        a.pop();
+      });
+      v.addChild(s);
+      t.view = s;
+      t.view.index = Base.clone(a);
+      t.parent = p;
+    }
+  }
+  t.initTile = (kon)=>{
+    tileTree = kon;
     UI.root.addChild(view);
     UI.root.addChild(borderView);
     makeTree(tileTree,null,view,[]);
