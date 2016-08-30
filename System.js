@@ -453,7 +453,8 @@ Base.write("System",()=>{
               }else{
                 if(!f.exist(curX,curY)){
                   f.place(curX,curY,"Id");
-                }else{
+                }
+                {
                   var a=0,ca=0;
                   for(var i=0;i<8;i++){
                     var b = f.bridge(curX,curY,i);
@@ -462,7 +463,7 @@ Base.write("System",()=>{
                       else a++;
                     }
                   }
-                  if(a==2 && ca==1 && !f.exist(p.x,p.y)){
+                  if(a==2 && ca==1){
                     f.place(curX,curY,"Swap");
                   }
                 }
@@ -486,6 +487,19 @@ Base.write("System",()=>{
                         }
                       }
                     }
+                  }
+                }
+                if(f.at(p.x,p.y) == "Id"){
+                  var a=0,ca=0;
+                  for(var i=0;i<8;i++){
+                    var b = f.bridge(p.x,p.y,i);
+                    if(b){
+                      if(b.type)ca++;
+                      else a++;
+                    }
+                  }
+                  if(a==2 && ca==2){
+                    f.place(p.x,p.y,"Swap");
                   }
                 }
               }
