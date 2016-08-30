@@ -162,13 +162,15 @@ Base.write("Render",()=>{
         size : 0,
       };
     }else{
-      var p = Font.make(text,s,x,y);
+      var p = Font.make(text,s,0,0);
       var ix = p.ix;
       var vx = p.vx;
       var ax = p.ax;
       function kon(dx){
         return component(()=>{
-          p.draw(ctx,dx,0);
+          Render.translate(x,y,()=>{
+            p.draw(ctx,dx,0);
+          })
         },(x,y)=>false);
       }
       return {

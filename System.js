@@ -454,7 +454,11 @@ Base.write("System",()=>{
                 if(!f.exist(curX,curY)){
                   f.place(curX,curY,"Id");
                 }
-                {
+                if(!f.exist(p.x,p.y)){
+                  f.place(p.x,p.y,"Id");
+                }
+                f.connect(curX,curY,p.x,p.y);
+                if(f.at(curX,curY) == "Id"){
                   var a=0,ca=0;
                   for(var i=0;i<8;i++){
                     var b = f.bridge(curX,curY,i);
@@ -463,14 +467,23 @@ Base.write("System",()=>{
                       else a++;
                     }
                   }
-                  if(a==2 && ca==1){
+                  if(a==2 && ca==2){
                     f.place(curX,curY,"Swap");
                   }
                 }
-                if(!f.exist(p.x,p.y)){
-                  f.place(p.x,p.y,"Id");
+                if(f.at(p.x,p.y) == "Id"){
+                  var a=0,ca=0;
+                  for(var i=0;i<8;i++){
+                    var b = f.bridge(p.x,p.y,i);
+                    if(b){
+                      if(b.type)ca++;
+                      else a++;
+                    }
+                  }
+                  if(a==2 && ca==2){
+                    f.place(p.x,p.y,"Swap");
+                  }
                 }
-                f.connect(curX,curY,p.x,p.y);
                 if(f.at(curX,curY)=="Swap" && !(q.x==curX && q.y==curY)){
                   var d1 = Base.dir(q.x-curX,q.y-curY);
                   var d2 = Base.dir(p.x-curX,p.y-curY);
@@ -487,19 +500,6 @@ Base.write("System",()=>{
                         }
                       }
                     }
-                  }
-                }
-                if(f.at(p.x,p.y) == "Id"){
-                  var a=0,ca=0;
-                  for(var i=0;i<8;i++){
-                    var b = f.bridge(p.x,p.y,i);
-                    if(b){
-                      if(b.type)ca++;
-                      else a++;
-                    }
-                  }
-                  if(a==2 && ca==2){
-                    f.place(p.x,p.y,"Swap");
                   }
                 }
               }
@@ -699,14 +699,6 @@ Base.write("System",()=>{
             if(e.type){
               Render.line(0,0,p.x,p.y).stroke(0.07)(UI.theme.button);
             }
-            if(e.name){
-              // Debug
-              if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
-                Render.rotate(-i*Math.PI/4,()=>{
-                  Render.text(e.name,0.2,0.2,-0.1).left.fill(Color(1,1,0));
-                });
-              }
-            }
           }
         })
       });
@@ -730,6 +722,18 @@ Base.write("System",()=>{
       });
       allDraw((x,y,r)=>{
         r.func.draw(r,shadowSize);
+        r.neighbor.forEach((e,i)=>{
+          if(e){
+            if(e.name){
+              if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
+                var dx = 0.4, dy = 0.18;
+                var a = i*Math.PI/4;
+                [dx,dy] = [dx*Math.cos(a)+dy*Math.sin(a), -dx*Math.sin(a)+dy*Math.cos(a)];
+                Render.text(e.name,0.2,dx,dy+0.09).center.fill(UI.theme.frame);
+              }
+            }
+          }
+        });
       });
     }),(v)=>{v.name="layer";})).place(0,0,1,1));
     var overlay = UI.create((v)=>{v.name="overlay";});
