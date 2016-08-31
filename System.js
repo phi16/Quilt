@@ -341,6 +341,7 @@ Base.write("System",()=>{
           var size = 80;
           var start = {x:0,y:0},current = {x:0,y:0};
           var first = true, end = false;
+          var firstPoint = null, pointOnly = true;
           v.addChild(UI.create(UI.image(()=>{
             if(!first && !end){
               Render.shadowed(4,UI.theme.frame,()=>{
@@ -349,22 +350,40 @@ Base.write("System",()=>{
             }
           })).place(0,0,1,1));
           while(true){
-            while(p = yield)if(!p.onPoint)break;
+            while(p = yield)if(!p.onPoint){
+              firstPoint = {x:p.x,y:p.y};
+              break;
+            }
             if(!p)break;
             if(first){
               first = false;
               start.x = current.x = p.x;
               start.y = current.y = p.y;
             }else{
+              pointOnly = false;
               current.x = p.x;
               current.y = p.y;
             }
           }
-          var a = Math.floor(start.x/size), b = Math.floor(start.y/size);
-          var c = Math.floor(current.x/size), d = Math.floor(current.y/size);
-          if(c < a)[a,c] = [c,a];
-          if(d < b)[b,d] = [d,b];
-          f.select.init(a+1,b+1,c+1,d+1);
+          if(pointOnly){
+            var ox = firstPoint.x/size, oy = firstPoint.y/size;
+            var ux = Math.floor(ox+0.5), uy = Math.floor(oy+0.5);
+            var vx = Math.floor(ox+0.5), vy = Math.floor(oy);
+            var hx = Math.floor(ox), hy = Math.floor(oy+0.5);
+            if(Base.distance(ox,oy,ux,uy) < 0.3){
+              f.select.init(ux,uy,ux+1,uy+1);
+            }else if(Math.abs(ox-vx) < 0.2){
+              f.select.init(vx,vy,vx+1,vy+2);
+            }else if(Math.abs(oy-hy) < 0.2){
+              f.select.init(hx,hy,hx+2,hy+1);
+            }
+          }else{
+            var a = Math.floor(start.x/size), b = Math.floor(start.y/size);
+            var c = Math.floor(current.x/size), d = Math.floor(current.y/size);
+            if(c < a)[a,c] = [c,a];
+            if(d < b)[b,d] = [d,b];
+            f.select.init(a+1,b+1,c+1,d+1);
+          }
           end = true;
         }
       },
@@ -726,7 +745,7 @@ Base.write("System",()=>{
           if(e){
             if(e.name){
               if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
-                var dx = 0.4, dy = 0.18;
+                var dx = 0.3, dy = 0.18;
                 var a = i*Math.PI/4;
                 [dx,dy] = [dx*Math.cos(a)+dy*Math.sin(a), -dx*Math.sin(a)+dy*Math.cos(a)];
                 Render.text(e.name,0.2,dx,dy+0.09).center.fill(UI.theme.frame);
@@ -933,12 +952,14 @@ Base.write("System",()=>{
             type : 0,
             name : "Function"
           }
-        ]
+        ],
+        ratio : [0.7]
       },{
         type : 0,
         name : "Control"
       }
-    ]
+    ],
+    ratio : [0.7]
   });
 
   return s;

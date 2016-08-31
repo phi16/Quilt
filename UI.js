@@ -278,6 +278,11 @@ Base.write("UI",()=>{
           motRatio[i] = ratio[i];
         }
       };
+      v.setRatio = (a)=>{
+        for(var i=0;i<a.length;i++){
+          motRatio[i] = ratio[i] = a[i];
+        }
+      };
       if(draggable){
         var idx = 0;
         v.grab = (i)=>{
