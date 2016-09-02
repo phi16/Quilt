@@ -370,12 +370,16 @@ Base.write("System",()=>{
             var ux = Math.floor(ox+0.5), uy = Math.floor(oy+0.5);
             var vx = Math.floor(ox+0.5), vy = Math.floor(oy);
             var hx = Math.floor(ox), hy = Math.floor(oy+0.5);
-            if(Base.distance(ox,oy,ux,uy) < 0.3){
+            if(Base.distance(ox,oy,ux,uy) < 0.2){
               f.select.init(ux,uy,ux+1,uy+1);
-            }else if(Math.abs(ox-vx) < 0.2){
+            }else if(Math.abs(ox-vx) < 0.2 && f.bridge(vx,vy,6)){
               f.select.init(vx,vy,vx+1,vy+2);
-            }else if(Math.abs(oy-hy) < 0.2){
+            }else if(Math.abs(oy-hy) < 0.2 && f.bridge(hx,hy,0)){
               f.select.init(hx,hy,hx+2,hy+1);
+            }else if(Base.distance(ox,oy,ux,uy) < 0.3){
+              f.select.init(ux,uy,ux+1,uy+1);
+            }else {
+              f.select.init(0,0,0,0);
             }
           }else{
             var a = Math.floor(start.x/size), b = Math.floor(start.y/size);

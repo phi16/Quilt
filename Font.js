@@ -2,7 +2,7 @@ Base.write("Font",()=>{
   var f = {};
   var font = null;
   f.available = ()=>font!=null;
-  opentype.load('/res/ReemKufi-Regular.ttf',(err,f)=>{
+  opentype.load('/Quilt/res/ReemKufi-Regular.ttf',(err,f)=>{
     if(err)console.log(err);
     else font = f;
   });
