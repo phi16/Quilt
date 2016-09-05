@@ -607,6 +607,7 @@ Base.write("System",()=>{
                 }
               }
               f.validate(p.x,p.y);
+              break;
             }
           }
         }
@@ -664,7 +665,7 @@ Base.write("System",()=>{
     var f = {};
     var map = {}, selection = [];
     var action = null;
-    var lastE,lastX,lastY; 
+    var lastE,lastX,lastY;
     function allDraw(f){
       Render.scale(size,size,()=>{
         for(var i in map){
@@ -676,6 +677,7 @@ Base.write("System",()=>{
       });
     }
     v.addChild(UI.create(UI.inherit(UI.image(()=>{
+      f.update();
       Render.shadowed(5/shadowSize,UI.theme.select,()=>{
         allDraw((x,y,r)=>{
           if(r.select){
@@ -749,7 +751,7 @@ Base.write("System",()=>{
           if(e){
             if(e.name){
               if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
-                var dx = 0.3, dy = 0.18;
+                var dx = 0.33, dy = 0.15;
                 var a = i*Math.PI/4;
                 [dx,dy] = [dx*Math.cos(a)+dy*Math.sin(a), -dx*Math.sin(a)+dy*Math.cos(a)];
                 Render.text(e.name,0.2,dx,dy+0.09).center.fill(UI.theme.frame);
@@ -864,9 +866,11 @@ Base.write("System",()=>{
         f.validate(x+p.x,y+p.y);
       }
     }
+    f.validated = false;
     f.validate = (x,y)=>{
       var m = map[[x,y]];
       m.valid = false;
+      m.validIO = false;
       var iCnt = 0, oCnt = 0;
       for(var i=0;i<8;i++){
         if(m.neighbor[i]){
@@ -875,7 +879,7 @@ Base.write("System",()=>{
         }
       }
       if(m.func.arity.length == iCnt && m.func.coarity.length == oCnt){
-        m.valid = true;
+        m.validIO = true;
         var ip = 0, op = 0;
         for(var i=0;i<8;i++){
           if(m.neighbor[i]){
@@ -894,6 +898,47 @@ Base.write("System",()=>{
             m.neighbor[i].name = null;
           }
         }
+      }
+      f.validated = true;
+    };
+    f.update = ()=>{
+      function traverse(x,y){
+        function f(i,j){
+          if(i==x && y==j || map[[i,j]].depend[[x,y]])return;
+          map[[i,j]].depend[[x,y]] = true;
+          for(var k=0;k<8;k++){
+            if(map[[i,j]].neighbor[k] && map[[i,j]].neighbor[k].type){
+              var d = Base.fromDir(k);
+              f(i+d.x,j+d.y);
+            }
+          }
+        }
+        return f;
+      }
+      if(f.validated){
+        Object.keys(map).forEach((k)=>{
+          map[k].depend = {};
+          if(map[k].validIO)map[k].valid = true;
+        });
+        Object.keys(map).forEach((k)=>{
+          if(map[k].name == "Lambda" && map[k].validIO){
+            for(var i=0;i<8;i++){
+              if(map[k].neighbor[i] && map[k].neighbor[i].name=="X"){
+                var a = k.split(",").map((x)=>parseInt(x));
+                var d = Base.fromDir(i);
+                traverse(a[0],a[1])(a[0]+d.x,a[1]+d.y);
+              }
+            }
+          }
+        });
+        Object.keys(map).forEach((k)=>{
+          if(map[k].name == "Out" && map[k].validIO){
+            if(Object.keys(map[k].depend).length != 0){
+              map[k].valid = false;
+            }
+          }
+        });
+        f.validated = false;
       }
     };
     f.valid = (x,y)=>{

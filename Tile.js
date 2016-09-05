@@ -49,10 +49,10 @@ Base.write("Tile",()=>{
       v.render = (c)=>{
         if(v.previousRender){
           v.previousRender(true);
-          var size = Base.distance(0,0,v.rect.w,v.rect.h);
-          v.previousMotion += (1.2 - v.previousMotion) / 16;
+          var size = Math.max(v.rect.w,v.rect.h);
+          v.previousMotion += (1 - v.previousMotion) / 8;
           var r = v.previousMotion;
-          Render.circle(0,0,r*size).dup((d)=>{
+          Render.rect(0,0,r*size,r*size).dup((d)=>{
             Render.shadowed(20,UI.theme.shadow,()=>{
               d.fill(UI.theme.def);
             });
