@@ -51,7 +51,7 @@ Base.write("System",()=>{
             sc.list[oldMode].draw(UI.theme.def);
           });
         });
-      })
+      });
       Render.scale(1,1-v,()=>{
         Render.shadowed(4,UI.theme.shadow,()=>{
           sc.list[curMode].draw(UI.theme.def);
@@ -108,7 +108,7 @@ Base.write("System",()=>{
       var ns = sc.name[g];
       var cnt = 0;
       var plate = UI.create(UI.image(()=>{
-        Render.text(g,30,0,0).left.fill(UI.theme.def);
+        Render.text(g,30,0,0).left.fill(sc.available[g] ? UI.theme.def : UI.theme.split);
       })).place(pos*50+10,70,1,1);
       for(var i=0;i<ns.length;i++){
         ((j)=>{
@@ -186,6 +186,33 @@ Base.write("System",()=>{
       Render.line(0.2,0.8-0.05,0.8,0.8-0.05).stroke(0.1)(UI.theme.def);
     });
   });
+  Tile.registerTile("Evaluate",(v)=>{
+    var e = null;
+    s.field.listener.listen((n,d)=>{
+      e = Eval(d.field,d.map);
+    });
+    v.addChild(UI.create(UI.image(()=>{
+      Render.shadowed(4,UI.theme.shadow,()=>{
+        Render.text("Status",25,10,30).left.fill(UI.theme.def);
+        Render.text("Output",25,10,90).left.fill(UI.theme.def);
+      });
+      if(e){
+        if(e.status.error){
+          Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
+        }else{
+          Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
+        }
+      }else{
+        Render.text("No field",25,30,58).left.fill(UI.theme.split);
+      }
+    })).place(0,0,1,1));
+  },()=>{
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.meld([
+        Render.circle(0.5,0.5,0.3)
+      ]).stroke(0.1)(UI.theme.def);
+    });
+  });
 
   s.func = (()=>{
     var f = {};
@@ -193,12 +220,13 @@ Base.write("System",()=>{
       if(drf==null){
         drf = (r,shadowSize)=>{
           var col = r.valid ? UI.theme.def : UI.theme.invalid;
+          var sdw = r.valid ? UI.theme.sharp : Color(1,0.2,0);
           Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
             Render.circle(0,0,0.2).fill(UI.theme.base);
           });
           Render.circle(0,0,0.2).stroke(0.02)(col);
           Render.scale(0.2,0.2,()=>{
-            Render.shadowed(2/shadowSize,UI.theme.sharp,()=>{
+            Render.shadowed(2/shadowSize,sdw,()=>{
               icf(col);
             });
           });
@@ -232,8 +260,8 @@ Base.write("System",()=>{
       },null,Base.void),
       Lambda : make(["Y"],["X","F"],(col)=>{
         Render.meld([
-          Render.line(0,0,-0.4,0.7),
-          Render.line(-0.4,-0.7,0.4,0.7)
+          Render.line(0,-0.1,-0.4,0.7),
+          Render.line(-0.2,-0.7,0.4,0.7)
         ]).stroke(0.2)(col);
       }),
       Apply : make(["F","X"],["Y"],(col)=>{
@@ -901,6 +929,7 @@ Base.write("System",()=>{
       }
       f.validated = true;
     };
+    f.error = null;
     f.update = ()=>{
       function traverse(x,y){
         function f(i,j){
@@ -916,9 +945,14 @@ Base.write("System",()=>{
         return f;
       }
       if(f.validated){
+        f.error = null;
         Object.keys(map).forEach((k)=>{
           map[k].depend = {};
           if(map[k].validIO)map[k].valid = true;
+          else{
+            if(!f.error)f.error = "Invalid (co)arity : ("+k+")";
+            else f.error += ", ("+k+")";
+          }
         });
         Object.keys(map).forEach((k)=>{
           if(map[k].name == "Lambda" && map[k].validIO){
@@ -931,14 +965,26 @@ Base.write("System",()=>{
             }
           }
         });
+        var boundError = null;
+        var outCount = 0;
         Object.keys(map).forEach((k)=>{
           if(map[k].name == "Out" && map[k].validIO){
             if(Object.keys(map[k].depend).length != 0){
               map[k].valid = false;
+              if(!f.error){
+                if(!boundError)boundError = "Invalid bound variable : ("+k+")";
+                else boundError += ", ("+k+")";
+              }
             }
+            outCount++;
           }
         });
+        if(!f.error)f.error = boundError;
+        if(!f.error && outCount!=1){
+          f.error = "There must be only one Out func";
+        }
         f.validated = false;
+        s.field.listener.push("update",{field:f,map:map});
       }
     };
     f.valid = (x,y)=>{
@@ -987,6 +1033,7 @@ Base.write("System",()=>{
     })();
     return f;
   };
+  s.field.listener = Listener();
 
   Tile.initTile({
     type : 2,
@@ -1004,8 +1051,17 @@ Base.write("System",()=>{
         ],
         ratio : [0.7]
       },{
-        type : 0,
-        name : "Control"
+        type : 1,
+        children : [
+          {
+            type : 0,
+            name : "Evaluate"
+          },{
+            type : 0,
+            name : "Control"
+          }
+        ],
+        ratio : [0.3]
       }
     ],
     ratio : [0.7]

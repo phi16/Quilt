@@ -10,6 +10,7 @@ Base.write("Font",()=>{
     if(x==null)x=0;
     if(y==null)y=0;
     if(size==null)size = 1;
+    text = text.replace(/ /g,"  ");
     var p = font.getPath(text,x,y,size);
     var ix=0,ax=0,vx;
     for(var i=0;i<p.commands.length;i++){

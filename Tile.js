@@ -44,7 +44,7 @@ Base.write("Tile",()=>{
     }));
     var value = Math.random();
     container = UI.create((v)=>{
-      v.name = "container";
+      v.name = "Blank";
       f(v);
       v.render = (c)=>{
         if(v.previousRender){
@@ -180,6 +180,9 @@ Base.write("Tile",()=>{
         }
       });
     })).place(0,0,titleHeight,titleHeight));
+    titleBar.addChild(UI.create(UI.image(()=>{
+      Render.text(container.name,15,3,-4).left.fill(UI.theme.frame);
+    })).place(titleHeight,titleHeight,1,1));
     fr.addChild(menu);
     fr.addChild(titleBar);
     return fr;
@@ -398,7 +401,10 @@ Base.write("Tile",()=>{
   t.registerTile = (n,t,i)=>{
     confTiles.push({
       name : n,
-      tile : t,
+      tile : (v)=>{
+        t(v);
+        v.name = n;
+      },
       icon : i
     });
     confX = Math.ceil(Math.sqrt(confTiles.length*Math.PHI));

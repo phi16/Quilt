@@ -17,7 +17,8 @@ var Base = (()=>{
       "Render",
       "UI",
       "Tile",
-      "System"
+      "Eval",
+      "System",
     ];
     loadSeq.forEach(function(n){
       window[n] = a[n]();
