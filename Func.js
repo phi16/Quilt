@@ -44,7 +44,7 @@ Base.write("Func",()=>{
     Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
     Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
   },null,Base.void)),
-  System.func.register("Lambda",make(["Y"],["X","F"],function*(m,p,d,s,e,de,err){
+  System.func.register("Lambda",make(["Y"],["F","X"],function*(m,p,d,s,e,de,err){
     if(m.coarity["F"][0] == d){
       return {
         type : "function",
@@ -73,7 +73,7 @@ Base.write("Func",()=>{
     var res = yield* de(m.arity["F"][0]);
     if(res.type == "function"){
       var scope = Base.clone(res.scope);
-      if(scope[[res.position.x,res.position.y]])return err("Duplicate variable : " + Base.str(scope[p]));
+      if(scope[[res.position.x,res.position.y]])return err("Duplicate variable : " + Base.str(scope[[res.position.x,res.position.y]]));
       scope[[res.position.x,res.position.y]] = {
         type : "thunk",
         position : p,
@@ -171,6 +171,210 @@ Base.write("Func",()=>{
     return err("Try to evaluate Out");
   },(col)=>{
     Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
+  }));
+  System.func.register("Zero",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 0
+    };
+  },(col)=>{
+    Render.text("0",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("One",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 1
+    };
+  },(col)=>{
+    Render.text("1",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("Two",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 2
+    };
+  },(col)=>{
+    Render.text("2",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("Three",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 3
+    };
+  },(col)=>{
+    Render.text("3",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("Four",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 4
+    };
+  },(col)=>{
+    Render.text("4",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("Five",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "number",
+      number : 5
+    };
+  },(col)=>{
+    Render.text("5",2,0,0.65).center.fill(col);
+  }));
+  System.func.register("Plus",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    var y = yield* de(m.arity["In"][1]);
+    if(x.type == "number" && y.type == "number"){
+      return {
+        type : "number",
+        number : x.number + y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.5,0,0.5,0),
+      Render.line(0,0.5,0,-0.5)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("Minus",make(["X","Y"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["X"][0]);
+    var y = yield* de(m.arity["Y"][0]);
+    if(x.type == "number" && y.type == "number"){
+      return {
+        type : "number",
+        number : x.number - y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.6,0,0.6,0)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("Multiply",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    var y = yield* de(m.arity["In"][1]);
+    if(x.type == "number" && y.type == "number"){
+      return {
+        type : "number",
+        number : x.number * y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.5,-0.5,0.5,0.5),
+      Render.line(-0.5,0.5,0.5,-0.5)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("Divide",make(["X","Y"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["X"][0]);
+    var y = yield* de(m.arity["Y"][0]);
+    if(x.type == "number" && y.type == "number"){
+      return {
+        type : "number",
+        number : x.number / y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.6,0,0.6,0),
+      Render.line(0,-0.6,0,-0.35),
+      Render.line(0,0.6,0,0.35)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("True",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "boolean",
+      boolean : true
+    };
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.4,-0.4,0.4,-0.4),
+      Render.line(0,-0.4,0,0.6)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("False",make([],["Out"],function*(m,p,d,s,e,de,err){
+    return {
+      type : "boolean",
+      boolean : false
+    };
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.4,0.4,0.4,0.4),
+      Render.line(0,0.4,0,-0.6)
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("And",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    var y = yield* de(m.arity["In"][1]);
+    if(x.type == "boolean" && y.type == "boolean"){
+      return {
+        type : "boolean",
+        boolean : x.boolean && y.boolean
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,0.6,0,-0.4,0.4,0.6])
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("Or",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    var y = yield* de(m.arity["In"][1]);
+    if(x.type == "boolean" && y.type == "boolean"){
+      return {
+        type : "boolean",
+        boolean : x.boolean || y.boolean
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,-0.6,0,0.4,0.4,-0.6])
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("Not",make(["In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    if(x.type == "boolean"){
+      return {
+        type : "boolean",
+        boolean : !x.boolean
+      };
+    }else return err("Type mismatch : " + x.type);
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.5,-0.1,0.4,-0.1,0.4,0.3])
+    ]).stroke(0.2)(col);
+  }));
+  System.func.register("If",make(["C","T","F"],["Out"],function*(m,p,d,s,e,de,err){
+    var c = yield* de(m.arity["C"][0]);
+    if(c.type == "boolean"){
+      var res = yield* de(m.arity[c.boolean?"T":"F"][0]);
+      return res;
+    }else return err("Type mismatch : " + c.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(0,0.3,0,0,1),
+      Render.arc(0,-0.2,0.3,Math.PI*3/2,Math.PI)
+    ]).stroke(0.2)(col);
+    Render.line(0,0.5,0,0.7).stroke(0.2)(col);
+  }));
+  System.func.register("Equal",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["In"][0]);
+    var y = yield* de(m.arity["In"][1]);
+    if(x.type == "boolean" && y.type == "boolean"){
+      return {
+        type : "boolean",
+        boolean : x.boolean === y.boolean
+      };
+    }else if(x.type == "number" && y.type == "number"){
+      return {
+        type : "boolean",
+        boolean : x.number === y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.5,-0.25,0.5,-0.25),
+      Render.line(-0.5,0.25,0.5,0.25)
+    ]).stroke(0.2)(col);
   }));
   return {};
 });

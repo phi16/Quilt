@@ -163,8 +163,8 @@ Base.write("System",()=>{
       {
         var text;
         var i = "", o = "";
-        f.arity.forEach((s)=>{i += s + "   ";});
-        f.coarity.forEach((s)=>{o += s + "   ";});
+        f.arity.forEach((s)=>{i += s + "  ";});
+        f.coarity.forEach((s)=>{o += s + "  ";});
         var iText;
         var oText;
         row.addChild(UI.create(UI.image(()=>{
@@ -188,6 +188,7 @@ Base.write("System",()=>{
   });
   Tile.registerTile("Evaluate",(v)=>{
     var e = null;
+    var evalTimer = null;
     s.field.listener.listen((n,d)=>{
       e = Eval(d.field,d.map);
     });
@@ -205,20 +206,42 @@ Base.write("System",()=>{
         if(e.output){
           Render.text(e.output,25,30,118).left.fill(UI.theme.frame);
         }else{
-          Render.text("Evaluating...",25,30,118).left.fill(UI.theme.split);
+          if(evalTimer){
+            Render.text("Evaluating...",25,30,118).left.fill(UI.theme.split);
+          }else{
+            Render.text("No output",25,30,118).left.fill(UI.theme.split);
+          }
         }
       }else{
         Render.text("No field",25,30,58).left.fill(UI.theme.split);
         Render.text("No output",25,30,118).left.fill(UI.theme.split);
       }
     })).place(0,0,1,1));
-    v.addChild(UI.create(UI.button(()=>{
-      if(e && e.status.success){
-        console.log("EVALUATOR:",e.eval.next());
-      }else{
-        console.log("EVALUATOR:","No field");
+    v.addChild(UI.create(UI.inherit(UI.button(()=>{
+      if(evalTimer)clearInterval(evalTimer);
+      else{
+        evalTimer = setInterval(()=>{
+          if(e && e.status.success){
+            if(e.eval.next().done){
+              clearInterval(evalTimer);
+              evalTimer = null;
+            }
+          }else{
+            console.log("EVALUATOR:","No field");
+            clearInterval(evalTimer);
+            evalTimer = null;
+          }
+        },10);
       }
-    })).place(90,70,40,25));
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        if(e && e.status.success){
+          Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+        }else{
+          Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
+        }
+      })).place(5,30,1,1));
+    })).place(10,130,120,40));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -342,7 +365,7 @@ Base.write("System",()=>{
       },
       Place : {
         draw : (col)=>{
-          Render.circle(0.5,0.5,0.25).stroke(0.1)(col);
+          //Render.circle(0.5,0.5,0.25).stroke(0.1)(col);
         },
         naming : (e)=>{return "Place : " + e;},
         execute : (e)=>function*(f,v){
@@ -971,7 +994,7 @@ Base.write("System",()=>{
               name : "Control"
             }
           ],
-          ratio : [0.3]
+          ratio : [0.4]
         }
       ],
       ratio : [0.7]

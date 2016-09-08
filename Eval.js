@@ -2,7 +2,7 @@ Base.write("Eval",()=>{
   return (field,map)=>{
     var e = {};
     function* evaluate(position,bridge,scope){
-      yield "begin("+position.x+","+position.y+") [(" + position.x + "," + position.y + ")," + bridge + "," + JSON.stringify(scope) + "]";
+      yield "begin("+position.x+","+position.y+")";
       var p = Base.fromDir(bridge);
       var nd = (bridge+4)%8;
       var np = {x:position.x+p.x,y:position.y+p.y};
@@ -11,15 +11,15 @@ Base.write("Eval",()=>{
         var r = yield* evaluate(np,d,scope);
         return r;
       },(str)=>{
-        var e = {
+        var err = {
           type : "error",
           name : m.name + "(" + np.x + "," + np.y + ")",
           error : str
         };
-        console.log(JSON.stringify(e));
+        console.log(JSON.stringify(err));
         e.status.error = "Failed to evaluate";
         delete e.status.success;
-        return e;
+        return err;
       });
       yield "end("+position.x+","+position.y+")";
       return res;
@@ -50,6 +50,11 @@ Base.write("Eval",()=>{
         var f = yield* display(res.function);
         var x = yield* display(res.argument);
         return "(" + f + " " + x + ")";
+      }else if(res.type == "number"){
+        return String(res.number);
+      }else if(res.type == "boolean"){
+        if(res.boolean)return "True";
+        else return "False";
       }else{
         return "<Fail>";
       }
