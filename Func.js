@@ -73,7 +73,6 @@ Base.write("Func",()=>{
     var res = yield* de(m.arity["F"][0]);
     if(res.type == "function"){
       var scope = Base.clone(res.scope);
-      if(scope[[res.position.x,res.position.y]])return err("Duplicate variable : " + Base.str(scope[[res.position.x,res.position.y]]));
       scope[[res.position.x,res.position.y]] = {
         type : "thunk",
         position : p,
