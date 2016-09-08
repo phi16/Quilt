@@ -202,10 +202,23 @@ Base.write("System",()=>{
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
         }
+        if(e.output){
+          Render.text(e.output,25,30,118).left.fill(UI.theme.frame);
+        }else{
+          Render.text("Evaluating...",25,30,118).left.fill(UI.theme.split);
+        }
       }else{
         Render.text("No field",25,30,58).left.fill(UI.theme.split);
+        Render.text("No output",25,30,118).left.fill(UI.theme.split);
       }
     })).place(0,0,1,1));
+    v.addChild(UI.create(UI.button(()=>{
+      if(e && e.status.success){
+        console.log("EVALUATOR:",e.eval.next());
+      }else{
+        console.log("EVALUATOR:","No field");
+      }
+    })).place(90,70,40,25));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -216,130 +229,10 @@ Base.write("System",()=>{
 
   s.func = (()=>{
     var f = {};
-    function make(ari,coari,icf,drf,spf){
-      if(drf==null){
-        drf = (r,shadowSize)=>{
-          var col = r.valid ? UI.theme.def : UI.theme.invalid;
-          var sdw = r.valid ? UI.theme.sharp : Color(1,0.2,0);
-          Render.shadowed(4/shadowSize,UI.theme.frame,()=>{
-            Render.circle(0,0,0.2).fill(UI.theme.base);
-          });
-          Render.circle(0,0,0.2).stroke(0.02)(col);
-          Render.scale(0.2,0.2,()=>{
-            Render.shadowed(2/shadowSize,sdw,()=>{
-              icf(col);
-            });
-          });
-        }
-      }
-      if(spf==null){
-        spf = drf;
-      }
-      return {
-        arity : ari,
-        coarity : coari,
-        draw : (r,shadowSize)=>{
-          if(r.valid){
-            spf(r,shadowSize);
-          }else{
-            drf(r,shadowSize);
-          }
-        },
-        icon : ()=>{
-          Render.shadowed(2,UI.theme.sharp,()=>{
-            icf(UI.theme.def);
-          });
-        }
-      };
+    f.list = {};
+    f.register = (n,func)=>{
+      f.list[n] = func;
     }
-    f.list = {
-      Id : make(["In"],["Out"],(col)=>{
-        Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
-        Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
-        Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
-      },null,Base.void),
-      Lambda : make(["Y"],["X","F"],(col)=>{
-        Render.meld([
-          Render.line(0,-0.1,-0.4,0.7),
-          Render.line(-0.2,-0.7,0.4,0.7)
-        ]).stroke(0.2)(col);
-      }),
-      Apply : make(["F","X"],["Y"],(col)=>{
-        Render.circle(0,0,0.4).stroke(0.2)(col);
-      }),
-      Duplicate : make(["In"],["Out","Out"],(col)=>{
-        Render.scale(0.7,0.7,()=>{
-          Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
-        });
-      }),
-      Discard : make(["In"],[],(col)=>{
-        Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
-        Render.line(0,0.5,0,0.7).stroke(0.2)(col);
-      }),
-      Swap : make(["In1","In2"],["Out1","Out2"],(col)=>{
-        Render.meld([
-          Render.line(-0.5,-0.5,0.5,0.5),
-          Render.line(-0.5,0.5,0.5,-0.5)
-        ]).stroke(0.2)(col);
-      },null,(r,shadowSize)=>{
-        var n = r.neighbor;
-        var i1,o1,i2,o2;
-        for(var i=0;i<8;i++){
-          if(n[i]){
-            if(n[i].type){
-              if(n[i].name=="Out1")i1 = i;
-              else i2 = i;
-            }else{
-              if(n[i].name=="In1")o1 = i;
-              else o2 = i;
-            }
-          }
-        }
-        var pi1 = Base.fromDir(i1);
-        var po1 = Base.fromDir(o1);
-        var pi2 = Base.fromDir(i2);
-        var po2 = Base.fromDir(o2);
-        Render.shadowed(10/shadowSize,UI.theme.base,()=>{
-          Render.line(0,0,pi1.x*0.05,pi1.y*0.05).stroke(0.1)(UI.theme.base);
-          Render.line(0,0,po1.x*0.05,po1.y*0.05).stroke(0.1)(UI.theme.base);
-          Render.circle(0,0,0.05).fill(UI.theme.base);
-        });
-        Render.shadowed(2/shadowSize,UI.theme.frame,()=>{
-          Render.line(0,0,pi1.x*0.4,pi1.y*0.4).stroke(0.1)(UI.theme.def);
-          Render.line(0,0,po1.x*0.4,po1.y*0.4).stroke(0.1)(UI.theme.def);
-          Render.circle(0,0,0.05).fill(UI.theme.def);
-        });
-        Render.line(0,0,pi1.x/2,pi1.y/2).stroke(0.07)(UI.theme.button);
-        Render.line(0,0,po1.x/2,po1.y/2).stroke(0.07)(UI.theme.button);
-        Render.circle(0,0,0.035).fill(UI.theme.button);
-        var t = UI.time()%80/80;
-        var sz = 0.03;
-        if(t<0.7){
-          Render.shadowed(4,UI.theme.shadow,()=>{
-            Render.translate(t*pi1.x,t*pi1.y,()=>{
-              Render.rotate(-i1*Math.PI*2/8,()=>{
-                Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
-              });
-            });
-          });
-        }
-        if(0.3<t){
-          Render.shadowed(4,UI.theme.shadow,()=>{
-            Render.translate((1-t)*po1.x,(1-t)*po1.y,()=>{
-              Render.rotate(-o1*Math.PI*2/8,()=>{
-                Render.rect(-sz,-sz,sz*2,sz*2).fill(UI.theme.def);
-              });
-            })
-          });
-        }
-      }),
-      In : make([],["Out"],(col)=>{
-        Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
-      }),
-      Out : make(["In"],[],(col)=>{
-        Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
-      })
-    };
     return f;
   })();
 
@@ -552,6 +445,7 @@ Base.write("System",()=>{
                       }
                     }
                   }
+                  f.validate(curX,curY);
                 }
               }
               curE = true;
@@ -920,6 +814,20 @@ Base.write("System",()=>{
             }
           }
         }
+        m.arity = {};
+        m.coarity = {};
+        for(var i=0;i<8;i++){
+          if(m.neighbor[i]){
+            var n = m.neighbor[i].name;
+            if(m.neighbor[i].type){
+              if(!m.arity[n])m.coarity[n] = [i];
+              else m.coarity[n].push(i);
+            }else{
+              if(!m.arity[n])m.arity[n] = [i];
+              else m.arity[n].push(i);
+            }
+          }
+        }
       }else{
         for(var i=0;i<8;i++){
           if(m.neighbor[i]){
@@ -932,6 +840,7 @@ Base.write("System",()=>{
     f.error = null;
     f.update = ()=>{
       function traverse(x,y){
+        // TODO : Swap
         function f(i,j){
           if(i==x && y==j || map[[i,j]].depend[[x,y]])return;
           map[[i,j]].depend[[x,y]] = true;
@@ -1035,37 +944,39 @@ Base.write("System",()=>{
   };
   s.field.listener = Listener();
 
-  Tile.initTile({
-    type : 2,
-    children : [
-      {
-        type : 1,
-        children : [
-          {
-            type : 0,
-            name : "Field"
-          },{
-            type : 0,
-            name : "Function"
-          }
-        ],
-        ratio : [0.7]
-      },{
-        type : 1,
-        children : [
-          {
-            type : 0,
-            name : "Evaluate"
-          },{
-            type : 0,
-            name : "Control"
-          }
-        ],
-        ratio : [0.3]
-      }
-    ],
-    ratio : [0.7]
-  });
+  setTimeout(()=>{
+    Tile.initTile({
+      type : 2,
+      children : [
+        {
+          type : 1,
+          children : [
+            {
+              type : 0,
+              name : "Field"
+            },{
+              type : 0,
+              name : "Function"
+            }
+          ],
+          ratio : [0.7]
+        },{
+          type : 1,
+          children : [
+            {
+              type : 0,
+              name : "Evaluate"
+            },{
+              type : 0,
+              name : "Control"
+            }
+          ],
+          ratio : [0.3]
+        }
+      ],
+      ratio : [0.7]
+    });
+  },0);
 
   return s;
 });

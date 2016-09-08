@@ -19,6 +19,7 @@ var Base = (()=>{
       "Tile",
       "Eval",
       "System",
+      "Func"
     ];
     loadSeq.forEach(function(n){
       window[n] = a[n]();
@@ -26,6 +27,7 @@ var Base = (()=>{
   };
   b.void = ()=>{}
   b.id = (v)=>{return v;};
+  b.str = (s)=>{return JSON.stringify(s);};
   b.const = (v)=>{return ()=>{return v;};};
   b.morph = (x,y)=>{return x+(y-x)/4.0;};
   b.in = (x_,y_,w_,h_)=>{
@@ -39,7 +41,30 @@ var Base = (()=>{
       return x<=p && p<=x+w && y<=q && q<=y+h;
     };
   };
-  b.clone = (a)=>a.concat([]);
+  b.clone = (obj)=>{
+    var copy;
+    if (null == obj || "object" != typeof obj) return obj;
+    if (obj instanceof Date) {
+      copy = new Date();
+      copy.setTime(obj.getTime());
+      return copy;
+    }
+    if (obj instanceof Array) {
+      copy = [];
+      for (var i=0,len=obj.length;i<len;i++) {
+        copy[i] = b.clone(obj[i]);
+      }
+      return copy;
+    }
+    if (obj instanceof Object) {
+      copy = {};
+      for (var attr in obj) {
+        if(obj.hasOwnProperty(attr))copy[attr] = b.clone(obj[attr]);
+      }
+      return copy;
+    }
+    throw new Error("Unable to copy");
+  }
   b.with = (v,f)=>f(v);
   b.distance = (x1,y1,x2,y2)=>{
     return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
