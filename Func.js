@@ -36,14 +36,6 @@ Base.write("Func",()=>{
       }
     };
   }
-  System.func.register("Id",make(["In"],["Out"],function*(m,p,d,s,e,de,err){
-    var res = yield* de(m.arity["In"][0]);
-    return res;
-  },(col)=>{
-    Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
-    Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
-    Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
-  },null,Base.void)),
   System.func.register("Lambda",make(["Y"],["F","X"],function*(m,p,d,s,e,de,err){
     if(m.coarity["F"][0] == d){
       return {
@@ -92,6 +84,14 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.circle(0,0,0.4).stroke(0.2)(col);
   }));
+  System.func.register("Id",make(["In"],["Out"],function*(m,p,d,s,e,de,err){
+    var res = yield* de(m.arity["In"][0]);
+    return res;
+  },(col)=>{
+    Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
+    Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
+    Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
+  },null,Base.void)),
   System.func.register("Duplicate",make(["In"],["Out","Out"],function*(m,p,d,s,e,de,err){
     var res = yield* de(m.arity["In"][0]);
     return res;
@@ -99,13 +99,13 @@ Base.write("Func",()=>{
     Render.scale(0.7,0.7,()=>{
       Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
     });
-  }));
+  },null,Base.void));
   System.func.register("Discard",make(["In"],[],function*(m,p,d,s,e,de,err){
     return err("Try to evaluate Discard");
   },(col)=>{
     Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
     Render.line(0,0.5,0,0.7).stroke(0.2)(col);
-  }));
+  },null,Base.void));
   System.func.register("Swap",make(["In1","In2"],["Out1","Out2"],function*(m,p,d,s,e,de,err){
     var n;
     if(m.neighbor[d].name=="Out1")n = "In1";
