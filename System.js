@@ -425,44 +425,8 @@ Base.write("System",()=>{
                   f.place(p.x,p.y,"Discard");
                 }
                 f.connect(curX,curY,p.x,p.y);
-                if(f.at(curX,curY) == "Id" || f.at(curX,curY) == "Duplicate" || f.at(curX,curY) == "Discard" || f.at(curX,curY) == "Swap"){
-                  var a=0,ca=0;
-                  for(var i=0;i<8;i++){
-                    var b = f.bridge(curX,curY,i);
-                    if(b){
-                      if(b.type)ca++;
-                      else a++;
-                    }
-                  }
-                  if(a==1 && ca==1){
-                    f.place(curX,curY,"Id");
-                  }else if(a==1 && ca==2){
-                    f.place(curX,curY,"Duplicate");
-                  }else if(a==1 && ca==0){
-                    f.place(p.x,p.y,"Discard");
-                  }else if(a==2 && ca==2){
-                    f.place(curX,curY,"Swap");
-                  }
-                }
-                if(f.at(p.x,p.y) == "Id" || f.at(curX,curY) == "Duplicate" || f.at(curX,curY) == "Discard" || f.at(curX,curY) == "Swap"){
-                  var a=0,ca=0;
-                  for(var i=0;i<8;i++){
-                    var b = f.bridge(p.x,p.y,i);
-                    if(b){
-                      if(b.type)ca++;
-                      else a++;
-                    }
-                  }
-                  if(a==1 && ca==1){
-                    f.place(curX,curY,"Id");
-                  }else if(a==1 && ca==2){
-                    f.place(p.x,p.y,"Duplicate");
-                  }else if(a==1 && ca==0){
-                    f.place(p.x,p.y,"Discard");
-                  }else if(a==2 && ca==2){
-                    f.place(p.x,p.y,"Swap");
-                  }
-                }
+                f.autoAdjust(curX,curY);
+                f.autoAdjust(p.x,p.y);
                 if(f.at(curX,curY)=="Swap" && !(q.x==curX && q.y==curY)){
                   var d1 = Base.dir(q.x-curX,q.y-curY);
                   var d2 = Base.dir(p.x-curX,p.y-curY);
@@ -510,7 +474,8 @@ Base.write("System",()=>{
             if(dx!=0 || dy!=0){
               var th = (8 - Math.floor(Math.atan2(dy,dx) / Math.PI / 2 * 8 + 0.5))%8;
               f.disconnect(x,y,th);
-              // TODO : morph
+              f.autoAdjust(x,y);
+              f.autoAdjust(x+dx,y+dy);
             }
           }
         }
@@ -818,6 +783,27 @@ Base.write("System",()=>{
         map[[x+p.x,y+p.y]].neighbor[(i+4)%8] = null;
         f.validate(x,y);
         f.validate(x+p.x,y+p.y);
+      }
+    };
+    f.autoAdjust = (x,y)=>{
+      if(f.at(x,y) == "Id" || f.at(x,y) == "Duplicate" || f.at(x,y) == "Discard" || f.at(x,y) == "Swap"){
+        var a=0,ca=0;
+        for(var i=0;i<8;i++){
+          var b = f.bridge(x,y,i);
+          if(b){
+            if(b.type)ca++;
+            else a++;
+          }
+        }
+        if(a==1 && ca==1){
+          f.place(x,y,"Id");
+        }else if(a==1 && ca==2){
+          f.place(x,y,"Duplicate");
+        }else if(a==1 && ca==0){
+          f.place(x,y,"Discard");
+        }else if(a==2 && ca==2){
+          f.place(x,y,"Swap");
+        }
       }
     }
     f.validated = false;
