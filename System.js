@@ -202,6 +202,27 @@ Base.write("System",()=>{
           Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
+          Render.shadowed(4,UI.theme.shadow,()=>{
+            Render.meld([
+              Render.rect(20,205,10,e.current[0]*10+10),
+              Render.rect(40,205,10,e.current[1]*10+10),
+              Render.rect(60,205,10,e.current[2]*10+10),
+              Render.rect(80,205,10,e.current[3]*10+10),
+              Render.rect(100,205,10,e.current[4]*10+10),
+              Render.rect(120,205,10,e.current[5]*10+10),
+              Render.rect(140,205,10,e.current[6]*10+10)
+            ]).dup((d)=>{
+              d.fill(UI.theme.front);
+              d.stroke(2)(UI.theme.def);
+            });
+            Render.text(Base.str(e.current[0]),15,25,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[1]),15,45,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[2]),15,65,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[3]),15,85,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[4]),15,105,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[5]),15,125,198).center.fill(UI.theme.def);
+            Render.text(Base.str(e.current[6]),15,145,198).center.fill(UI.theme.def);
+          });
         }
         if(e.output){
           Render.text(e.output,25,30,118).left.fill(UI.theme.frame);
@@ -231,7 +252,7 @@ Base.write("System",()=>{
             clearInterval(evalTimer);
             evalTimer = null;
           }
-        },10);
+        },100);
       }
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
@@ -246,6 +267,15 @@ Base.write("System",()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
         Render.circle(0.5,0.5,0.3)
+      ]).stroke(0.1)(UI.theme.def);
+    });
+  });
+  Tile.registerTile("Info",Base.void,()=>{
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.meld([
+        Render.line(0.5,0.15,0.5,0.25),
+        Render.polygon([0.35,0.4,0.5,0.4,0.5,0.8]),
+        Render.line(0.3,0.8,0.7,0.8)
       ]).stroke(0.1)(UI.theme.def);
     });
   });
@@ -971,19 +1001,22 @@ Base.write("System",()=>{
           children : [
             {
               type : 0,
+              name : "Evaluate"
+            },{
+              type : 0,
               name : "Field"
             },{
               type : 0,
               name : "Function"
             }
           ],
-          ratio : [0.7]
+          ratio : [0.2,0.7]
         },{
           type : 1,
           children : [
             {
               type : 0,
-              name : "Evaluate"
+              name : "Info"
             },{
               type : 0,
               name : "Control"
@@ -992,7 +1025,7 @@ Base.write("System",()=>{
           ratio : [0.4]
         }
       ],
-      ratio : [0.7]
+      ratio : [0.8]
     });
   },0);
 

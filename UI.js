@@ -594,13 +594,13 @@ Base.write("UI",()=>{
       v.onWheel = (x,y)=>{
         var p=x-dx, q=y-dy;
         if(dir){
-          if(Mouse.wheel > 0)dy -= 50;
-          else if(Mouse.wheel < 0)dy += 50;
+          if(Mouse.wheel > 0)dy -= 100;
+          else if(Mouse.wheel < 0)dy += 100;
           if(dy < 0)dy = 0;
           if(dy > shy-v.rect.h)dy = shy-v.rect.h;
         }else{
-          if(Mouse.wheel > 0)dx -= 50;
-          else if(Mouse.wheel < 0)dx += 50;
+          if(Mouse.wheel > 0)dx -= 100;
+          else if(Mouse.wheel < 0)dx += 100;
           if(dx < 0)dx = 0;
           if(dx > shx-v.rect.w)dx = shx-v.rect.w;
         }

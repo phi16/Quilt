@@ -115,7 +115,8 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
-      Render.line(-0.5,0.5,0.5,-0.5)
+      Render.line(-0.5,0.5,-0.2,0.2),
+      Render.line(0.2,-0.2,0.5,-0.5)
     ]).stroke(0.2)(col);
   },null,(r,shadowSize)=>{
     var n = r.neighbor;
@@ -355,7 +356,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
     Render.line(0,0.5,0,0.7).stroke(0.2)(col);
   }));
-  System.func.register("Equal",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
+  System.func.register("Same",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     var y = yield* de(m.arity["In"][1]);
     if(x.type == "boolean" && y.type == "boolean"){
