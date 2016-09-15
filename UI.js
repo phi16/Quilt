@@ -106,13 +106,14 @@ Base.write("UI",()=>{
   };
   u.button = (run)=>{
     return (v)=>{
+      v.enable = true;
       v.name = "button";
       v.full = false;
       v.shadow = true;
       v.clipped = true;
       var state = 0; // Default, Hover, Press, Untouch
       v.onHover = (x,y)=>{
-        Mouse.cursor(Mouse.Cur.select);
+        if(v.enable)Mouse.cursor(Mouse.Cur.select);
         if(Mouse.pressing)state = 2;
         else state = 1;
         return true;
@@ -127,15 +128,19 @@ Base.write("UI",()=>{
         return true;
       };
       v.onRelease = (x,y)=>{
-        if(state == 2 && run)run(v);
+        if(v.enable && state == 2 && run)run(v);
         state = 0;
         return true;
       };
       v.render = ()=>{
         v.shape.dup((d)=>{
-          if(state==0 || state==3)d.fill(u.theme.button);
-          else if(state==1)d.fill(u.theme.notify);
-          else if(state==2)d.fill(u.theme.impact);
+          if(v.enable){
+            if(state==0 || state==3)d.fill(u.theme.button);
+            else if(state==1)d.fill(u.theme.notify);
+            else if(state==2)d.fill(u.theme.impact);
+          }else{
+            d.fill(u.theme.button);
+          }
           d.stroke(2)(u.theme.frame);
         });
       };

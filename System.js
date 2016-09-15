@@ -104,12 +104,14 @@ Base.write("System",()=>{
     v.addChild(scr);
     var pos = 0;
     var available = {};
+    var buttonss = [];
     Object.keys(sc.name).forEach((g)=>{
       var ns = sc.name[g];
       var cnt = 0;
       var plate = UI.create(UI.image(()=>{
         Render.text(g,30,0,0).left.fill(sc.available[g] ? UI.theme.def : UI.theme.split);
       })).place(pos*50+10,70,1,1);
+      var buttons = [];
       for(var i=0;i<ns.length;i++){
         ((j)=>{
           var name = ns[j];
@@ -122,13 +124,25 @@ Base.write("System",()=>{
                 sc.list[name].draw(sc.available[g] ? UI.theme.def : UI.theme.split);
               });
             })).place(0,0,40,40));
+            btn.enable = sc.available[g];
             scr.addChild(btn);
+            buttons.push({button:btn,category:g});
             pos++;
             cnt++;
           }
         })(i);
       }
       if(cnt>0)scr.addChild(plate), pos += 0.2;
+      buttonss.push(buttons);
+    });
+    sc.listener.on("visiblity",()=>{
+      if(!v.available)return true;
+      var ix = 0;
+      buttonss.forEach((bs)=>{
+        bs.forEach((b)=>{
+          b.button.enable = sc.available[b.category];
+        });
+      });
     });
     scr.resize(pos*50);
   },()=>{
@@ -189,8 +203,10 @@ Base.write("System",()=>{
   Tile.registerTile("Evaluate",(v)=>{
     var e = null;
     var evalTimer = null;
+    var enableButton = Base.void;
     s.field.listener.listen((n,d)=>{
       e = Eval(d.field,d.map);
+      enableButton(e && e.status.success);
       if(e.draw)d.field.evalDraw(e.draw);
     });
     v.addChild(UI.create(UI.image(()=>{
@@ -235,22 +251,35 @@ Base.write("System",()=>{
         Render.text("No output",25,30,118).left.fill(UI.theme.split);
       }
     })).place(0,0,1,1));
-    v.addChild(UI.create(UI.inherit(UI.button(()=>{
+    var evalEE = ()=>{
+      if(e && e.status.success){
+        if(e.eval.next().done){
+          clearInterval(evalTimer);
+          evalTimer = null;
+        }
+      }else{
+        clearInterval(evalTimer);
+        evalTimer = null;
+      }
+    };
+    var speed = 0;
+    function setEvalTimer(){
+      var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
+      var f = evalEE;
+      if(speed==1){
+        f = ()=>{
+          for(var i=0;i<100;i++)evalEE();
+        }
+      }
+      clearInterval(evalTimer);
+      evalTimer = setInterval(f,dur);
+    }
+    var evalButton = UI.create(UI.inherit(UI.button(()=>{
       if(evalTimer){
         clearInterval(evalTimer);
         evalTimer = null;
       }else{
-        evalTimer = setInterval(()=>{
-          if(e && e.status.success){
-            if(e.eval.next().done){
-              clearInterval(evalTimer);
-              evalTimer = null;
-            }
-          }else{
-            clearInterval(evalTimer);
-            evalTimer = null;
-          }
-        },400);
+        setEvalTimer();
       }
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
@@ -264,7 +293,41 @@ Base.write("System",()=>{
           Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
         }
       })).place(5,30,1,1));
-    })).place(10,130,120,40));
+      v.enable = e && e.status.success;
+    })).place(10,130,120,40);
+    enableButton = (b)=>{
+      evalButton.enable = b;
+    };
+    v.addChild(evalButton);
+    var leftButton,rightButton;
+    leftButton = UI.create(UI.inherit(UI.button(()=>{
+      if(speed==1)rightButton.enable = true;
+      speed--;
+      if(speed==-1)leftButton.enable = false;
+      setEvalTimer();
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        var col = speed>=0 ? UI.theme.frame : UI.theme.split;
+        Render.text("<",30,-1,-10).left.fill(col);
+      })).place(5,30,1,1));
+    })).place(140,137,25,25);
+    rightButton = UI.create(UI.inherit(UI.button(()=>{
+      if(speed==-1)leftButton.enable = true;
+      speed++;
+      if(speed==1)rightButton.enable = false;
+      setEvalTimer();
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        var col = speed<=0 ? UI.theme.frame : UI.theme.split;
+        Render.text(">",30,-1,-10).left.fill(col);
+      })).place(5,30,1,1));
+    })).place(225,137,25,25);
+    v.addChild(leftButton);
+    v.addChild(rightButton);
+    v.addChild(UI.create(UI.image(()=>{
+      var str = speed==-1 ? "Slow" : speed==1 ? "Fast" : "Def";
+      Render.text(str,25,0,0).center.fill(UI.theme.def);
+    })).place(195,159,1,1));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -609,9 +672,11 @@ Base.write("System",()=>{
     };
     c.visible = (cat)=>{
       c.available[cat] = true;
+      c.listener.push("visiblity",null);
     };
     c.invisible = (cat)=>{
       c.available[cat] = false;
+      c.listener.push("visiblity",null);
     };
     return c;
   })();
