@@ -280,6 +280,18 @@ Base.write("Func",()=>{
       Render.line(0,0.6,0,0.35)
     ]).stroke(0.2)(col);
   }));
+  System.func.register("Modulo",make(["X","Y"],["Out"],function*(m,p,d,s,e,de,err){
+    var x = yield* de(m.arity["X"][0]);
+    var y = yield* de(m.arity["Y"][0]);
+    if(x.type == "number" && y.type == "number"){
+      return {
+        type : "number",
+        number : x.number % y.number
+      };
+    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  },(col)=>{
+    Render.text("M",1.7,0,0.65).center.fill(col);
+  }));
   System.func.register("True",make([],["Out"],function*(m,p,d,s,e,de,err){
     return {
       type : "boolean",
@@ -304,12 +316,16 @@ Base.write("Func",()=>{
   }));
   System.func.register("And",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
     var x = yield* de(m.arity["In"][0]);
-    var y = yield* de(m.arity["In"][1]);
-    if(x.type == "boolean" && y.type == "boolean"){
-      return {
-        type : "boolean",
-        boolean : x.boolean && y.boolean
-      };
+    if(x.type == "boolean"){
+      if(!x.boolean){
+        return {
+          type : "boolean",
+          boolean : false
+        };
+      }else{
+        var y = yield* de(m.arity["In"][1]);
+        return y;
+      }
     }else return err("Type mismatch : " + x.type + ", " + y.type);
   },(col)=>{
     Render.meld([
@@ -318,12 +334,16 @@ Base.write("Func",()=>{
   }));
   System.func.register("Or",make(["In","In"],["Out"],function*(m,p,d,s,e,de,err){
     var x = yield* de(m.arity["In"][0]);
-    var y = yield* de(m.arity["In"][1]);
-    if(x.type == "boolean" && y.type == "boolean"){
-      return {
-        type : "boolean",
-        boolean : x.boolean || y.boolean
-      };
+    if(x.type == "boolean"){
+      if(x.boolean){
+        return {
+          type : "boolean",
+          boolean : true
+        };
+      }else{
+        var y = yield* de(m.arity["In"][1]);
+        return y;
+      }
     }else return err("Type mismatch : " + x.type + ", " + y.type);
   },(col)=>{
     Render.meld([
