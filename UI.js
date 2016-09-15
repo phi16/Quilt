@@ -32,7 +32,10 @@ Base.write("UI",()=>{
     in : Color(0,0.8,0.6),
     out : Color(0.2,0.8,1.0),
     invalid : Color(1,0.5,0),
-    select : Color(1,1,1)
+    select : Color(1,1,1),
+    evalIn : Color(0,1,0),
+    evalOut : Color(1,0.5,0),
+    evalWait : Color(0.5,0.7,0)
   };
   var shadowDepth = 5;
   /**** View

@@ -191,6 +191,7 @@ Base.write("System",()=>{
     var evalTimer = null;
     s.field.listener.listen((n,d)=>{
       e = Eval(d.field,d.map);
+      if(e.draw)d.field.evalDraw(e.draw);
     });
     v.addChild(UI.create(UI.image(()=>{
       Render.shadowed(4,UI.theme.shadow,()=>{
@@ -227,11 +228,7 @@ Base.write("System",()=>{
         if(e.output){
           Render.text(e.output,25,30,118).left.fill(UI.theme.frame);
         }else{
-          if(evalTimer){
-            Render.text("Evaluating...",25,30,118).left.fill(UI.theme.split);
-          }else{
-            Render.text("No output",25,30,118).left.fill(UI.theme.split);
-          }
+          Render.text("No output",25,30,118).left.fill(UI.theme.split);
         }
       }else{
         Render.text("No field",25,30,58).left.fill(UI.theme.split);
@@ -239,8 +236,10 @@ Base.write("System",()=>{
       }
     })).place(0,0,1,1));
     v.addChild(UI.create(UI.inherit(UI.button(()=>{
-      if(evalTimer)clearInterval(evalTimer);
-      else{
+      if(evalTimer){
+        clearInterval(evalTimer);
+        evalTimer = null;
+      }else{
         evalTimer = setInterval(()=>{
           if(e && e.status.success){
             if(e.eval.next().done){
@@ -248,16 +247,19 @@ Base.write("System",()=>{
               evalTimer = null;
             }
           }else{
-            console.log("EVALUATOR:","No field");
             clearInterval(evalTimer);
             evalTimer = null;
           }
-        },100);
+        },400);
       }
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
         if(e && e.status.success){
-          Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+          if(!evalTimer){
+            Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+          }else{
+            Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+          }
         }else{
           Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
         }
@@ -619,6 +621,7 @@ Base.write("System",()=>{
     var map = {}, selection = [];
     var action = null;
     var lastE,lastX,lastY;
+    var evalDraw = Base.void; 
     function allDraw(f){
       Render.scale(size,size,()=>{
         for(var i in map){
@@ -654,6 +657,9 @@ Base.write("System",()=>{
           }
         });
       });
+      Render.scale(size,size,()=>{
+        evalDraw();
+      });
       Render.shadowed(2/shadowSize,UI.theme.frame,()=>{
         allDraw((x,y,r)=>{
           Render.circle(0,0,0.05).fill(UI.theme.def);
@@ -674,7 +680,7 @@ Base.write("System",()=>{
               Render.line(0,0,p.x,p.y).stroke(0.07)(UI.theme.button);
             }
           }
-        })
+        });
       });
       allDraw((x,y,r)=>{
         r.neighbor.forEach((e,i)=>{
@@ -748,6 +754,9 @@ Base.write("System",()=>{
       f.newView();
       action = inst(f,overlay);
       if(action.next().value)action = null;
+    };
+    f.evalDraw = (d)=>{
+      evalDraw = d;
     };
     f.scale = ()=>{
       return v.scale();
@@ -985,9 +994,13 @@ Base.write("System",()=>{
         selection = [];
         s.control.invisible("Selection");
         s.control.set("Select");
+        s.field.listener.push("update",{field:f,map:map});
       };
       return e;
     })();
+    f.view = ()=>{
+      return v;
+    };
     return f;
   };
   s.field.listener = Listener();
