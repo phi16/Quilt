@@ -552,7 +552,7 @@ Base.write("System",()=>{
           c.set("Connect");
         }
       },
-      Disconnect : {
+      Remove : {
         draw : (col)=>{
           Render.meld([
             Render.line(0.2,0.2,0.45,0.45),
@@ -645,12 +645,12 @@ Base.write("System",()=>{
       }
     };
     c.name = {
-      Tile : ["Swap","Duplicate"],
-      Field : ["Select","Connect","Disconnect","Name"],
+      //Tile : ["Swap","Duplicate"],
+      Field : ["Select","Connect","Remove","Name"],
       Selection : ["Move","Rotate","Delete"]
     };
     c.available = {
-      Tile : false,
+      //Tile : false,
       Field : true,
       Selection : false
     }

@@ -59,6 +59,23 @@ Base.write("Eval",()=>{
       }
       e.stack.shift();
     };
+    e.showScope = (s)=>{
+      var v = [
+        s.type,
+        s.position.x,
+        s.position.y,
+        s.bridge
+      ].toString();
+      v += "(";
+      for(var i in s.scope){
+        v += i;
+        v += e.showScope(s.scope[i]);
+        v += ",";
+      }
+      v += ")";
+      return v;
+    };
+    e.cache = {};
     function* evaluate(position,bridge,scope){
       e.push(position.x,position.y,bridge);
       e.current[0]++;
@@ -74,7 +91,7 @@ Base.write("Eval",()=>{
         e.current[6] = 0;
       }
       if(m.name !== "Id" && m.name !== "Swap" && m.name !== "Duplicate")e.current[4]++,e.current[6]++;
-      var res = yield* m.func.eval(m,np,nd,scope,function*(p,b,s){
+      var res = yield* m.func.eval(m,np,nd,scope,e,function*(p,b,s){
         e.jmp(p.x,p.y);
         var r = yield* evaluate(p,b,s);
         yield "return";
