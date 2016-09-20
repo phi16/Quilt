@@ -159,6 +159,9 @@ Base.write("Render",()=>{
         left : stub,
         center : stub,
         right : stub,
+        forceLeft : stub,
+        forceCenter : stub,
+        forceRight : stub,
         size : 0,
       };
     }else{
@@ -174,9 +177,12 @@ Base.write("Render",()=>{
         },(x,y)=>false);
       }
       return {
-        left : kon(ix),
+        left : kon(0),
         center : kon(vx),
         right : kon(ax),
+        forceLeft : kon(ix),
+        forceCenter : kon((ax+ix)/2),
+        forceRight : kon(ax),
         size : ax-ix
       };
     }

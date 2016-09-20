@@ -3,7 +3,7 @@ Base.write("Func",()=>{
     if(icf==null){
       var str = name[0];
       icf = (col)=>{
-        Render.text(str,1.7,0,0.65).center.fill(col);
+        Render.text(str,1.7,0,0.65).forceCenter.fill(col);
       }
     }
     if(drf==null){

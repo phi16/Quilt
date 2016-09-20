@@ -357,10 +357,10 @@ Base.write("System",()=>{
       Render.translate(w/2,0,()=>{
         Render.scale(mult,mult,()=>{
           Render.translate(0,0.2,()=>{
-            script.center.fill(UI.theme.def);
+            script.forceCenter.fill(UI.theme.def);
           });
           Render.translate(0,1.05,()=>{
-            title.center.fill(UI.theme.def);
+            title.forceCenter.fill(UI.theme.def);
           });
         });
       });
