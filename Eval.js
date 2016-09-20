@@ -104,12 +104,10 @@ Base.write("Eval",()=>{
         return r;
       },(str)=>{
         var err = {
-          type : "error",
-          name : m.name + "(" + np.x + "," + np.y + ")",
-          error : str
+          type : "error"
         };
-        console.log(JSON.stringify(err));
         e.status.error = "Failed to evaluate";
+        e.output = m.name + "(" + np.x + "," + np.y + ") : " + str;
         delete e.status.success;
         return err;
       });

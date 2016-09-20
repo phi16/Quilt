@@ -149,7 +149,10 @@ Base.write("System",()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.translate(0.5,0.5,()=>{
         Render.rotate(Math.PI/4,()=>{
-          Render.rect(-0.25,-0.25,0.5,0.5).stroke(0.1)(UI.theme.def);
+          Render.meld([
+            Render.rect(-0.25,-0.25,0.5,0.5),
+            Render.polygon([0,0.25,0,0,-0.25,0])
+          ]).stroke(0.1)(UI.theme.def);
         });
       });
     });
@@ -331,7 +334,8 @@ Base.write("System",()=>{
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
-        Render.circle(0.5,0.5,0.3)
+        Render.circle(0.5,0.5,0.3),
+        Render.line(0.5,0.5,0.75,0.25)
       ]).stroke(0.1)(UI.theme.def);
     });
   });
@@ -341,6 +345,31 @@ Base.write("System",()=>{
         Render.line(0.5,0.15,0.5,0.25),
         Render.polygon([0.35,0.4,0.5,0.4,0.5,0.8]),
         Render.line(0.3,0.8,0.7,0.8)
+      ]).stroke(0.1)(UI.theme.def);
+    });
+  });
+  Tile.registerTile("Start",(v)=>{
+    v.addChild(UI.create(UI.image(()=>{
+      var w = v.parent.rect.w;
+      var title = Render.text("Quilt Untyped",1,0,0);
+      var script = Render.text("Untyped Lambda Calculus Based Visual Programming Language & Environment",0.15,0,0);
+      var mult = w * 0.95 / title.size;
+      Render.translate(w/2,0,()=>{
+        Render.scale(mult,mult,()=>{
+          Render.translate(0,0.2,()=>{
+            script.center.fill(UI.theme.def);
+          });
+          Render.translate(0,1.05,()=>{
+            title.center.fill(UI.theme.def);
+          });
+        });
+      });
+    })).place(0,0,1,1));
+  },()=>{
+    Render.shadowed(4,UI.theme.frame,()=>{
+      Render.meld([
+        Render.circle(0.5,0.38,0.2),
+        Render.line(0.5,0.55,0.5,0.9)
       ]).stroke(0.1)(UI.theme.def);
     });
   });
@@ -561,18 +590,43 @@ Base.write("System",()=>{
         },
         execute : ()=>function*(f,v){
           var size = 80;
+          var curE=false, curX, curY, curR, curMX, curMY, state;
+          state = 1;
+          curR = 0;
+          var q;
+          var curImage = UI.create(UI.image(()=>{
+            if(curR>0.01){
+              Render.circle(curMX*size,curMY*size,curR*size*0.3).dup((d)=>{
+                d.fill(UI.theme.invalid,0.1);
+                d.stroke(2)(UI.theme.invalid);
+              });
+            }
+            curMX += (curX - curMX) / 2;
+            curMY += (curY - curMY) / 2;
+            curR += (state - curR) / 2;
+          })).place(0,0,1,1);
+          var path = false;
           var p;
           while(p = yield){
-            if(p.onPoint)continue;
-            var x = Math.floor(p.x/size+0.5), y = Math.floor(p.y/size+0.5);
-            var dx = p.x - x*size, dy = p.y - y*size;
-            if(dx!=0 || dy!=0){
-              var th = (8 - Math.floor(Math.atan2(dy,dx) / Math.PI / 2 * 8 + 0.5))%8;
-              f.disconnect(x,y,th);
-              f.autoAdjust(x,y);
-              f.autoAdjust(x+dx,y+dy);
+            if(p.onPoint){
+              if(!curE){
+                v.addChild(curImage);
+                curE = true;
+                curMX = curX = p.x;
+                curMY = curY = p.y;
+              }else if(Math.max(Math.abs(curX-p.x),Math.abs(curY-p.y)) == 1){
+                var dx = p.x - curX, dy = p.y - curY;
+                var th = (8 - Math.floor(Math.atan2(dy,dx) / Math.PI / 2 * 8 + 0.5))%8;
+                f.disconnect(curX,curY,th);
+                f.autoAdjust(curX,curY);
+                f.autoAdjust(p.x,p.y);
+                path = true;
+                curX = p.x;
+                curY = p.y;
+              }
             }
           }
+          state = 0;
         }
       },
       Name : {
@@ -907,6 +961,8 @@ Base.write("System",()=>{
           f.place(x,y,"Discard");
         }else if(a==2 && ca==2){
           f.place(x,y,"Swap");
+        }else if(a==0 && ca==0){
+          delete map[[x,y]];
         }
       }
     }
@@ -1082,7 +1138,7 @@ Base.write("System",()=>{
               name : "Evaluate"
             },{
               type : 0,
-              name : "Field"
+              name : "Start"
             },{
               type : 0,
               name : "Function"

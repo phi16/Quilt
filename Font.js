@@ -11,12 +11,17 @@ Base.write("Font",()=>{
     if(y==null)y=0;
     if(size==null)size = 1;
     text = text.replace(/ /g,"  ");
-    var p = font.getPath(text,x,y,size);
-    var ix=0,ax=0,vx;
+    var p = font.getPath(text,0,0,size);
+    var start=true,ix,ax,vx;
     for(var i=0;i<p.commands.length;i++){
       if(p.commands[i].x){
-        if(p.commands[i].x < ix)ix = p.commands[i].x;
-        if(p.commands[i].x > ax)ax = p.commands[i].x;
+        if(start){
+          ix = ax = p.commands[i].x;
+          start = false;
+        }else{
+          if(p.commands[i].x < ix)ix = p.commands[i].x;
+          if(p.commands[i].x > ax)ax = p.commands[i].x; 
+        }
       }
     }
     vx = (ix+ax)/2;
