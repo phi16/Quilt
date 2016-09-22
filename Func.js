@@ -226,7 +226,7 @@ Base.write("Func",()=>{
       number : 4
     };
   },(col)=>{
-    Render.text("4",2,0,0.65).center.fill(col);
+    Render.text("4",2,0.1,0.65).center.fill(col);
   });
   make("Five",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {

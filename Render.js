@@ -221,10 +221,10 @@ Base.write("Render",()=>{
   r.shadowed = (h,c,f)=>{
     ctx.save();
     Color.con((ce)=>{
-      //ctx.shadowColor = ce;
-      //ctx.shadowBlur = h;
-      //ctx.shadowOffsetX = 0;
-      //ctx.shadowOffsetY = h/2;
+      ctx.shadowColor = ce;
+      ctx.shadowBlur = h;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = h/2;
     })(c);
     f();
     ctx.restore();

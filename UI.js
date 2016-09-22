@@ -32,6 +32,7 @@ Base.write("UI",()=>{
     in : Color(0,0.8,0.6),
     out : Color(0.2,0.8,1.0),
     invalid : Color(1,0.5,0),
+    invalidShadow : Color(0.5,0.25,0),
     select : Color(1,1,1),
     evalIn : Color(0,1,0),
     evalOut : Color(1,0.5,0),
@@ -397,14 +398,14 @@ Base.write("UI",()=>{
         }else return false;
       };
       v.onHover = (x,y)=>{
+        if(handler && handler.onHover)handler.onHover((x-dx)/dz,(y-dy)/dz);
         if(Mouse.right && Mouse.drag == v){
           dx += x-cx;
           dy += y-cy;
           cx = x;
           cy = y;
           return true;
-        }else if(Mouse.left && handler && handler.onHover){
-          handler.onHover((x-dx)/dz,(y-dy)/dz);
+        }else if(Mouse.left){
           return true;
         }else return false;
       };

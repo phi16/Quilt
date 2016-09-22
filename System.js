@@ -207,7 +207,7 @@ Base.write("System",()=>{
     var e = null;
     var evalTimer = null;
     var enableButton = Base.void;
-    s.field.listener.listen((n,d)=>{
+    s.field.listener.on("update",(n,d)=>{
       e = Eval(d.field,d.map);
       enableButton(e && e.status.success);
       if(e.draw)d.field.evalDraw(e.draw);
@@ -339,7 +339,110 @@ Base.write("System",()=>{
       ]).stroke(0.1)(UI.theme.def);
     });
   });
-  Tile.registerTile("Info",Base.void,()=>{
+  Tile.registerTile("Info",(v)=>{
+    var m = null,x = null,y = null,strs = [], branch = [0,0], depend = "";
+    s.field.listener.on("hover",(n,d)=>{
+      if(!(x && y && x==d.x && y==d.y && m==d.m)){
+        x = d.x;
+        y = d.y;
+        m = d.m;
+        strs = [];
+        depend = "";
+        if(m){
+          if(m.valid){
+            for(var i=0;i<8;i++){
+              if(m.neighbor[i]){
+                strs.push({
+                  dir : m.neighbor[i].type,
+                  name : m.neighbor[i].name
+                });
+              }
+            }
+            branch = [m.func.arity.length,m.func.coarity.length];
+            m.depend.for
+          }else{
+            m.func.arity.forEach((s)=>{
+              strs.push({
+                dir : false,
+                name : s
+              });
+            });
+            m.func.coarity.forEach((s)=>{
+              strs.push({
+                dir : true,
+                name : s
+              });
+            });
+            var al=0,col=0;
+            for(var i=0;i<8;i++){
+              if(m.neighbor[i]){
+                if(!m.neighbor[i].type)al++;
+                else col++;
+              }
+            }
+            branch = [al,col];
+          }
+          if(m.depend){
+            Object.keys(m.depend).forEach((b,i)=>{
+              depend += (i==0?"Deps : ":", ") + "(" + b + ")";
+            });
+          }
+        }
+      }
+    });
+    v.addChild(UI.create(UI.image(()=>{
+      Render.rect(10,10,60,60).dup((d)=>{
+        Render.shadowed(6,UI.theme.shadow,()=>{
+          d.fill(UI.theme.front);
+        })
+        d.stroke(2.2)(UI.theme.frame);
+      });
+      if(m){
+        Render.translate(40,40,()=>{
+          Render.scale(30,30,()=>{
+            m.func.icon();
+          });
+        });
+        var title = Render.text(m.name,40,80,45);
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          title.left.fill(UI.theme.def);
+        });
+        (()=>{
+          var shCol = m.valid ? UI.theme.shadow : UI.theme.invalidShadow;
+          var col = m.valid ? UI.theme.def : UI.theme.invalid;
+          Render.shadowed(4,shCol,()=>{
+            var p = 100 + title.size;
+            var w1 = Render.text("[ " + Base.str(branch[0]),40,p,45);
+            w1.forceLeft.fill(col);
+            p += w1.size+9;
+            Render.meld([
+              Render.line(p,32,p+20,32),
+              Render.polygon([p+13,25,p+20,32,p+13,39])
+            ]).stroke(3)(col);
+            p += 29;
+            var w2 = Render.text(Base.str(branch[1]) + " ]",40,p,45);
+            w2.forceLeft.fill(col);
+          });
+        })();
+        var coordStr = Render.text("(" + x + "," + y + ")",20,80,70);
+        coordStr.left.fill(UI.theme.def);
+        var p = 85+coordStr.size;
+        strs.forEach((v)=>{
+          var col = !m.valid ? UI.theme.invalid : v.dir ? UI.theme.in : UI.theme.out;
+          Render.line(p+10,55,p+10,70).stroke(2)(col);
+          if(v.dir){
+            Render.polygon([p+5,60,p+10,55,p+15,60]).stroke(2)(col);
+          }else{
+            Render.polygon([p+5,65,p+10,70,p+15,65]).stroke(2)(col);
+          }
+          var str = Render.text(v.name,20,p+20,70);
+          str.left.fill(col);
+          p += str.size + 25;
+        });
+        Render.text(depend,20,10,95).left.fill(UI.theme.def);
+      }
+    })).place(0,0,1,1));
+  },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
         Render.line(0.5,0.15,0.5,0.25),
@@ -854,14 +957,15 @@ Base.write("System",()=>{
       f.pass(ux,uy);
     };
     f.pass = (ux,uy)=>{
+      var x = i(ux), y = i(uy);
       if(action){
         if(action.next({onPoint:false,x:ux,y:uy}).value)action = null;
-        var x = i(ux), y = i(uy);
         if(Base.distance(x,y,ux/size,uy/size) < 0.4 && (!lastE || lastX!=x || lastY!=y)){
           lastE = true, lastX = x, lastY = y;
           if(action.next({onPoint:true,x:x,y:y}).value)action = null;
         }
       }
+      s.field.listener.push("hover",{x:x,y:y,m:map[[x,y]]});
     };
     f.end = ()=>{
       if(action){
@@ -908,6 +1012,7 @@ Base.write("System",()=>{
       }
       map[[x,y]].valid = false;
       f.validate(x,y);
+      s.field.listener.push("hover",{x:x,y:y,m:map[[x,y]]});
       return true;
     };
     f.bridge = (x,y,i)=>{
