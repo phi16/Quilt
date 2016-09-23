@@ -200,7 +200,7 @@ Base.write("System",()=>{
       Render.line(0.2,0.8-0.05,0.8,0.8-0.05).stroke(0.1)(UI.theme.def);
     });
   });
-  Tile.registerTile("Evaluate",(v)=>{
+  Tile.registerTile("Execute",(v)=>{
     var e = null;
     var evalTimer = null;
     var enableButton = Base.void;
@@ -285,14 +285,14 @@ Base.write("System",()=>{
       v.addChild(UI.create(UI.image(()=>{
         if(e && e.status.success){
           if(!evalTimer){
-            Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+            Render.text("Execute",30,6,0).left.fill(UI.theme.frame);
           }else{
             Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
           }
         }else{
           Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
         }
-      })).place(5,30,1,1));
+      })).place(5,32,1,1));
       v.enable = e && e.status.success;
     })).place(10,130,120,40);
     enableButton = (b)=>{
@@ -428,9 +428,9 @@ Base.write("System",()=>{
           var col = !m.valid ? UI.theme.invalid : v.dir ? UI.theme.in : UI.theme.out;
           Render.line(p+10,55,p+10,70).stroke(2)(col);
           if(v.dir){
-            Render.polygon([p+5,60,p+10,55,p+15,60]).stroke(2)(col);
-          }else{
             Render.polygon([p+5,65,p+10,70,p+15,65]).stroke(2)(col);
+          }else{
+            Render.polygon([p+5,60,p+10,55,p+15,60]).stroke(2)(col);
           }
           var str = Render.text(v.name,20,p+20,70);
           str.left.fill(col);
@@ -451,8 +451,8 @@ Base.write("System",()=>{
   Tile.registerTile("Start",(v)=>{
     v.addChild(UI.create(UI.image(()=>{
       var w = v.parent.rect.w;
-      var title = Render.text("Quilt Untyped",1,0,0);
-      var script = Render.text("Untyped Lambda Calculus Based Visual Programming Language & Environment",0.15,0,0);
+      var title = Render.text("Quilt Flow",1,0,0);
+      var script = Render.text("Flowchart Based Visual Imperative Programming Language & Environment",0.135,0,0);
       var mult = w * 0.95 / title.size;
       Render.translate(w/2,0,()=>{
         Render.scale(mult,mult,()=>{
@@ -661,10 +661,10 @@ Base.write("System",()=>{
                 q = {x:curX,y:curY};
               }else{
                 if(!f.exist(curX,curY)){
-                  f.place(curX,curY,"Id");
+                  f.place(curX,curY,"Unit");
                 }
                 if(!f.exist(p.x,p.y)){
-                  f.place(p.x,p.y,"Discard");
+                  f.place(p.x,p.y,"Through");
                 }
                 f.connect(curX,curY,p.x,p.y);
                 f.autoAdjust(curX,curY);
@@ -677,11 +677,11 @@ Base.write("System",()=>{
                       var b = f.bridge(curX,curY,i);
                       if(b){
                         if(b.type){
-                          if(i==d2)b.name="Out1";
-                          else b.name="Out2";
+                          if(i==d2)b.name="To1";
+                          else b.name="To2";
                         }else{
-                          if(i==d1)b.name="In1";
-                          else b.name="In2";
+                          if(i==d1)b.name="From1";
+                          else b.name="From2";
                         }
                       }
                     }
@@ -875,7 +875,7 @@ Base.write("System",()=>{
             var radi = 1.0;
             var width = 0.3 - 0.2 * r.selectMot;
             if(r.selectMot != 0){
-              if((r.name !== "Id" && r.name !== "Swap" && r.name !== "Duplicate" && r.name !== "Discard") || !r.valid){
+              if((r.name !== "Through" && r.name !== "Swap" && r.name !== "Merge" && r.name !== "Unit") || !r.valid){
                 Render.circle(0,0,0.2+width/2).stroke(width)(UI.theme.select);
               }
               Render.circle(0,0,0.05+width/2).stroke(width)(UI.theme.select);
@@ -940,7 +940,7 @@ Base.write("System",()=>{
         r.neighbor.forEach((e,i)=>{
           if(e){
             if(e.name){
-              if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
+              if(r.name!=="Swap" && e.name!=="From" && e.name!=="To"){
                 var dx = 0.33, dy = 0.15;
                 var a = i*Math.PI/4;
                 [dx,dy] = [dx*Math.cos(a)+dy*Math.sin(a), -dx*Math.sin(a)+dy*Math.cos(a)];
@@ -1062,7 +1062,7 @@ Base.write("System",()=>{
       }
     };
     f.autoAdjust = (x,y)=>{
-      if(f.at(x,y) == "Id" || f.at(x,y) == "Duplicate" || f.at(x,y) == "Discard" || f.at(x,y) == "Swap"){
+      if(f.at(x,y) == "Through" || f.at(x,y) == "Merge" || f.at(x,y) == "Unit" || f.at(x,y) == "Swap"){
         var a=0,ca=0;
         for(var i=0;i<8;i++){
           var b = f.bridge(x,y,i);
@@ -1072,11 +1072,11 @@ Base.write("System",()=>{
           }
         }
         if(a==1 && ca==1){
-          f.place(x,y,"Id");
-        }else if(a==1 && ca==2){
-          f.place(x,y,"Duplicate");
-        }else if(a==1 && ca==0){
-          f.place(x,y,"Discard");
+          f.place(x,y,"Through");
+        }else if(a==2 && ca==1){
+          f.place(x,y,"Merge");
+        }else if(a==0 && ca==1){
+          f.place(x,y,"Unit");
         }else if(a==2 && ca==2){
           f.place(x,y,"Swap");
         }else if(a==0 && ca==0){
@@ -1135,20 +1135,6 @@ Base.write("System",()=>{
     };
     f.error = null;
     f.update = ()=>{
-      function traverse(x,y){
-        // TODO : Swap
-        function f(i,j){
-          if(i==x && y==j || map[[i,j]].depend[[x,y]])return;
-          map[[i,j]].depend[[x,y]] = true;
-          for(var k=0;k<8;k++){
-            if(map[[i,j]].neighbor[k] && map[[i,j]].neighbor[k].type){
-              var d = Base.fromDir(k);
-              f(i+d.x,j+d.y);
-            }
-          }
-        }
-        return f;
-      }
       if(f.validated){
         f.error = null;
         Object.keys(map).forEach((k)=>{
@@ -1159,34 +1145,14 @@ Base.write("System",()=>{
             else f.error += ", ("+k+")";
           }
         });
-        Object.keys(map).forEach((k)=>{
-          if(map[k].name == "Lambda" && map[k].validIO){
-            for(var i=0;i<8;i++){
-              if(map[k].neighbor[i] && map[k].neighbor[i].name=="X"){
-                var a = k.split(",").map((x)=>parseInt(x));
-                var d = Base.fromDir(i);
-                traverse(a[0],a[1])(a[0]+d.x,a[1]+d.y);
-              }
-            }
-          }
-        });
-        var boundError = null;
         var outCount = 0;
         Object.keys(map).forEach((k)=>{
-          if(map[k].name == "Out" && map[k].validIO){
-            if(Object.keys(map[k].depend).length != 0){
-              map[k].valid = false;
-              if(!f.error){
-                if(!boundError)boundError = "Invalid bound variable : ("+k+")";
-                else boundError += ", ("+k+")";
-              }
-            }
+          if(map[k].name == "Begin" && map[k].validIO){
             outCount++;
           }
         });
-        if(!f.error)f.error = boundError;
         if(!f.error && outCount!=1){
-          f.error = "There must be only one Out func";
+          f.error = "There must be only one Begin func";
         }
         f.validated = false;
         s.field.listener.push("update",{field:f,map:map});
@@ -1253,7 +1219,7 @@ Base.write("System",()=>{
           children : [
             {
               type : 0,
-              name : "Evaluate"
+              name : "Execute"
             },{
               type : 0,
               name : "Start"

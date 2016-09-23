@@ -1,9 +1,9 @@
 Base.write("Eval",()=>{
   var Status = {
-    ready : "Ready to evaluate",
-    evaluating : "Evaluating...",
-    done : "Evaluation done",
-    failed : "Evaluation failed"
+    ready : "Ready to execute",
+    evaluating : "Executing...",
+    done : "Execution done",
+    failed : "Execution failed"
   };
   return (field,map)=>{
     var e = {};
@@ -106,7 +106,7 @@ Base.write("Eval",()=>{
         var err = {
           type : "error"
         };
-        e.status.error = "Failed to evaluate";
+        e.status.error = "Failed to execute";
         e.output = m.name + "(" + np.x + "," + np.y + ") : " + str;
         delete e.status.success;
         return err;

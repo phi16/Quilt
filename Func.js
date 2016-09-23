@@ -42,92 +42,41 @@ Base.write("Func",()=>{
       }
     });
   }
-  make("Lambda",["Y"],["F","X"],function*(m,p,d,s,ev,e,de,err){
-    if(m.coarity["F"][0] == d){
-      return {
-        type : "function",
-        position : p,
-        bridge : m.arity["Y"][0],
-        scope : Base.clone(s)
-      };
-    }else{
-      var x = s[[p.x,p.y]];
-      if(x){
-        if(x.type == "thunk"){
-          var res = yield* e(x.position,x.bridge,x.scope);
-          return res;
-        }else if(x.type == "variable"){
-          return x;
-        }else return err("Invalid value : " + Base.str(x));
-      }else return err("No scope variable");
-    }
+  make("Begin",[],["To"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
     Render.meld([
-      Render.line(0,-0.1,-0.4,0.7),
-      Render.line(-0.2,-0.7,0.4,0.7)
+      Render.circle(0,-0.2,0.4),
+      Render.line(0,0.1,0,0.7)
     ]).stroke(0.2)(col);
   });
-  make("Apply",["F","X"],["Y"],function*(m,p,d,s,ev,e,de,err){
-    var res = yield* de(m.arity["F"][0]);
-    if(res.type == "function"){
-      var scope = Base.clone(res.scope);
-      scope[[res.position.x,res.position.y]] = {
-        type : "thunk",
-        position : p,
-        bridge : m.arity["X"][0],
-        scope : Base.clone(s)
-      };
-      var ret = yield* e(res.position,res.bridge,scope);
-      return ret;
-    }else if(res.type == "variable" || res.type == "apply"){
-      var arg = yield* de(m.arity["X"][0]);
-      return {
-        type : "apply",
-        function : res,
-        argument : arg
-      };
-    }else return err("Not a function : " + Base.str(res));
+  make("End",["From"],[],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
-    Render.circle(0,0,0.4).stroke(0.2)(col);
+    Render.meld([
+      Render.circle(0,0.2,0.4),
+      Render.line(0,-0.1,0,-0.7)
+    ]).stroke(0.2)(col);
   });
-  make("Id",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var res = yield* de(m.arity["In"][0]);
-    return res;
+  make("Through",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
-    Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
-    Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
-    Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
-  },null,Base.void),
-  make("Duplicate",["In"],["Out","Out"],function*(m,p,d,s,ev,e,de,err){
-    var scopeStr = "";
-    for(var i in m.depend){
-      scopeStr += ev.showScope(s[i]);
-    }
-    if(ev.cache[[p.x,p.y]] && ev.cache[[p.x,p.y]][scopeStr]){
-      return ev.cache[[p.x,p.y]][scopeStr];
-    }else{
-      var res = yield* de(m.arity["In"][0]);
-      if(!ev.cache[[p.x,p.y]])ev.cache[[p.x,p.y]] = {};
-      ev.cache[[p.x,p.y]][scopeStr] = res;
-      return res;
-    }
-  },(col)=>{
-    Render.scale(0.7,0.7,()=>{
-      Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
-    });
+    Render.meld([
+      Render.line(0,-0.6,0,0.6)
+    ]).stroke(0.2)(col);
   },null,Base.void);
-  make("Discard",["In"],[],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate Discard");
+  make("Merge",["From","From"],["To"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
-    Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
-    Render.line(0,0.5,0,0.7).stroke(0.2)(col);
+    Render.meld([
+      Render.line(0,0.1,0,0.7),
+      Render.line(0,0.1,-0.4,-0.6),
+      Render.line(0,0.1,0.4,-0.6)
+    ]).stroke(0.2)(col);
   },null,Base.void);
-  make("Swap",["In1","In2"],["Out1","Out2"],function*(m,p,d,s,ev,e,de,err){
-    var n;
-    if(m.neighbor[d].name=="Out1")n = "In1";
-    else n = "In2";
-    var res = yield* de(m.arity[n][0]);
-    return res;
+  make("Unit",[],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.meld([
+      Render.cycle([0,0.4,-0.4,-0.4,0.4,-0.4])
+    ]).stroke(0.2)(col);
+  },null,Base.void);
+  make("Swap",["From1","From2"],["To1","To2"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
@@ -136,10 +85,10 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   },null,(r,shadowSize)=>{
     var n = r.neighbor;
-    var i1 = r.coarity["Out1"][0];
-    var o1 = r.arity["In1"][0];
-    var i2 = r.coarity["Out2"][0];
-    var o2 = r.arity["In2"][0];
+    var i1 = r.coarity["To1"][0];
+    var o1 = r.arity["From1"][0];
+    var i2 = r.coarity["To2"][0];
+    var o2 = r.arity["From2"][0];
     var pi1 = Base.fromDir(i1);
     var po1 = Base.fromDir(o1);
     var pi2 = Base.fromDir(i2);
@@ -178,236 +127,126 @@ Base.write("Func",()=>{
       });
     }
   });
-  make("In",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate In");
-  },(col)=>{
-    Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
-  });
-  make("Out",["In"],[],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate Out");
-  },(col)=>{
-    Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
-  });
-  make("Zero",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 0
-    };
-  },(col)=>{
-    Render.text("0",2,0,0.65).center.fill(col);
-  });
-  make("One",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 1
-    };
-  },(col)=>{
-    Render.text("1",2,-0.07,0.65).center.fill(col);
-  });
-  make("Two",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 2
-    };
-  },(col)=>{
-    Render.text("2",2,0,0.65).center.fill(col);
-  });
-  make("Three",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 3
-    };
-  },(col)=>{
-    Render.text("3",2,0,0.65).center.fill(col);
-  });
-  make("Four",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 4
-    };
-  },(col)=>{
-    Render.text("4",2,0.1,0.65).center.fill(col);
-  });
-  make("Five",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "number",
-      number : 5
-    };
-  },(col)=>{
-    Render.text("5",2,0,0.65).center.fill(col);
-  });
-  make("Plus",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    var y = yield* de(m.arity["In"][1]);
-    if(x.type == "number" && y.type == "number"){
-      return {
-        type : "number",
-        number : x.number + y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  make("Forward",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
     Render.meld([
-      Render.line(-0.5,0,0.5,0),
-      Render.line(0,0.5,0,-0.5)
+      Render.line(0,-0.6,0,0.65),
+      Render.polygon([-0.4,-0.2,0,-0.6,0.4,-0.2])
     ]).stroke(0.2)(col);
   });
-  make("Minus",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["X"][0]);
-    var y = yield* de(m.arity["Y"][0]);
-    if(x.type == "number" && y.type == "number"){
-      return {
-        type : "number",
-        number : x.number - y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  make("Left",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.rotate(-Math.PI*3/4,()=>{
+      Render.meld([
+        Render.arc(0,0,0.4,Math.PI*3/4,Math.PI*1/4),
+        Render.polygon([0.05,0,0.4,-0.35,0.75,0])
+      ]).stroke(0.2)(col);
+    });
+  });
+  make("Right",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.scale(-1,1,()=>{
+      Render.rotate(-Math.PI*3/4,()=>{
+        Render.meld([
+          Render.arc(0,0,0.4,Math.PI*3/4,Math.PI*1/4),
+          Render.polygon([0.05,0,0.4,-0.35,0.75,0])
+        ]).stroke(0.2)(col);
+      });
+    });
+  });
+  make("Dig",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    var r = 0.45;
+    var a = 0.3;
+    Render.meld([
+      Render.arc(-r,-r,a,Math.PI*3/2,0),
+      Render.to(r,-r),
+      Render.arc(r,r,a,Math.PI*1/2,Math.PI),
+      Render.to(-r,r),
+      Render.to(-r,a-r),
+      Render.to(-r+0.0001,a-r)
+    ]).stroke(0.2)(col);
+  });
+  make("Put",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    var r = 0.45;
+    var a = 0.4;
+    Render.meld([
+      Render.arc(-r+a,-r+a,a,Math.PI*1/2,Math.PI),
+      Render.to(-r,r),
+      Render.arc(r-a,r-a,a,Math.PI*3/2,0),
+      Render.to(r,-r),
+      Render.to(a-r,-r)
+    ]).stroke(0.2)(col);
+  });
+  make("Mark",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
     Render.meld([
-      Render.line(-0.6,0,0.6,0)
+      Render.rect(-0.3,-0.3,0.6,0.6)
     ]).stroke(0.2)(col);
   });
-  make("Multiply",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    var y = yield* de(m.arity["In"][1]);
-    if(x.type == "number" && y.type == "number"){
-      return {
-        type : "number",
-        number : x.number * y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
+  make("Push0",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.text("0",1.7,0,0.55).center.fill(col);
+  });
+  make("Push1",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.text("1",1.7,-0.05,0.55).center.fill(col); 
+  });
+  make("Wall?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.meld([
+      Render.rect(-0.47,-0.4,0.94,0.8),
+      Render.line(-0.47,0.25,0.47,0.25)
+    ]).stroke(0.2)(col);
+  });
+  make("Goal?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.rotate(Math.PI/4,()=>{
+      Render.meld([
+        Render.rect(-0.3,-0.3,0.6,0.6)
+      ]).stroke(0.2)(col);
+    });
+  });
+  make("Mark?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.meld([
+      Render.line(-0.2,-0.4,0.2,-0.4),
+      Render.line(0.4,-0.2,0.4,0.2),
+      Render.line(0.2,0.4,-0.2,0.4),
+      Render.line(-0.4,0.2,-0.4,-0.2)
+    ]).stroke(0.2)(col);
+  });
+  make("Pop?",["From"],["0","1","X"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    var rad = Math.PI*0.5;
+    Render.rotate(-Math.PI/2,()=>{
+      Render.meld([
+        Render.arc(0.55,0,0.45,Math.PI,Math.PI+rad),
+        Render.to(-0.45,0.45),
+        Render.to(-0.45,-0.45),
+        Render.arc(0.55,0,0.45,Math.PI-rad,Math.PI)
+      ]).stroke(0.2)(col);
+    });
+  });
+  make("Call",["From"],["F","To"],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.meld([
+      Render.cycle([-0.35,-0.4,0.5,0,-0.35,0.4])
+    ]).stroke(0.2)(col);
+  });
+  make("Return",["From"],[],function*(m,p,d,s,ev,e,de,err){
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.1,-0.4,-0.5,0,-0.1,0.4]),
+      Render.polygon([0.5,-0.4,0.1,0,0.5,0.4])
+    ]).stroke(0.2)(col);
+  });
+  make("Abort",["From"],[],function*(m,p,d,s,ev,e,de,err){
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
       Render.line(-0.5,0.5,0.5,-0.5)
-    ]).stroke(0.2)(col);
-  });
-  make("Divide",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["X"][0]);
-    var y = yield* de(m.arity["Y"][0]);
-    if(x.type == "number" && y.type == "number"){
-      return {
-        type : "number",
-        number : x.number / y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
-  },(col)=>{
-    Render.meld([
-      Render.line(-0.6,0,0.6,0),
-      Render.line(0,-0.6,0,-0.35),
-      Render.line(0,0.6,0,0.35)
-    ]).stroke(0.2)(col);
-  });
-  make("Modulo",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["X"][0]);
-    var y = yield* de(m.arity["Y"][0]);
-    if(x.type == "number" && y.type == "number"){
-      return {
-        type : "number",
-        number : x.number % y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
-  });
-  make("True",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "boolean",
-      boolean : true
-    };
-  },(col)=>{
-    Render.meld([
-      Render.line(-0.4,-0.4,0.4,-0.4),
-      Render.line(0,-0.4,0,0.6)
-    ]).stroke(0.2)(col);
-  });
-  make("False",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return {
-      type : "boolean",
-      boolean : false
-    };
-  },(col)=>{
-    Render.meld([
-      Render.line(-0.4,0.4,0.4,0.4),
-      Render.line(0,0.4,0,-0.6)
-    ]).stroke(0.2)(col);
-  });
-  make("And",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    if(x.type == "boolean"){
-      if(!x.boolean){
-        return {
-          type : "boolean",
-          boolean : false
-        };
-      }else{
-        var y = yield* de(m.arity["In"][1]);
-        return y;
-      }
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
-  },(col)=>{
-    Render.meld([
-      Render.polygon([-0.4,0.6,0,-0.4,0.4,0.6])
-    ]).stroke(0.2)(col);
-  });
-  make("Or",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    if(x.type == "boolean"){
-      if(x.boolean){
-        return {
-          type : "boolean",
-          boolean : true
-        };
-      }else{
-        var y = yield* de(m.arity["In"][1]);
-        return y;
-      }
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
-  },(col)=>{
-    Render.meld([
-      Render.polygon([-0.4,-0.6,0,0.4,0.4,-0.6])
-    ]).stroke(0.2)(col);
-  });
-  make("Not",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    if(x.type == "boolean"){
-      return {
-        type : "boolean",
-        boolean : !x.boolean
-      };
-    }else return err("Type mismatch : " + x.type);
-  },(col)=>{
-    Render.meld([
-      Render.polygon([-0.5,-0.1,0.4,-0.1,0.4,0.3])
-    ]).stroke(0.2)(col);
-  });
-  make("If",["C","T","F"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var c = yield* de(m.arity["C"][0]);
-    if(c.type == "boolean"){
-      var res = yield* de(m.arity[c.boolean?"T":"F"][0]);
-      return res;
-    }else return err("Type mismatch : " + c.type);
-  },(col)=>{
-    Render.meld([
-      Render.line(0,0.3,0,0,1),
-      Render.arc(0,-0.2,0.3,Math.PI*3/2,Math.PI)
-    ]).stroke(0.2)(col);
-    Render.line(0,0.5,0,0.7).stroke(0.2)(col);
-  });
-  make("Same",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
-    var x = yield* de(m.arity["In"][0]);
-    var y = yield* de(m.arity["In"][1]);
-    if(x.type == "boolean" && y.type == "boolean"){
-      return {
-        type : "boolean",
-        boolean : x.boolean === y.boolean
-      };
-    }else if(x.type == "number" && y.type == "number"){
-      return {
-        type : "boolean",
-        boolean : x.number === y.number
-      };
-    }else return err("Type mismatch : " + x.type + ", " + y.type);
-  },(col)=>{
-    Render.meld([
-      Render.line(-0.5,-0.25,0.5,-0.25),
-      Render.line(-0.5,0.25,0.5,0.25)
     ]).stroke(0.2)(col);
   });
   return {};

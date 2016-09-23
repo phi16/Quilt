@@ -110,6 +110,11 @@ Base.write("Render",()=>{
       ctx.arc(x,y,r,-sa,-fa,1);
     });
   };
+  r.to = (x,y)=>{
+    return component(()=>{
+      ctx.lineTo(x,y);
+    });
+  };
   r.bezier = (a)=>{
     if(a.length<8)return component(()=>{},()=>false);
     return component(()=>{
