@@ -204,6 +204,7 @@ Base.write("System",()=>{
     var e = null;
     var evalTimer = null;
     var enableButton = Base.void;
+    var all = 28*11;
     s.field.listener.on("update",(n,d)=>{
       e = Eval(d.field,d.map);
       enableButton(e && e.status.success);
@@ -243,7 +244,6 @@ Base.write("System",()=>{
       });
       Render.translate(33,161,()=>{
         Render.shadowed(2,UI.theme.shadow,()=>{
-          var all = 220;
           if(e){
             var sz = all / e.field.size;
             for(var i=0;i<e.field.size;i++){
@@ -284,31 +284,53 @@ Base.write("System",()=>{
     var putColor;
     v.onPress = (x,y)=>{
       if(e){
-        var all = 220;
-        var sz = all / e.field.size;
-        var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
-        if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
-          if(Mouse.left){
-            putColor = !e.field.ix(i,j).type;
-            e.original.field(i,j,putColor);
-            Mouse.drag = v;
-            e.field.ix(i,j).type = putColor;
-          }else if(Mouse.right){
-            var nd = (e.field.pos.d+1)%4;
-            e.original.pos(i,j,nd);
-            e.field.pos = {x:i,y:j,d:nd};
+        if(32 <= x && 98 <= y && y <= 98+24){
+          var i = Math.floor((x-32)/22);
+          console.log(i,e.field.stack.length);
+          if(i < e.field.stack.length){
+            if(Mouse.right){
+              e.original.stack.remove(i);
+            }else{
+              e.original.stack.flip(i);
+            }
+          }else{
+            if(Mouse.right){
+              e.original.stack.pop();
+            }else{
+              var t = y-98 < 12 ? 0 : 1;
+              e.original.stack.push(t);
+            }
+          }
+        }else{
+          var sz = all / e.field.size;
+          var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
+          if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
+            if(Mouse.left){
+              putColor = !e.field.ix(i,j).type;
+              e.original.field(i,j,putColor);
+              Mouse.drag = v;
+            }else if(Mouse.right){
+              if(e.field.pos.x==i && e.field.pos.y==j){
+                var nd = (e.field.pos.d+1)%4;
+                e.original.pos(i,j,nd);
+              }else{
+                var nd = 1;
+                e.original.pos(i,j,nd);
+              }
+            }
           }
         }
       }
     };
     v.onHover = (x,y)=>{
-      var all = 220;
-      var sz = all / e.field.size;
-      var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
-      if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
-        if(Mouse.drag == v){
-          e.original.field(i,j,putColor);
-          e.field.ix(i,j).type = putColor;
+      if(e){
+        var sz = all / e.field.size;
+        var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
+        if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
+          if(Mouse.drag == v){
+            e.original.field(i,j,putColor);
+            e.field.ix(i,j).type = putColor;
+          }
         }
       }
     };
@@ -330,7 +352,7 @@ Base.write("System",()=>{
     function setEvalTimer(){
       var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
       var f = evalEE;
-      if(speed==1){
+      if(false && speed==1){
         f = ()=>{
           for(var i=0;i<100;i++)evalEE();
         }
@@ -338,7 +360,7 @@ Base.write("System",()=>{
       clearInterval(evalTimer);
       evalTimer = setInterval(f,dur);
     }
-    var basePos = 400;
+    var basePos = 400-220+all;
     var evalButton = UI.create(UI.inherit(UI.button(()=>{
       if(evalTimer){
         clearInterval(evalTimer);
@@ -1248,19 +1270,23 @@ Base.write("System",()=>{
       e.delete = ()=>{
         var n = [];
         selection.forEach((p)=>{
-          map[[p.x,p.y]].neighbor.forEach((e,i)=>{
-            var d = Base.fromDir(i);
-            var m = map[[p.x+d.x,p.y+d.y]];
-            if(m){
-              n.push({x:p.x+d.x,y:p.y+d.y});
-              m.neighbor[(i+4)%8] = null;
+          for(var i=0;i<8;i++){
+            var e = map[[p.x,p.y]].neighbor[i];
+            if(e){
+              var d = Base.fromDir(i);
+              var m = map[[p.x+d.x,p.y+d.y]];
+              if(m){
+                n.push({x:p.x+d.x,y:p.y+d.y});
+                m.neighbor[(i+4)%8] = null;
+              }
             }
-          });
+          };
           delete map[[p.x,p.y]];
         });
         n.forEach((p)=>{
           if(map[[p.x,p.y]])f.validate(p.x,p.y);
         });
+        f.validated = true;
         selection = [];
         s.control.invisible("Selection");
         s.control.set("Select");

@@ -28,9 +28,32 @@ Base.write("Eval",()=>{
           type : t,
           mark : false
         };
+        e.field.array[i][j] = {
+          type : t,
+          mark : false
+        };
       },
       pos : (x,y,d)=>{
         originalField.pos = {x:x,y:y,d:d};
+        e.field.pos = {x:x,y:y,d:d};
+      },
+      stack : {
+        push : (u)=>{
+          originalField.stack.push(u);
+          e.field.stack.push(u);
+        },
+        pop : ()=>{
+          originalField.stack.pop();
+          e.field.stack.pop();
+        },
+        remove : (i)=>{
+          originalField.stack.splice(i,1);
+          e.field.stack.splice(i,1);
+        },
+        flip : (i)=>{
+          originalField.stack[i] = 1-originalField.stack[i];
+          e.field.stack[i] = 1-e.field.stack[i];
+        }
       }
     };
     e.field = Base.clone(originalField);
