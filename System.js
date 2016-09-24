@@ -562,7 +562,7 @@ Base.write("System",()=>{
             end = true;
           },
           finish : ()=>{
-            if(field)field.select.init(0,0,0,0);
+            //if(field)field.select.init(0,0,0,0);
           }
         };
       },
