@@ -203,7 +203,7 @@ Base.write("UI",()=>{
         Render.scale(v.rect.w,v.rect.h,()=>{
           g();
         });
-      }
+      };
     };
   };
   var sequencialLayout = (dir)=>(sp_,draggable_,vanish)=>{

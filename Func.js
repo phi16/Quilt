@@ -1,4 +1,5 @@
 Base.write("Func",()=>{
+  var ddx = [1,0,-1,0], ddy = [0,-1,0,1];
   function make(name,ari,coari,ev,icf,drf,spf){
     if(icf==null){
       var str = name[0];
@@ -57,12 +58,14 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Through",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([
       Render.line(0,-0.6,0,0.6)
     ]).stroke(0.2)(col);
   },null,Base.void);
   make("Merge",["From","From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([
       Render.line(0,0.1,0,0.7),
@@ -71,12 +74,17 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   },null,Base.void);
   make("Unit",[],["To"],function*(m,p,d,s,ev,e,de,err){
+    return err("Tried to evaluate Discard");
   },(col)=>{
     Render.meld([
       Render.cycle([0,0.4,-0.4,-0.4,0.4,-0.4])
     ]).stroke(0.2)(col);
   },null,Base.void);
   make("Swap",["From1","From2"],["To1","To2"],function*(m,p,d,s,ev,e,de,err){
+    var n;
+    if(m.neighbor[d].name=="From1")n = "To1";
+    else n = "To2";
+    yield* de(m.coarity[n][0]);
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
@@ -128,6 +136,13 @@ Base.write("Func",()=>{
     }
   });
   make("Forward",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    ev.field.pos.x += ddx[ev.field.pos.d];
+    ev.field.pos.y += ddy[ev.field.pos.d];
+    if(ev.field.ix(ev.field.pos.x,ev.field.pos.y).type){
+      return err("Forward : (" + p.x + "," + p.y + ")");
+    }else{
+      yield* de(m.coarity["To"][0]);
+    }
   },(col)=>{
     Render.meld([
       Render.line(0,-0.6,0,0.65),
@@ -135,6 +150,9 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Left",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    ev.field.pos.d++;
+    if(ev.field.pos.d == 4)ev.field.pos.d = 0;
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.rotate(-Math.PI*3/4,()=>{
       Render.meld([
@@ -144,6 +162,9 @@ Base.write("Func",()=>{
     });
   });
   make("Right",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    ev.field.pos.d--;
+    if(ev.field.pos.d == -1)ev.field.pos.d = 3;
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.scale(-1,1,()=>{
       Render.rotate(-Math.PI*3/4,()=>{
@@ -155,6 +176,14 @@ Base.write("Func",()=>{
     });
   });
   make("Dig",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x + ddx[ev.field.pos.d];
+    var py = ev.field.pos.y + ddy[ev.field.pos.d];
+    if(ev.field.ix(px,py).type){
+      ev.field.ix(px,py).type = false;
+      yield* de(m.coarity["To"][0]);
+    }else{
+      return err("Dig : (" + p.x + "," + p.y + ")");
+    }
   },(col)=>{
     var r = 0.45;
     var a = 0.3;
@@ -168,6 +197,14 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Put",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x + ddx[ev.field.pos.d];
+    var py = ev.field.pos.y + ddy[ev.field.pos.d];
+    if(ev.field.ix(px,py).type){
+      return err("Put : (" + p.x + "," + p.y + ")");
+    }else{
+      ev.field.ix(px,py).type = true;
+      yield* de(m.coarity["To"][0]);
+    }
   },(col)=>{
     var r = 0.45;
     var a = 0.4;
@@ -180,20 +217,35 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Mark",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x;
+    var py = ev.field.pos.y;
+    ev.field.ix(px,py).mark = !ev.field.ix(px,py).mark;
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([
       Render.rect(-0.3,-0.3,0.6,0.6)
     ]).stroke(0.2)(col);
   });
   make("Push0",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    ev.field.stack.push(0);
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.text("0",1.7,0,0.55).center.fill(col);
   });
   make("Push1",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
+    ev.field.stack.push(1);
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.text("1",1.7,-0.05,0.55).center.fill(col); 
   });
   make("Wall?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x + ddx[ev.field.pos.d];
+    var py = ev.field.pos.y + ddy[ev.field.pos.d];
+    if(ev.field.ix(px,py).type){
+      yield* de(m.coarity["Y"][0]);
+    }else{
+      yield* de(m.coarity["N"][0]);
+    }
   },(col)=>{
     Render.meld([
       Render.rect(-0.47,-0.4,0.94,0.8),
@@ -209,6 +261,13 @@ Base.write("Func",()=>{
     });
   });
   make("Mark?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x;
+    var py = ev.field.pos.y;
+    if(ev.field.ix(px,py).mark){
+      yield* de(m.coarity["Y"][0]);
+    }else{
+      yield* de(m.coarity["N"][0]);
+    }
   },(col)=>{
     Render.meld([
       Render.line(-0.2,-0.4,0.2,-0.4),
@@ -218,6 +277,16 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Pop?",["From"],["0","1","X"],function*(m,p,d,s,ev,e,de,err){
+    if(ev.field.stack.length == 0){
+      yield* de(m.coarity["X"][0]);
+    }else{
+      var t = ev.field.stack.pop();
+      if(t==0){
+        yield* de(m.coarity["0"][0]);
+      }else{
+        yield* de(m.coarity["1"][0]);
+      }
+    }
   },(col)=>{
     var rad = Math.PI*0.5;
     Render.rotate(-Math.PI/2,()=>{
@@ -243,6 +312,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Abort",["From"],[],function*(m,p,d,s,ev,e,de,err){
+    return err("Abort : (" + p.x + "," + p.y + ")");
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),

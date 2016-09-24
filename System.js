@@ -212,45 +212,109 @@ Base.write("System",()=>{
     v.addChild(UI.create(UI.image(()=>{
       Render.shadowed(4,UI.theme.shadow,()=>{
         Render.text("Status",25,10,30).left.fill(UI.theme.def);
-        Render.text("Output",25,10,90).left.fill(UI.theme.def);
+        Render.text("Stack",25,10,90).left.fill(UI.theme.def);
+        Render.text("Field",25,10,150).left.fill(UI.theme.def);
       });
       if(e){
         if(e.status.error){
           Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
-          Render.shadowed(4,UI.theme.shadow,()=>{
-            Render.meld([
-              Render.rect(20,205,10,e.current[0]*10+10),
-              Render.rect(40,205,10,e.current[1]*10+10),
-              Render.rect(60,205,10,e.current[2]*10+10),
-              Render.rect(80,205,10,e.current[3]*10+10),
-              Render.rect(100,205,10,e.current[4]*10+10),
-              Render.rect(120,205,10,e.current[5]*10+10),
-              Render.rect(140,205,10,e.current[6]*10+10)
-            ]).dup((d)=>{
-              d.fill(UI.theme.front);
-              d.stroke(2)(UI.theme.def);
-            });
-            Render.text(Base.str(e.current[0]),15,25,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[1]),15,45,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[2]),15,65,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[3]),15,85,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[4]),15,105,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[5]),15,125,198).center.fill(UI.theme.def);
-            Render.text(Base.str(e.current[6]),15,145,198).center.fill(UI.theme.def);
-          });
-        }
-        if(e.output){
-          Render.text(e.output,25,30,118).left.fill(UI.theme.frame);
-        }else{
-          Render.text("No output",25,30,118).left.fill(UI.theme.split);
         }
       }else{
         Render.text("No field",25,30,58).left.fill(UI.theme.split);
-        Render.text("No output",25,30,118).left.fill(UI.theme.split);
       }
+      Render.translate(32,98,()=>{
+        if(e){
+          e.field.stack.forEach((v,i)=>{
+            Render.rect(3+i*22,3,18,18).dup((d)=>{
+              Render.shadowed(4,UI.theme.shadow,()=>{
+                d.stroke(2)(UI.theme.def);
+                d.fill(v ? UI.theme.select : UI.theme.button);
+              });
+            });
+            if(v==0)Render.circle(12+i*22,12,5).stroke(0.8)(UI.theme.def);
+            else Render.line(12+i*22,6,12+i*22,18).stroke(1)(UI.theme.def);
+          });
+        }
+        Render.shadowed(4,UI.theme.shadow,()=>{
+          Render.rect(0,0,1000,24).stroke(2)(UI.theme.def);
+        });
+      });
+      Render.translate(33,161,()=>{
+        Render.shadowed(2,UI.theme.shadow,()=>{
+          var all = 220;
+          if(e){
+            var sz = all / e.field.size;
+            for(var i=0;i<e.field.size;i++){
+              for(var j=0;j<e.field.size;j++){
+                if(e.field.ix(i,j).type){
+                  Render.rect(sz*i,sz*j,sz,sz).fill(UI.theme.split);
+                }
+                if(e.field.ix(i,j).mark){
+                  Render.rect(sz*i+sz/4,sz*j+sz/4,sz/2,sz/2).dup((d)=>{
+                    d.fill(UI.theme.def,0.3);
+                    d.stroke(1)(UI.theme.def,0.6);
+                  });
+                }
+              }
+            }
+            var a = [];
+            for(var i=1;i<e.field.size;i++){
+              a.push(Render.line(0,sz*i,all,sz*i));
+              a.push(Render.line(sz*i,0,sz*i,all));
+            }
+            Render.meld(a).stroke(2)(UI.theme.def);
+            Render.translate(sz*e.field.pos.x+sz/2,sz*e.field.pos.y+sz/2,()=>{
+              Render.scale(sz/2,sz/2,()=>{
+                Render.rotate(-Math.PI*e.field.pos.d/2,()=>{
+                  Render.cycle([-0.65,-0.5,0.6,0,-0.65,0.5]).dup((d)=>{
+                    d.fill(UI.theme.impact);
+                    d.stroke(0.15)(UI.theme.def);
+                  });
+                });
+              });
+            });
+          }
+          Render.rect(-1,-1,all+2,all+2).stroke(4)(UI.theme.def);
+        });
+      });
     })).place(0,0,1,1));
+    v.checkRightButton = true;
+    var putColor;
+    v.onPress = (x,y)=>{
+      if(e){
+        var all = 220;
+        var sz = all / e.field.size;
+        var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
+        if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
+          if(Mouse.left){
+            putColor = !e.field.ix(i,j).type;
+            e.original.field(i,j,putColor);
+            Mouse.drag = v;
+            e.field.ix(i,j).type = putColor;
+          }else if(Mouse.right){
+            var nd = (e.field.pos.d+1)%4;
+            e.original.pos(i,j,nd);
+            e.field.pos = {x:i,y:j,d:nd};
+          }
+        }
+      }
+    };
+    v.onHover = (x,y)=>{
+      var all = 220;
+      var sz = all / e.field.size;
+      var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
+      if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
+        if(Mouse.drag == v){
+          e.original.field(i,j,putColor);
+          e.field.ix(i,j).type = putColor;
+        }
+      }
+    };
+    v.onRelease = ()=>{
+      Mouse.drag = null;
+    }
     var evalEE = ()=>{
       if(e && e.status.success){
         if(e.eval.next().done){
@@ -274,6 +338,7 @@ Base.write("System",()=>{
       clearInterval(evalTimer);
       evalTimer = setInterval(f,dur);
     }
+    var basePos = 400;
     var evalButton = UI.create(UI.inherit(UI.button(()=>{
       if(evalTimer){
         clearInterval(evalTimer);
@@ -294,7 +359,7 @@ Base.write("System",()=>{
         }
       })).place(5,32,1,1));
       v.enable = e && e.status.success;
-    })).place(10,130,120,40);
+    })).place(10,basePos,120,40);
     enableButton = (b)=>{
       evalButton.enable = b;
     };
@@ -310,7 +375,7 @@ Base.write("System",()=>{
         var col = speed>=0 ? UI.theme.frame : UI.theme.split;
         Render.text("<",30,-1,-10).left.fill(col);
       })).place(5,30,1,1));
-    })).place(140,137,25,25);
+    })).place(140,basePos+7,25,25);
     rightButton = UI.create(UI.inherit(UI.button(()=>{
       if(speed==-1)leftButton.enable = true;
       speed++;
@@ -321,13 +386,13 @@ Base.write("System",()=>{
         var col = speed<=0 ? UI.theme.frame : UI.theme.split;
         Render.text(">",30,-1,-10).left.fill(col);
       })).place(5,30,1,1));
-    })).place(225,137,25,25);
+    })).place(225,basePos+7,25,25);
     v.addChild(leftButton);
     v.addChild(rightButton);
     v.addChild(UI.create(UI.image(()=>{
       var str = speed==-1 ? "Slow" : speed==1 ? "Fast" : "Def";
       Render.text(str,25,0,0).center.fill(UI.theme.def);
-    })).place(195,159,1,1));
+    })).place(195,basePos+29,1,1));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
