@@ -39,8 +39,7 @@ Base.write("System",()=>{
   Tile.registerTile("Control",(v)=>{
     var sc = s.control;
     var ope = UI.create(UI.inherit(UI.frame(),(v)=>{v.full = false;})).place(10,10,60,60);
-    var oldName = sc.current.display, curName = sc.current.display;
-    var oldMode = sc.current.name, curMode = sc.current.name;
+    var oldCtrl = sc.current, curCtrl = sc.current;
     var animate = 1;
     ope.addChild(UI.create(UI.image(()=>{
       Render.rect(0,0,1,1).fill(UI.theme.front);
@@ -48,13 +47,13 @@ Base.write("System",()=>{
       Render.translate(0,1-v,()=>{
         Render.scale(1,v,()=>{
           Render.shadowed(4,UI.theme.shadow,()=>{
-            sc.list[oldMode].draw(UI.theme.def);
+            oldCtrl.draw(UI.theme.def);
           });
         });
       });
       Render.scale(1,1-v,()=>{
         Render.shadowed(4,UI.theme.shadow,()=>{
-          sc.list[curMode].draw(UI.theme.def);
+          curCtrl.draw(UI.theme.def);
         });
       });
       Render.line(0,1-v,1,1-v).stroke(0.03)(UI.theme.def);
@@ -67,13 +66,13 @@ Base.write("System",()=>{
       Render.translate(0,(1-v)*50,()=>{
         Render.scale(1,v,()=>{
           Render.shadowed(4,UI.theme.shadow,()=>{
-            Render.text(oldName,50,0,50).left.fill(UI.theme.def);
+            Render.text(oldCtrl.display,50,0,50).left.fill(UI.theme.def);
           });
         });
       });
       Render.scale(1,1-v,()=>{
         Render.shadowed(4,UI.theme.shadow,()=>{
-          Render.text(curName,50,0,50).left.fill(UI.theme.def);
+          Render.text(curCtrl.display,50,0,50).left.fill(UI.theme.def);
         });
       });
     })).place(80,10,1,1));
@@ -85,11 +84,9 @@ Base.write("System",()=>{
     v.addChild(bar);
     sc.listener.on("change",()=>{
       if(!v.available)return true;
-      if(curName == sc.current.display)return;
-      oldName = curName;
-      curName = sc.current.display;
-      oldMode = curMode;
-      curMode = sc.current.name;
+      if(curCtrl.display == sc.current.display)return;
+      oldCtrl = curCtrl;
+      curCtrl = sc.current;
       animate = 0;
     });
     v.layout = (w,h)=>{
@@ -489,98 +486,105 @@ Base.write("System",()=>{
   s.control = (()=>{
     var c = {};
     c.list = {
-      Swap : {
+      Swap : ()=>({
         draw : (col)=>{
           Render.bezier([0.2,0.8,0.2,0.1,0.8,0.1,0.8,0.8]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){}
-      },
-      Duplicate : {
+        execute : function*(f,v){}
+      }),
+      Duplicate : ()=>({
         draw : (col)=>{
           Render.meld([
             Render.rect(0.2,0.2,0.3,0.3),
             Render.rect(0.5,0.5,0.3,0.3)
           ]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){}
-      },
-      Select : {
-        draw : (col)=>{
-          Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(col);
-        },
-        execute : ()=>function*(f,v){
-          var size = 80;
-          var start = {x:0,y:0},current = {x:0,y:0};
-          var first = true, end = false;
-          var firstPoint = null, pointOnly = true;
-          v.addChild(UI.create(UI.image(()=>{
-            if(!first && !end){
-              Render.shadowed(4,UI.theme.frame,()=>{
-                Render.rect(start.x,start.y,current.x-start.x,current.y-start.y).stroke(1/f.scale())(UI.theme.def);
-              });
+        execute : function*(f,v){}
+      }),
+      Select : ()=>{
+        var field;
+        return {
+          draw : (col)=>{
+            Render.rect(0.25,0.25,0.5,0.5).stroke(0.1)(col);
+          },
+          execute : function*(f,v){
+            field = f;
+            var size = 80;
+            var start = {x:0,y:0},current = {x:0,y:0};
+            var first = true, end = false;
+            var firstPoint = null, pointOnly = true;
+            v.addChild(UI.create(UI.image(()=>{
+              if(!first && !end){
+                Render.shadowed(4,UI.theme.frame,()=>{
+                  Render.rect(start.x,start.y,current.x-start.x,current.y-start.y).stroke(1/f.scale())(UI.theme.def);
+                });
+              }
+            })).place(0,0,1,1));
+            while(true){
+              while(p = yield)if(!p.onPoint){
+                firstPoint = {x:p.x,y:p.y};
+                break;
+              }
+              if(!p)break;
+              if(first){
+                first = false;
+                start.x = current.x = p.x;
+                start.y = current.y = p.y;
+              }else{
+                pointOnly = false;
+                current.x = p.x;
+                current.y = p.y;
+              }
             }
-          })).place(0,0,1,1));
-          while(true){
-            while(p = yield)if(!p.onPoint){
-              firstPoint = {x:p.x,y:p.y};
-              break;
-            }
-            if(!p)break;
-            if(first){
-              first = false;
-              start.x = current.x = p.x;
-              start.y = current.y = p.y;
+            if(pointOnly){
+              var ox = firstPoint.x/size, oy = firstPoint.y/size;
+              var ux = Math.floor(ox+0.5), uy = Math.floor(oy+0.5);
+              var vx = Math.floor(ox+0.5), vy = Math.floor(oy);
+              var hx = Math.floor(ox), hy = Math.floor(oy+0.5);
+              if(Base.distance(ox,oy,ux,uy) < 0.2){
+                f.select.init(ux,uy,ux+1,uy+1);
+              }else if(Math.abs(ox-vx) < 0.2 && f.bridge(vx,vy,6)){
+                f.select.init(vx,vy,vx+1,vy+2);
+              }else if(Math.abs(oy-hy) < 0.2 && f.bridge(hx,hy,0)){
+                f.select.init(hx,hy,hx+2,hy+1);
+              }else if(Base.distance(ox,oy,ux,uy) < 0.3){
+                f.select.init(ux,uy,ux+1,uy+1);
+              }else {
+                f.select.init(0,0,0,0);
+              }
             }else{
-              pointOnly = false;
-              current.x = p.x;
-              current.y = p.y;
+              var a = Math.floor(start.x/size), b = Math.floor(start.y/size);
+              var c = Math.floor(current.x/size), d = Math.floor(current.y/size);
+              if(c < a)[a,c] = [c,a];
+              if(d < b)[b,d] = [d,b];
+              f.select.init(a+1,b+1,c+1,d+1);
             }
+            end = true;
+          },
+          finish : ()=>{
+            if(field)field.select.init(0,0,0,0);
           }
-          if(pointOnly){
-            var ox = firstPoint.x/size, oy = firstPoint.y/size;
-            var ux = Math.floor(ox+0.5), uy = Math.floor(oy+0.5);
-            var vx = Math.floor(ox+0.5), vy = Math.floor(oy);
-            var hx = Math.floor(ox), hy = Math.floor(oy+0.5);
-            if(Base.distance(ox,oy,ux,uy) < 0.2){
-              f.select.init(ux,uy,ux+1,uy+1);
-            }else if(Math.abs(ox-vx) < 0.2 && f.bridge(vx,vy,6)){
-              f.select.init(vx,vy,vx+1,vy+2);
-            }else if(Math.abs(oy-hy) < 0.2 && f.bridge(hx,hy,0)){
-              f.select.init(hx,hy,hx+2,hy+1);
-            }else if(Base.distance(ox,oy,ux,uy) < 0.3){
-              f.select.init(ux,uy,ux+1,uy+1);
-            }else {
-              f.select.init(0,0,0,0);
-            }
-          }else{
-            var a = Math.floor(start.x/size), b = Math.floor(start.y/size);
-            var c = Math.floor(current.x/size), d = Math.floor(current.y/size);
-            if(c < a)[a,c] = [c,a];
-            if(d < b)[b,d] = [d,b];
-            f.select.init(a+1,b+1,c+1,d+1);
-          }
-          end = true;
-        }
+        };
       },
-      Move : {
+      Move : ()=>({
         draw : (col)=>{
           Render.meld([
             Render.line(0.5,0.15,0.5,0.85),
             Render.line(0.15,0.5,0.85,0.5)
           ]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){}
-      },
-      Rotate : {
+        execute : function*(f,v){}
+      }),
+      Rotate : ()=>({
         draw : (col)=>{
           Render.meld([
             Render.line(0.5,0.5,0.5,0.8),
             Render.arc(0.5,0.5,0.3,Math.PI*3/2,Math.PI)
           ]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){}
-      },
-      Operate : {
+        execute : function*(f,v){}
+      }),
+      Operate : ()=>({
         draw : (col)=>{
           Render.translate(0.5,0.5,()=>{
             Render.rotate(Math.PI/4,()=>{
@@ -588,14 +592,25 @@ Base.write("System",()=>{
             });
           });
         },
-        execute : ()=>function*(f,v){}
-      },
-      Place : {
-        draw : (col)=>{
-          //Render.circle(0.5,0.5,0.25).stroke(0.1)(col);
-        },
-        naming : (e)=>{return "Place : " + e;},
-        execute : (e)=>function*(f,v){
+        execute : function*(f,v){}
+      }),
+      Place : (e)=>({
+        draw : (()=>{
+          var f = Base.void;
+          if(s.func.list[e]){
+            f = s.func.list[e].icon;
+          }
+          return (col)=>{
+            Render.translate(0.5,0.5,()=>{
+              Render.scale(0.5,0.5,()=>{
+                f();
+              });
+            });
+            Render.circle(0.5,0.5,0.5).stroke(0.1)(col);
+          };
+        })(),
+        display : "Place : " + e,
+        execute : function*(f,v){
           if(!e)return;
           var p;
           while(p = yield)if(p.onPoint)break;
@@ -604,13 +619,13 @@ Base.write("System",()=>{
           c.set("Connect",p);
           f.rewriteAction(s.control.current.execute);
         }
-      },
-      Connect : {
+      }),
+      Connect : (u)=>({
         draw : (col)=>{
           Render.line(0.15,0.37,0.85,0.37).stroke(0.1)(col);
           Render.line(0.15,0.63,0.85,0.63).stroke(0.1)(col);
         },
-        execute : (u)=>function*(f,v){
+        execute : function*(f,v){
           var size = 80;
           var curE=false, curX, curY, curR, curMX, curMY, state;
           state = 1;
@@ -683,15 +698,15 @@ Base.write("System",()=>{
           state = 0;
           c.set("Connect");
         }
-      },
-      Remove : {
+      }),
+      Remove : ()=>({
         draw : (col)=>{
           Render.meld([
             Render.line(0.2,0.2,0.45,0.45),
             Render.line(0.55,0.55,0.8,0.8)
           ]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){
+        execute : function*(f,v){
           var size = 80;
           var curE=false, curX, curY, curR, curMX, curMY, state;
           state = 1;
@@ -731,8 +746,8 @@ Base.write("System",()=>{
           }
           state = 0;
         }
-      },
-      Name : {
+      }),
+      Name : ()=>({
         draw : (col)=>{
           Render.meld([
             Render.line(0.5,0.2,0.5,0.8),
@@ -742,7 +757,7 @@ Base.write("System",()=>{
             Render.line(0.7,0.82,0.5,0.8),
           ]).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){
+        execute : function*(f,v){
           var p;
           while(p = yield){
             if(!p.onPoint)continue;
@@ -786,8 +801,8 @@ Base.write("System",()=>{
             }
           }
         }
-      },
-      Delete : {
+      }),
+      Delete : ()=>({
         draw : (col)=>{
           var a = [];
           for(var i=0;i<8;i++){
@@ -796,11 +811,14 @@ Base.write("System",()=>{
           }
           Render.meld(a).stroke(0.1)(col);
         },
-        execute : ()=>function*(f,v){
+        execute : function*(f,v){
           f.select.delete();
         }
-      }
+      })
     };
+    Object.keys(c.list).forEach((k)=>{
+      c.list[k].draw = c.list[k]().draw;
+    });
     c.name = {
       //Tile : ["Swap","Duplicate"],
       Field : ["Select","Connect","Remove","Name"],
@@ -811,22 +829,17 @@ Base.write("System",()=>{
       Field : true,
       Selection : false
     }
-    c.current = {
-      name : "Select",
-      display : "Select",
-      execute : c.list["Select"].execute()
-    };
+    c.current = null;
     c.listener = Listener();
     c.set = (n,opt)=>{
-      c.current.name = n;
-      if(c.list[n].naming){
-        c.current.display = c.list[n].naming(opt);
-      }else{
+      if(c.current && c.current.finish)c.current.finish();
+      c.current = c.list[n](opt);
+      if(!c.current.display){
         c.current.display = n;
       }
-      c.current.execute = c.list[n].execute(opt);
       c.listener.push("change",null);
     };
+    c.set("Select");
     c.visible = (cat)=>{
       c.available[cat] = true;
       c.listener.push("visiblity",null);
