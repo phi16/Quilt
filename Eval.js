@@ -174,11 +174,13 @@ Base.write("Eval",()=>{
         return "<Fail>";
       }
     }
+    e.done = false;
     function* output(gen){
       e.status.success = Status.evaluating;
       var str = yield* display(gen);
       e.output = str;
       if(!e.status.error)e.status.success = Status.done;
+      e.done = true;
     }
     if(field.error){
       e.status = {

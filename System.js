@@ -204,10 +204,14 @@ Base.write("System",()=>{
     var e = null;
     var evalTimer = null;
     var enableButton = Base.void;
+    var init = ()=>{};
     s.field.listener.on("update",(n,d)=>{
-      e = Eval(d.field,d.map);
-      enableButton(e && e.status.success);
-      if(e.draw)d.field.evalDraw(e.draw);
+      init = ()=>{
+        e = Eval(d.field,d.map);
+        if(e.draw)d.field.evalDraw(e.draw);
+      };
+      init();
+      enableButton(e && (e.done || e.status.success));
     });
     v.addChild(UI.create(UI.image(()=>{
       Render.shadowed(4,UI.theme.shadow,()=>{
@@ -275,19 +279,29 @@ Base.write("System",()=>{
       evalTimer = setInterval(f,dur);
     }
     var evalButton = UI.create(UI.inherit(UI.button(()=>{
-      if(evalTimer){
-        clearInterval(evalTimer);
-        evalTimer = null;
+      if(e.done){
+        init();
       }else{
-        setEvalTimer();
+        if(evalTimer){
+          clearInterval(evalTimer);
+          evalTimer = null;
+        }else{
+          setEvalTimer();
+        }
       }
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
-        if(e && e.status.success){
-          if(!evalTimer){
-            Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+        if(e){
+          if(e.done){
+            Render.text("Initialize",30,6,0).left.fill(UI.theme.frame);
+          }else if(e.status.success){
+            if(!evalTimer){
+              Render.text("Evaluate",30,0,0).left.fill(UI.theme.frame);
+            }else{
+              Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+            }
           }else{
-            Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+            Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
           }
         }else{
           Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
@@ -304,7 +318,7 @@ Base.write("System",()=>{
       if(speed==1)rightButton.enable = true;
       speed--;
       if(speed==-1)leftButton.enable = false;
-      setEvalTimer();
+      if(evalTimer)setEvalTimer();
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
         var col = speed>=0 ? UI.theme.frame : UI.theme.split;
@@ -315,7 +329,7 @@ Base.write("System",()=>{
       if(speed==-1)leftButton.enable = true;
       speed++;
       if(speed==1)rightButton.enable = false;
-      setEvalTimer();
+      if(evalTimer)setEvalTimer();
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
         var col = speed<=0 ? UI.theme.frame : UI.theme.split;
@@ -963,6 +977,7 @@ Base.write("System",()=>{
       v.rewriteAt(overlayIx,overlay);
     };
     f.begin = (inst,ux,uy)=>{
+      f.validated = true;
       f.newView();
       action = inst(f,overlay);
       if(action.next().value)action = null;
@@ -1230,6 +1245,7 @@ Base.write("System",()=>{
         n.forEach((p)=>{
           if(map[[p.x,p.y]])f.validate(p.x,p.y);
         });
+        f.validated = true;
         selection = [];
         s.control.invisible("Selection");
         s.control.set("Select");

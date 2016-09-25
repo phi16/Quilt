@@ -73,7 +73,7 @@ Base.write("UI",()=>{
     v.shadow = false;
     v.shadowDepth = ()=>shadowDepth;
     v.hovering = false;
-    v.checkRightButton = false;
+    v.checkOtherButton = false;
     v.onHover = Base.const(false);
     v.onLeave = Base.void;
     v.onPress = Base.const(false);
@@ -387,7 +387,7 @@ Base.write("UI",()=>{
       v.name = "field";
       v.full = true;
       v.clipped = false;
-      v.checkRightButton = true;
+      v.checkOtherButton = true;
       v.onPress = (x,y)=>{
         if(Mouse.right && !Mouse.drag){
           cx = x,cy = y;
@@ -470,7 +470,7 @@ Base.write("UI",()=>{
       v.name = "scroll";
       v.full = true;
       v.clipped = false;
-      v.checkRightButton = false;
+      v.checkOtherButton = false;
       var main = UI.create((v)=>{
         v.name = "scrollContainer";
       });
@@ -730,7 +730,7 @@ Base.write("UI",()=>{
         return pChilds;
       };
       var vRes = false;
-      if(Mouse.left || ins == "onHover" || ins == "onLeave" || ins == "onWheel" || v.checkRightButton){
+      if(Mouse.left || ins == "onHover" || ins == "onLeave" || ins == "onWheel" || v.checkOtherButton){
         vRes = v[ins](p,q,procChilds);
       }
       v.hovering = true;
