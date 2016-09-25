@@ -218,7 +218,7 @@ Base.write("System",()=>{
       });
       if(e){
         if(e.status.error){
-          Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
+          Render.text(e.status.error + " : " + e.status.reason,25,30,58).left.fill(UI.theme.invalid);
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
         }
@@ -230,12 +230,11 @@ Base.write("System",()=>{
           e.field.stack.forEach((v,i)=>{
             Render.rect(3+i*22,3,18,18).dup((d)=>{
               Render.shadowed(4,UI.theme.shadow,()=>{
-                d.stroke(2)(UI.theme.def);
+                d.stroke(3)(UI.theme.def);
                 d.fill(v ? UI.theme.select : UI.theme.button);
               });
             });
-            if(v==0)Render.circle(12+i*22,12,5).stroke(0.8)(UI.theme.def);
-            else Render.line(12+i*22,6,12+i*22,18).stroke(1)(UI.theme.def);
+            Render.text(v?"1":"0",20,12+i*22,19).center.fill(UI.theme.def);
           });
         }
         Render.shadowed(4,UI.theme.shadow,()=>{
@@ -280,6 +279,20 @@ Base.write("System",()=>{
         });
       });
     })).place(0,0,1,1));
+    v.addChild(UI.create(UI.inherit(UI.button(()=>{
+      if(e)e.original.stack.push(0);
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        Render.text("0",20,10,17).center.fill(UI.theme.def);
+      })).place(0,0,1,1));
+    })).place(75,71,20,20));
+    v.addChild(UI.create(UI.inherit(UI.button(()=>{
+      if(e)e.original.stack.push(1);
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        Render.text("1",20,10,17).center.fill(UI.theme.def);
+      })).place(0,0,1,1));
+    })).place(100,71,20,20));
     v.checkRightButton = true;
     var putColor;
     v.onPress = (x,y)=>{
@@ -296,9 +309,6 @@ Base.write("System",()=>{
           }else{
             if(Mouse.right){
               e.original.stack.pop();
-            }else{
-              var t = y-98 < 12 ? 0 : 1;
-              e.original.stack.push(t);
             }
           }
         }else{
@@ -1050,6 +1060,7 @@ Base.write("System",()=>{
       v.rewriteAt(overlayIx,overlay);
     };
     f.begin = (inst,ux,uy)=>{
+      f.validated = true;
       f.newView();
       action = inst(f,overlay);
       if(action.next().value)action = null;

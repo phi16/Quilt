@@ -68,6 +68,7 @@ Base.write("Eval",()=>{
       }
     };
     function* evaluate(position,bridge,scope){
+      if(e.done)return;
       yield "begin("+position.x+","+position.y+")";
       var p = Base.fromDir(bridge);
       var nd = (bridge+4)%8;
@@ -83,15 +84,24 @@ Base.write("Eval",()=>{
           type : "error"
         };
         e.status.error = "Failed to execute";
+        e.status.reason = str;
         delete e.status.success;
-        console.log(str);
         return err;
       });
     }
+    e.done = false;
+    e.end = ()=>{
+      e.done = true;
+    };
     function* output(gen){
       e.status.success = Status.evaluating;
       yield* gen;
-      if(!e.status.error)e.status.success = Status.done;
+      if(!e.status.error){
+        if(!e.done){
+          e.status.error = Status.failed;
+          e.status.reason = "call stack is empty";
+        }else e.status.success = Status.done;
+      }
     }
     if(field.error){
       e.status = {

@@ -51,6 +51,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("End",["From"],[],function*(m,p,d,s,ev,e,de,err){
+    ev.end();
   },(col)=>{
     Render.meld([
       Render.circle(0,0.2,0.4),
@@ -74,7 +75,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   },null,Base.void);
   make("Unit",[],["To"],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate Discard");
+    return err("tried to evaluate Unit");
   },(col)=>{
     Render.meld([
       Render.cycle([0,0.4,-0.4,-0.4,0.4,-0.4])
@@ -139,7 +140,7 @@ Base.write("Func",()=>{
     ev.field.pos.x += ddx[ev.field.pos.d];
     ev.field.pos.y += ddy[ev.field.pos.d];
     if(ev.field.ix(ev.field.pos.x,ev.field.pos.y).type){
-      return err("Forward : (" + p.x + "," + p.y + ")");
+      return err("crashed into a wall");
     }else{
       yield* de(m.coarity["To"][0]);
     }
@@ -178,11 +179,13 @@ Base.write("Func",()=>{
   make("Dig",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     var px = ev.field.pos.x + ddx[ev.field.pos.d];
     var py = ev.field.pos.y + ddy[ev.field.pos.d];
-    if(ev.field.ix(px,py).type){
+    if(px<0 || py<0 || px>=ev.field.size || py>=ev.field.size){
+      return err("out of bounds");
+    }else if(ev.field.ix(px,py).type){
       ev.field.ix(px,py).type = false;
       yield* de(m.coarity["To"][0]);
     }else{
-      return err("Dig : (" + p.x + "," + p.y + ")");
+      return err("there is no wall");
     }
   },(col)=>{
     var r = 0.45;
@@ -199,8 +202,10 @@ Base.write("Func",()=>{
   make("Put",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     var px = ev.field.pos.x + ddx[ev.field.pos.d];
     var py = ev.field.pos.y + ddy[ev.field.pos.d];
-    if(ev.field.ix(px,py).type){
-      return err("Put : (" + p.x + "," + p.y + ")");
+    if(px<0 || py<0 || px>=ev.field.size || py>=ev.field.size){
+      return err("out of bounds");
+    }else if(ev.field.ix(px,py).type){
+      return err("there is already a wall");
     }else{
       ev.field.ix(px,py).type = true;
       yield* de(m.coarity["To"][0]);
@@ -299,6 +304,8 @@ Base.write("Func",()=>{
     });
   });
   make("Call",["From"],["F","To"],function*(m,p,d,s,ev,e,de,err){
+    yield* de(m.coarity["F"][0]);
+    yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([
       Render.cycle([-0.35,-0.4,0.5,0,-0.35,0.4])
@@ -312,7 +319,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Abort",["From"],[],function*(m,p,d,s,ev,e,de,err){
-    return err("Abort : (" + p.x + "," + p.y + ")");
+    return err("abort!");
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
