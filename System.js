@@ -205,10 +205,14 @@ Base.write("System",()=>{
     var evalTimer = null;
     var enableButton = Base.void;
     var all = 28*11;
+    var init = ()=>{};
     s.field.listener.on("update",(n,d)=>{
-      e = Eval(d.field,d.map);
-      enableButton(e && e.status.success);
-      if(e.draw)d.field.evalDraw(e.draw);
+      init = ()=>{
+        e = Eval(d.field,d.map);
+        if(e.draw)d.field.evalDraw(e.draw);
+      };
+      init();
+      enableButton(e && (e.done || e.status.success));
     });
     v.addChild(UI.create(UI.image(()=>{
       Render.shadowed(4,UI.theme.shadow,()=>{
@@ -218,7 +222,11 @@ Base.write("System",()=>{
       });
       if(e){
         if(e.status.error){
-          Render.text(e.status.error + " : " + e.status.reason,25,30,58).left.fill(UI.theme.invalid);
+          if(e.status.reason){
+            Render.text(e.status.error + " : " + e.status.reason,25,30,58).left.fill(UI.theme.invalid);
+          }else{
+            Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
+          }
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
         }
@@ -231,18 +239,18 @@ Base.write("System",()=>{
             Render.rect(3+i*22,3,18,18).dup((d)=>{
               Render.shadowed(4,UI.theme.shadow,()=>{
                 d.stroke(3)(UI.theme.def);
-                d.fill(v ? UI.theme.select : UI.theme.button);
+                d.fill(v ? UI.theme.select : Color(1,0.8,0));
               });
             });
             Render.text(v?"1":"0",20,12+i*22,19).center.fill(UI.theme.def);
           });
         }
         Render.shadowed(4,UI.theme.shadow,()=>{
-          Render.rect(0,0,1000,24).stroke(2)(UI.theme.def);
+          Render.rect(0,0,v.rect.w,24).stroke(2)(UI.theme.def);
         });
       });
       Render.translate(33,161,()=>{
-        Render.shadowed(2,UI.theme.shadow,()=>{
+        Render.shadowed(4,UI.theme.shadow,()=>{
           if(e){
             var sz = all / e.field.size;
             for(var i=0;i<e.field.size;i++){
@@ -264,6 +272,14 @@ Base.write("System",()=>{
               a.push(Render.line(sz*i,0,sz*i,all));
             }
             Render.meld(a).stroke(2)(UI.theme.def);
+            Render.translate(sz*e.field.goal.x+sz/2,sz*e.field.goal.y+sz/2,()=>{
+              Render.scale(sz/2,sz/2,()=>{
+                Render.cycle([0.6,0,0,0.6,-0.6,0,0,-0.6]).dup((d)=>{
+                  d.fill(Color(1,1,0));
+                  d.stroke(0.15)(UI.theme.frame);
+                });
+              });
+            });
             Render.translate(sz*e.field.pos.x+sz/2,sz*e.field.pos.y+sz/2,()=>{
               Render.scale(sz/2,sz/2,()=>{
                 Render.rotate(-Math.PI*e.field.pos.d/2,()=>{
@@ -293,17 +309,16 @@ Base.write("System",()=>{
         Render.text("1",20,10,17).center.fill(UI.theme.def);
       })).place(0,0,1,1));
     })).place(100,71,20,20));
-    v.checkRightButton = true;
+    v.checkOtherButton = true;
     var putColor;
     v.onPress = (x,y)=>{
       if(e){
         if(32 <= x && 98 <= y && y <= 98+24){
           var i = Math.floor((x-32)/22);
-          console.log(i,e.field.stack.length);
           if(i < e.field.stack.length){
             if(Mouse.right){
               e.original.stack.remove(i);
-            }else{
+            }else if(Mouse.left){
               e.original.stack.flip(i);
             }
           }else{
@@ -327,6 +342,8 @@ Base.write("System",()=>{
                 var nd = 1;
                 e.original.pos(i,j,nd);
               }
+            }else if(Mouse.center){
+              e.original.goal(i,j);
             }
           }
         }
@@ -362,9 +379,9 @@ Base.write("System",()=>{
     function setEvalTimer(){
       var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
       var f = evalEE;
-      if(false && speed==1){
+      if(speed==1){
         f = ()=>{
-          for(var i=0;i<100;i++)evalEE();
+          for(var i=0;i<5;i++)evalEE();
         }
       }
       clearInterval(evalTimer);
@@ -372,19 +389,29 @@ Base.write("System",()=>{
     }
     var basePos = 400-220+all;
     var evalButton = UI.create(UI.inherit(UI.button(()=>{
-      if(evalTimer){
-        clearInterval(evalTimer);
-        evalTimer = null;
+      if(e.done){
+        init();
       }else{
-        setEvalTimer();
+        if(evalTimer){
+          clearInterval(evalTimer);
+          evalTimer = null;
+        }else{
+          setEvalTimer();
+        }
       }
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
-        if(e && e.status.success){
-          if(!evalTimer){
-            Render.text("Execute",30,6,0).left.fill(UI.theme.frame);
+        if(e){
+          if(e.done){
+            Render.text("Initialize",30,6,0).left.fill(UI.theme.frame);
+          }else if(e.status.success){
+            if(!evalTimer){
+              Render.text("Execute",30,6,0).left.fill(UI.theme.frame);
+            }else{
+              Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+            }
           }else{
-            Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+            Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
           }
         }else{
           Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
@@ -401,7 +428,7 @@ Base.write("System",()=>{
       if(speed==1)rightButton.enable = true;
       speed--;
       if(speed==-1)leftButton.enable = false;
-      setEvalTimer();
+      if(evalTimer)setEvalTimer();
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
         var col = speed>=0 ? UI.theme.frame : UI.theme.split;
@@ -412,7 +439,7 @@ Base.write("System",()=>{
       if(speed==-1)leftButton.enable = true;
       speed++;
       if(speed==1)rightButton.enable = false;
-      setEvalTimer();
+      if(evalTimer)setEvalTimer();
     }),(v)=>{
       v.addChild(UI.create(UI.image(()=>{
         var col = speed<=0 ? UI.theme.frame : UI.theme.split;

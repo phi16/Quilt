@@ -258,6 +258,13 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
   });
   make("Goal?",["From"],["Y","N"],function*(m,p,d,s,ev,e,de,err){
+    var px = ev.field.pos.x;
+    var py = ev.field.pos.y;
+    if(ev.field.goal.x == px && ev.field.goal.y == py){
+      yield* de(m.coarity["Y"][0]);
+    }else{
+      yield* de(m.coarity["N"][0]);
+    }
   },(col)=>{
     Render.rotate(Math.PI/4,()=>{
       Render.meld([

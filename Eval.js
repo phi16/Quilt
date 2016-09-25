@@ -7,6 +7,7 @@ Base.write("Eval",()=>{
   };
   var originalField = {
     pos : {x:5,y:9,d:1},
+    goal : {x:5,y:5},
     array : [],
     size : 11,
     stack : []
@@ -37,10 +38,14 @@ Base.write("Eval",()=>{
         originalField.pos = {x:x,y:y,d:d};
         e.field.pos = {x:x,y:y,d:d};
       },
+      goal : (x,y)=>{
+        originalField.goal = {x:x,y:y};
+        e.field.goal = {x:x,y:y};
+      },
       stack : {
         push : (u)=>{
-          originalField.stack.push(u);
-          e.field.stack.push(u);
+          originalField.stack.unshift(u);
+          e.field.stack.unshift(u);
         },
         pop : ()=>{
           originalField.stack.pop();
@@ -102,6 +107,7 @@ Base.write("Eval",()=>{
           e.status.reason = "call stack is empty";
         }else e.status.success = Status.done;
       }
+      e.done = true;
     }
     if(field.error){
       e.status = {
