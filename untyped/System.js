@@ -155,43 +155,60 @@ Base.write("System",()=>{
     });
   });
   Tile.registerTile("Function",(v)=>{
+    var cats = Object.keys(s.func.category);
     var names = Object.keys(s.func.list);
-    var scroll = UI.create(UI.scroll(-1,names.length*50));
+    var ratAll = names.length*50 + cats.length*30;
+    var scroll = UI.create(UI.scroll(-1,ratAll));
     var list = UI.create(UI.vertical(0));
     scroll.addChild(list);
     v.addChild(scroll);
-    names.forEach((n)=>{
-      var row = UI.create(UI.frame());
-      var btn = UI.create(UI.button(()=>{
-        s.control.set("Place",n);
-      })).place(10,10,30,30);
-      var f = s.func.list[n];
-      btn.addChild(UI.create(UI.image(()=>{
-        Render.translate(15,15,()=>{
-          Render.scale(15,15,()=>{
-            f.icon();
+    var ratPos = 0;
+    var ratArr = [];
+    Object.keys(s.func.category).forEach((cat)=>{
+      list.addChild(UI.create((v)=>{
+        v.name = "categoryBar";
+        v.addChild(UI.create(UI.image(()=>{
+         Render.rect(0,0,v.rect.w,v.rect.h).fill(UI.theme.button,0.1);
+         Render.text(cat,20,5,26).left.fill(UI.theme.frame);
+        })).place(0,0,1,1));
+      }));
+      ratPos += 30, ratArr.push(ratPos);
+      s.func.category[cat].forEach((n)=>{
+        var row = UI.create(UI.frame());
+        var btn = UI.create(UI.button(()=>{
+          s.control.set("Place",n);
+        })).place(10,10,30,30);
+        var f = s.func.list[n];
+        btn.addChild(UI.create(UI.image(()=>{
+          Render.translate(15,15,()=>{
+            Render.scale(15,15,()=>{
+              f.icon();
+            });
           });
-        });
-      })).place(0,0,1,1));
-      row.addChild(btn);
-      {
-        var text;
-        var i = "", o = "";
-        f.arity.forEach((s)=>{i += s + "  ";});
-        f.coarity.forEach((s)=>{o += s + "  ";});
-        var iText;
-        var oText;
-        row.addChild(UI.create(UI.image(()=>{
-          if(!text || text.size==0)text = Render.text(n,40,0,30);
-          if(!iText || iText.size==0)iText = Render.text(i,20,text.size+10,13);
-          if(!oText || oText.size==0)oText = Render.text(o,20,text.size+10,32);
-          text.left.fill(UI.theme.def);
-          iText.left.fill(UI.theme.in);
-          oText.left.fill(UI.theme.out);
-        })).place(50,10,1,1));
-      }
-      list.addChild(row);
+        })).place(0,0,1,1));
+        row.addChild(btn);
+        {
+          var text;
+          var i = "", o = "";
+          f.arity.forEach((s)=>{i += s + "  ";});
+          f.coarity.forEach((s)=>{o += s + "  ";});
+          var iText;
+          var oText;
+          row.addChild(UI.create(UI.image(()=>{
+            if(!text || text.size==0)text = Render.text(n,40,0,30);
+            if(!iText || iText.size==0)iText = Render.text(i,20,text.size+10,13);
+            if(!oText || oText.size==0)oText = Render.text(o,20,text.size+10,32);
+            text.left.fill(UI.theme.def);
+            iText.left.fill(UI.theme.in);
+            oText.left.fill(UI.theme.out);
+          })).place(50,10,1,1));
+        }
+        list.addChild(row);
+        ratPos += 50, ratArr.push(ratPos);
+      });
     });
+    ratArr.pop();
+    list.setRatio(ratArr.map((r)=>r/ratAll));
     list.forceMotion();
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
@@ -466,7 +483,7 @@ Base.write("System",()=>{
     v.addChild(UI.create(UI.image(()=>{
       var w = v.parent.rect.w;
       var title = Render.text("Quilt Untyped",1,0,0);
-      var script = Render.text("Untyped Lambda Calculus Based Visual Programming Language & Environment",0.15,0,0);
+      var script = Render.text("Untyped Lambda Calculus Based Visual Programming Language & Environment",0.17,0,0);
       var mult = w * 0.95 / title.size;
       Render.translate(w/2,0,()=>{
         Render.scale(mult,mult,()=>{
@@ -490,10 +507,15 @@ Base.write("System",()=>{
 
   s.func = (()=>{
     var f = {};
+    f.category = {};
     f.list = {};
-    f.register = (n,func)=>{
+    f.addCategory = (cat)=>{
+      f.category[cat] = [];
+    };
+    f.register = (n,cat,func)=>{
+      f.category[cat].push(n);
       f.list[n] = func;
-    }
+    };
     return f;
   })();
 

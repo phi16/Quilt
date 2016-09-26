@@ -475,7 +475,10 @@ Base.write("Tile",()=>{
         makeTree(c,t,s,a);
         a.pop();
       });
-      if(t.ratio)s.setRatio(t.ratio);
+      if(t.ratio){
+        s.setRatio(t.ratio);
+        s.forceMotion();
+      }
       v.addChild(s);
       t.view = s;
       t.view.index = Base.clone(a);
