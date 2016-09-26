@@ -47,7 +47,29 @@ Base.write("Func",()=>{
   System.func.addCategory("Number");
   System.func.addCategory("Boolean");
   make("In","Flow",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate In");
+    yield "In";
+    var str = prompt("Input a value");
+    if(str === "T" || str === "True" || str === "t" || str === "true"){
+      return {
+        type : "boolean",
+        boolean : true
+      };
+    }else if(str === "F" || str === "False" || str === "f" || str === "false"){
+      return {
+        type : "boolean",
+        boolean : true
+      };
+    }else{
+      var v = Number(str);
+      if(str!=null && str.length>0 && !isNaN(v)){
+        return {
+          type : "number",
+          number : v
+        };
+      }else{
+        return err("Failed to convert " + Base.str(str) + " to a value");
+      }
+    }
   },(col)=>{
     Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
   });
