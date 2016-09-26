@@ -1,5 +1,5 @@
 Base.write("Func",()=>{
-  function make(name,ari,coari,ev,icf,drf,spf){
+  function make(name,cat,ari,coari,ev,icf,drf,spf){
     if(icf==null){
       var str = name[0];
       icf = (col)=>{
@@ -24,7 +24,7 @@ Base.write("Func",()=>{
     if(spf==null){
       spf = drf;
     }
-    System.func.register(name,{
+    System.func.register(name,cat,{
       arity : ari,
       coarity : coari,
       eval : ev,
@@ -42,55 +42,21 @@ Base.write("Func",()=>{
       }
     });
   }
-  make("Lambda",["Y"],["F","X"],function*(m,p,d,s,ev,e,de,err){
-    if(m.coarity["F"][0] == d){
-      return {
-        type : "function",
-        position : p,
-        bridge : m.arity["Y"][0],
-        scope : Base.clone(s)
-      };
-    }else{
-      var x = s[[p.x,p.y]];
-      if(x){
-        if(x.type == "thunk"){
-          var res = yield* e(x.position,x.bridge,x.scope);
-          return res;
-        }else if(x.type == "variable"){
-          return x;
-        }else return err("Invalid value : " + Base.str(x));
-      }else return err("No scope variable");
-    }
+  System.func.addCategory("Flow");
+  System.func.addCategory("Function");
+  System.func.addCategory("Number");
+  System.func.addCategory("Boolean");
+  make("In","Flow",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+    return err("Tried to evaluate In");
   },(col)=>{
-    Render.meld([
-      Render.line(0,-0.1,-0.4,0.7),
-      Render.line(-0.2,-0.7,0.4,0.7)
-    ]).stroke(0.2)(col);
+    Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
   });
-  make("Apply",["F","X"],["Y"],function*(m,p,d,s,ev,e,de,err){
-    var res = yield* de(m.arity["F"][0]);
-    if(res.type == "function"){
-      var scope = Base.clone(res.scope);
-      scope[[res.position.x,res.position.y]] = {
-        type : "thunk",
-        position : p,
-        bridge : m.arity["X"][0],
-        scope : Base.clone(s)
-      };
-      var ret = yield* e(res.position,res.bridge,scope);
-      return ret;
-    }else if(res.type == "variable" || res.type == "apply"){
-      var arg = yield* de(m.arity["X"][0]);
-      return {
-        type : "apply",
-        function : res,
-        argument : arg
-      };
-    }else return err("Not a function : " + Base.str(res));
+  make("Out","Flow",["In"],[],function*(m,p,d,s,ev,e,de,err){
+    return err("Tried to evaluate Out");
   },(col)=>{
-    Render.circle(0,0,0.4).stroke(0.2)(col);
+    Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
   });
-  make("Id",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Id","Flow",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var res = yield* de(m.arity["In"][0]);
     return res;
   },(col)=>{
@@ -98,7 +64,7 @@ Base.write("Func",()=>{
     Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
     Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
   },null,Base.void),
-  make("Duplicate",["In"],["Out","Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Duplicate","Flow",["In"],["Out","Out"],function*(m,p,d,s,ev,e,de,err){
     var scopeStr = "";
     for(var i in m.depend){
       scopeStr += ev.showScope(s[i]);
@@ -116,13 +82,13 @@ Base.write("Func",()=>{
       Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
     });
   },null,Base.void);
-  make("Discard",["In"],[],function*(m,p,d,s,ev,e,de,err){
+  make("Discard","Flow",["In"],[],function*(m,p,d,s,ev,e,de,err){
     return err("Tried to evaluate Discard");
   },(col)=>{
     Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
     Render.line(0,0.5,0,0.7).stroke(0.2)(col);
   },null,Base.void);
-  make("Swap",["In1","In2"],["Out1","Out2"],function*(m,p,d,s,ev,e,de,err){
+  make("Swap","Flow",["In1","In2"],["Out1","Out2"],function*(m,p,d,s,ev,e,de,err){
     var n;
     if(m.neighbor[d].name=="Out1")n = "In1";
     else n = "In2";
@@ -178,17 +144,55 @@ Base.write("Func",()=>{
       });
     }
   });
-  make("In",[],["Out"],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate In");
+  make("Lambda","Function",["Y"],["F","X"],function*(m,p,d,s,ev,e,de,err){
+    if(m.coarity["F"][0] == d){
+      return {
+        type : "function",
+        position : p,
+        bridge : m.arity["Y"][0],
+        scope : Base.clone(s)
+      };
+    }else{
+      var x = s[[p.x,p.y]];
+      if(x){
+        if(x.type == "thunk"){
+          var res = yield* e(x.position,x.bridge,x.scope);
+          return res;
+        }else if(x.type == "variable"){
+          return x;
+        }else return err("Invalid value : " + Base.str(x));
+      }else return err("No scope variable");
+    }
   },(col)=>{
-    Render.cycle([0,-0.5,-0.5,0,0,0.5,0.5,0]).stroke(0.2)(col);
+    Render.meld([
+      Render.line(0,-0.1,-0.4,0.7),
+      Render.line(-0.2,-0.7,0.4,0.7)
+    ]).stroke(0.2)(col);
   });
-  make("Out",["In"],[],function*(m,p,d,s,ev,e,de,err){
-    return err("Tried to evaluate Out");
+  make("Apply","Function",["F","X"],["Y"],function*(m,p,d,s,ev,e,de,err){
+    var res = yield* de(m.arity["F"][0]);
+    if(res.type == "function"){
+      var scope = Base.clone(res.scope);
+      scope[[res.position.x,res.position.y]] = {
+        type : "thunk",
+        position : p,
+        bridge : m.arity["X"][0],
+        scope : Base.clone(s)
+      };
+      var ret = yield* e(res.position,res.bridge,scope);
+      return ret;
+    }else if(res.type == "variable" || res.type == "apply"){
+      var arg = yield* de(m.arity["X"][0]);
+      return {
+        type : "apply",
+        function : res,
+        argument : arg
+      };
+    }else return err("Not a function : " + Base.str(res));
   },(col)=>{
-    Render.rect(-0.4,-0.4,0.8,0.8).stroke(0.2)(col);
+    Render.circle(0,0,0.4).stroke(0.2)(col);
   });
-  make("Zero",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Zero","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 0
@@ -196,7 +200,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("0",2,0,0.65).center.fill(col);
   });
-  make("One",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("One","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 1
@@ -204,7 +208,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("1",2,-0.07,0.65).center.fill(col);
   });
-  make("Two",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Two","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 2
@@ -212,7 +216,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("2",2,0,0.65).center.fill(col);
   });
-  make("Three",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Three","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 3
@@ -220,7 +224,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("3",2,0,0.65).center.fill(col);
   });
-  make("Four",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Four","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 4
@@ -228,7 +232,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("4",2,0.1,0.65).center.fill(col);
   });
-  make("Five",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Five","Number",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "number",
       number : 5
@@ -236,7 +240,7 @@ Base.write("Func",()=>{
   },(col)=>{
     Render.text("5",2,0,0.65).center.fill(col);
   });
-  make("Plus",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Plus","Number",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     var y = yield* de(m.arity["In"][1]);
     if(x.type == "number" && y.type == "number"){
@@ -251,7 +255,7 @@ Base.write("Func",()=>{
       Render.line(0,0.5,0,-0.5)
     ]).stroke(0.2)(col);
   });
-  make("Minus",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Minus","Number",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["X"][0]);
     var y = yield* de(m.arity["Y"][0]);
     if(x.type == "number" && y.type == "number"){
@@ -265,7 +269,7 @@ Base.write("Func",()=>{
       Render.line(-0.6,0,0.6,0)
     ]).stroke(0.2)(col);
   });
-  make("Multiply",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Multiply","Number",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     var y = yield* de(m.arity["In"][1]);
     if(x.type == "number" && y.type == "number"){
@@ -280,7 +284,7 @@ Base.write("Func",()=>{
       Render.line(-0.5,0.5,0.5,-0.5)
     ]).stroke(0.2)(col);
   });
-  make("Divide",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Divide","Number",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["X"][0]);
     var y = yield* de(m.arity["Y"][0]);
     if(x.type == "number" && y.type == "number"){
@@ -296,7 +300,7 @@ Base.write("Func",()=>{
       Render.line(0,0.6,0,0.35)
     ]).stroke(0.2)(col);
   });
-  make("Modulo",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Modulo","Number",["X","Y"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["X"][0]);
     var y = yield* de(m.arity["Y"][0]);
     if(x.type == "number" && y.type == "number"){
@@ -306,7 +310,7 @@ Base.write("Func",()=>{
       };
     }else return err("Type mismatch : " + x.type + ", " + y.type);
   });
-  make("True",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("True","Boolean",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "boolean",
       boolean : true
@@ -317,7 +321,7 @@ Base.write("Func",()=>{
       Render.line(0,-0.4,0,0.6)
     ]).stroke(0.2)(col);
   });
-  make("False",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("False","Boolean",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     return {
       type : "boolean",
       boolean : false
@@ -328,7 +332,7 @@ Base.write("Func",()=>{
       Render.line(0,0.4,0,-0.6)
     ]).stroke(0.2)(col);
   });
-  make("And",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("And","Boolean",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     if(x.type == "boolean"){
       if(!x.boolean){
@@ -346,7 +350,7 @@ Base.write("Func",()=>{
       Render.polygon([-0.4,0.6,0,-0.4,0.4,0.6])
     ]).stroke(0.2)(col);
   });
-  make("Or",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Or","Boolean",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     if(x.type == "boolean"){
       if(x.boolean){
@@ -364,7 +368,7 @@ Base.write("Func",()=>{
       Render.polygon([-0.4,-0.6,0,0.4,0.4,-0.6])
     ]).stroke(0.2)(col);
   });
-  make("Not",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Not","Boolean",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     if(x.type == "boolean"){
       return {
@@ -377,7 +381,7 @@ Base.write("Func",()=>{
       Render.polygon([-0.5,-0.1,0.4,-0.1,0.4,0.3])
     ]).stroke(0.2)(col);
   });
-  make("If",["C","T","F"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("If","Boolean",["C","T","F"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var c = yield* de(m.arity["C"][0]);
     if(c.type == "boolean"){
       var res = yield* de(m.arity[c.boolean?"T":"F"][0]);
@@ -390,7 +394,7 @@ Base.write("Func",()=>{
     ]).stroke(0.2)(col);
     Render.line(0,0.5,0,0.7).stroke(0.2)(col);
   });
-  make("Same",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+  make("Same","Boolean",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     var x = yield* de(m.arity["In"][0]);
     var y = yield* de(m.arity["In"][1]);
     if(x.type == "boolean" && y.type == "boolean"){
