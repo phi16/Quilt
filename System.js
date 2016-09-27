@@ -392,7 +392,7 @@ Base.write("System",()=>{
         evalTimer = null;
       }
     };
-    var speed = 0;
+    var speed = -1;
     function setEvalTimer(){
       var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
       var f = evalEE;

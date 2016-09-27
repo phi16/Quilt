@@ -16,7 +16,9 @@ Base.write("UI",()=>{
     out : Color(0.2,0.6,0.9),
     invalid : Color(1,0.3,0),
     invalidShadow : Color(0.5,0.15,0),
-    select : Color(1,0.7,0)
+    select : Color(1,0.7,0),
+    exec : Color(0.5,1,0),
+    execWait : Color(1,0.5,0)
   };
   /*u.theme = {
     bg : Color(0,0.1,0.1),

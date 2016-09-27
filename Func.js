@@ -316,7 +316,7 @@ Base.write("Func",()=>{
     });
   });
   make("Call","Routine",["From"],["F","To"],function*(m,p,d,s,ev,e,de,err){
-    yield* de(m.coarity["F"][0]);
+    yield* e(p,m.coarity["F"][0],s);
     yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([
