@@ -157,6 +157,7 @@ Base.write("Func",()=>{
   });
   make("Left","Turtle",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     ev.field.pos.d++;
+    ev.field.sumDir++;
     if(ev.field.pos.d == 4)ev.field.pos.d = 0;
     yield* de(m.coarity["To"][0]);
   },(col)=>{
@@ -169,6 +170,7 @@ Base.write("Func",()=>{
   });
   make("Right","Turtle",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     ev.field.pos.d--;
+    ev.field.sumDir--;
     if(ev.field.pos.d == -1)ev.field.pos.d = 3;
     yield* de(m.coarity["To"][0]);
   },(col)=>{
@@ -283,12 +285,14 @@ Base.write("Func",()=>{
   });
   make("Push0","Stack",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     ev.field.stack.push(0);
+    ev.field.stackPush();
     yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.text("0",1.7,0,0.55).center.fill(col);
   });
   make("Push1","Stack",["From"],["To"],function*(m,p,d,s,ev,e,de,err){
     ev.field.stack.push(1);
+    ev.field.stackPush();
     yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.text("1",1.7,-0.05,0.55).center.fill(col); 
@@ -298,6 +302,7 @@ Base.write("Func",()=>{
       yield* de(m.coarity["X"][0]);
     }else{
       var t = ev.field.stack.pop();
+      ev.field.stackPop();
       if(t==0){
         yield* de(m.coarity["0"][0]);
       }else{
@@ -316,7 +321,7 @@ Base.write("Func",()=>{
     });
   });
   make("Call","Routine",["From"],["F","To"],function*(m,p,d,s,ev,e,de,err){
-    yield* de(m.coarity["F"][0]);
+    yield* e(p,m.coarity["F"][0],s);
     yield* de(m.coarity["To"][0]);
   },(col)=>{
     Render.meld([

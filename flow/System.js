@@ -247,19 +247,38 @@ Base.write("System",()=>{
         }else{
           Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
         }
+        e.field.mot();
       }else{
         Render.text("No field",25,30,58).left.fill(UI.theme.split);
       }
       Render.translate(32,98,()=>{
         if(e){
-          e.field.stack.forEach((v,i)=>{
-            Render.rect(3+i*22,3,18,18).dup((d)=>{
-              Render.shadowed(4,UI.theme.shadow,()=>{
-                d.stroke(3)(UI.theme.def);
-                d.fill(v ? UI.theme.select : Color(1,0.8,0));
+          e.field.lostMot.forEach((ix)=>{
+            Render.translate(ix.pos*22+12,12,()=>{
+              Render.scale(ix.size,ix.size,()=>{
+                Render.rect(-9,-9,18,18).dup((d)=>{
+                  Render.shadowed(4,UI.theme.shadow,()=>{
+                    d.stroke(3)(UI.theme.def);
+                    d.fill(v ? UI.theme.select : Color(1,0.8,0));
+                  });
+                });
+                Render.text(v?"1":"0",20,0,7).center.fill(UI.theme.def);
               });
             });
-            Render.text(v?"1":"0",20,12+i*22,19).center.fill(UI.theme.def);
+          });
+          e.field.stack.forEach((v,i)=>{
+            var ix = e.field.stackMot[i];
+            Render.translate(ix.pos*22+12,12,()=>{
+              Render.scale(ix.size,ix.size,()=>{
+                Render.rect(-9,-9,18,18).dup((d)=>{
+                  Render.shadowed(4,UI.theme.shadow,()=>{
+                    d.stroke(3)(UI.theme.def);
+                    d.fill(v ? UI.theme.select : Color(1,0.8,0));
+                  });
+                });
+                Render.text(v?"1":"0",20,0,7).center.fill(UI.theme.def);
+              });
+            });
           });
         }
         Render.shadowed(4,UI.theme.shadow,()=>{
@@ -272,14 +291,23 @@ Base.write("System",()=>{
             var sz = all / e.field.size;
             for(var i=0;i<e.field.size;i++){
               for(var j=0;j<e.field.size;j++){
-                if(e.field.ix(i,j).type){
-                  Render.rect(sz*i,sz*j,sz,sz).fill(UI.theme.split);
+                var elm = e.field.ix(i,j);
+                if(elm.typeMot > 0.001){
+                  Render.translate(sz*i+sz/2,sz*j+sz/2,()=>{
+                    Render.scale(elm.typeMot,elm.typeMot,()=>{
+                      Render.rect(-sz/2,-sz/2,sz,sz).fill(UI.theme.split);
+                    });
+                  })
                 }
-                if(e.field.ix(i,j).mark){
-                  Render.rect(sz*i+sz/4,sz*j+sz/4,sz/2,sz/2).dup((d)=>{
-                    d.fill(UI.theme.def,0.3);
-                    d.stroke(1)(UI.theme.def,0.6);
-                  });
+                if(elm.markMot > 0.001){
+                  Render.translate(sz*i+sz/2,sz*j+sz/2,()=>{
+                    Render.scale(elm.markMot,elm.markMot,()=>{
+                      Render.rect(-sz/4,-sz/4,sz/2,sz/2).dup((d)=>{
+                        d.fill(UI.theme.def,0.3);
+                        d.stroke(1)(UI.theme.def,0.6);
+                      });
+                    })
+                  })
                 }
               }
             }
@@ -297,9 +325,9 @@ Base.write("System",()=>{
                 });
               });
             });
-            Render.translate(sz*e.field.pos.x+sz/2,sz*e.field.pos.y+sz/2,()=>{
+            Render.translate(sz*e.field.posMot.x+sz/2,sz*e.field.posMot.y+sz/2,()=>{
               Render.scale(sz/2,sz/2,()=>{
-                Render.rotate(-Math.PI*e.field.pos.d/2,()=>{
+                Render.rotate(-Math.PI*e.field.posMot.d/2,()=>{
                   Render.cycle([-0.65,-0.5,0.6,0,-0.65,0.5]).dup((d)=>{
                     d.fill(UI.theme.impact);
                     d.stroke(0.15)(UI.theme.def);
@@ -392,7 +420,7 @@ Base.write("System",()=>{
         evalTimer = null;
       }
     };
-    var speed = 0;
+    var speed = -1;
     function setEvalTimer(){
       var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
       var f = evalEE;
