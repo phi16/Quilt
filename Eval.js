@@ -60,9 +60,12 @@ Base.write("Eval",()=>{
           type : t,
           mark : false
         };
+        var elm = e.field.array[i][j];
         e.field.array[i][j] = {
           type : t,
-          mark : false
+          mark : false,
+          typeMot : elm.typeMot,
+          markMot : elm.markMot
         };
       },
       pos : (x,y,d)=>{
@@ -77,14 +80,19 @@ Base.write("Eval",()=>{
         push : (u)=>{
           originalField.stack.unshift(u);
           e.field.stack.unshift(u);
+          e.field.stackUnshift();
         },
         pop : ()=>{
-          originalField.stack.pop();
-          e.field.stack.pop();
+          if(originalField.stack.length>0){
+            originalField.stack.pop();
+            e.field.stack.pop();
+            e.field.stackPop();
+          }
         },
         remove : (i)=>{
           originalField.stack.splice(i,1);
           e.field.stack.splice(i,1);
+          e.field.stackRemove(i);
         },
         flip : (i)=>{
           originalField.stack[i] = 1-originalField.stack[i];
@@ -101,6 +109,55 @@ Base.write("Eval",()=>{
         }
       }else{
         return e.field.array[i][j];
+      }
+    };
+    e.field.array.forEach((a,i)=>{
+      a.forEach((e,j)=>{
+        e.typeMot = e.type ? 1 : 0;
+        e.markMot = e.mark ? 1 : 0;
+      });
+    });
+    e.field.posMot = Base.clone(e.field.pos);
+    e.field.sumDir = e.field.pos.d;
+    e.field.stackMot = [];
+    e.field.lostMot = [];
+    for(var i=0;i<e.field.stack.length;i++)e.field.stackMot.push({pos:i,size:1});
+    e.field.stackPush = ()=>{
+      e.field.stackMot.push({pos:e.field.stackMot.length+50,size:1});
+    };
+    e.field.stackPop = ()=>{
+      e.field.lostMot.push(e.field.stackMot[e.field.stackMot.length-1]);
+      e.field.stackMot.pop();
+    };
+    e.field.stackUnshift = ()=>{
+      e.field.stackMot.unshift({pos:0,size:0});
+    };
+    e.field.stackRemove = (i)=>{
+      e.field.lostMot.push(e.field.stackMot[i]);
+      e.field.stackMot.splice(i,1);
+    };
+    e.field.mot = ()=>{
+      e.field.array.forEach((a,i)=>{
+        a.forEach((e,j)=>{
+          e.typeMot += ((e.type ? 1 : 0) - e.typeMot) / 4;
+          e.markMot += ((e.mark ? 1 : 0) - e.markMot) / 4;
+        });
+      });
+      e.field.posMot.x += (e.field.pos.x - e.field.posMot.x) / 2;
+      e.field.posMot.y += (e.field.pos.y - e.field.posMot.y) / 2;
+      e.field.posMot.d += (e.field.sumDir - e.field.posMot.d) / 2;
+      e.field.stackMot.forEach((e,i)=>{
+        e.size += (1 - e.size) / 2;
+        e.pos += (i - e.pos) / 2;
+      });
+      e.field.lostMot.forEach((e)=>{
+        e.size += (0 - e.size) / 4;
+      });
+      for(var i=0;i<e.field.lostMot.length;i++){
+        if(e.field.lostMot[i].size < 0.001){
+          e.field.lostMot.splice(i,1);
+          i--;
+        }
       }
     };
     function* evaluate(position,bridge,scope){
