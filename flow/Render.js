@@ -240,9 +240,11 @@ Base.write("Render",()=>{
   r.add = (d)=>{
     draws.push(d);
   };
-  setInterval(()=>{
+  function render(){
     for(var i=0;i<draws.length;i++)draws[i]();
-  },16);
+    requestAnimationFrame(render);
+  }
+  render();
 
   r.width = 0;
   r.height = 0;
