@@ -71,6 +71,9 @@ Base.write("Eval",()=>{
       pos : (x,y,d)=>{
         originalField.pos = {x:x,y:y,d:d};
         e.field.pos = {x:x,y:y,d:d};
+        var ePos = ((d - e.field.posMot.d) % 4 + 4) % 4;
+        if(ePos <= 2)e.field.sumDir += ePos;
+        else if(ePos == 3)e.field.sumDir--;
       },
       goal : (x,y)=>{
         originalField.goal = {x:x,y:y};
