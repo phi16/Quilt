@@ -224,23 +224,50 @@ Base.write("Render",()=>{
     ctx.restore();
   };
   r.shadowed = (h,c,f)=>{
-    ctx.save();
-    Color.con((ce)=>{
-      ctx.shadowColor = ce;
-      ctx.shadowBlur = h;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = h/2;
-    })(c);
-    f();
-    ctx.restore();
+    if(r.enableShadow){
+      ctx.save();
+      Color.con((ce)=>{
+        ctx.shadowColor = ce;
+        ctx.shadowBlur = h;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = h/2;
+      })(c);
+      f();
+      ctx.restore();
+    }else{
+      f();
+    }
   };
 
-  var timer;
+  r.enableShadow = true;
+  var timer = null;
+  var flipCount = 0;
   var draws = [];
   r.add = (d)=>{
     draws.push(d);
   };
   function render(){
+    var t = new Date();
+    if(timer){
+      if(r.enableShadow){
+        if(t-timer > 60){
+          flipCount++;
+          if(flipCount > 100){
+            r.enableShadow = false;
+            flipCount = 0;
+          }
+        }
+      }else{
+        if(t-timer < 20){
+          flipCount++;
+          if(flipCount > 100){
+            r.enableShadow = true;
+            flipCount = 0;
+          }
+        }
+      }
+    }
+    timer = t;
     for(var i=0;i<draws.length;i++)draws[i]();
     requestAnimationFrame(render);
   }
