@@ -226,6 +226,8 @@ Base.write("System",()=>{
     s.field.listener.on("update",(n,d)=>{
       init = ()=>{
         e = Eval(d.field,d.map);
+        clearInterval(evalTimer);
+        evalTimer = null;
         if(e.draw)d.field.evalDraw(e.draw);
       };
       init();
