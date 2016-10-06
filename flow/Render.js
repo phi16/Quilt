@@ -257,14 +257,6 @@ Base.write("Render",()=>{
             flipCount = 0;
           }
         }
-      }else{
-        if(t-timer < 20){
-          flipCount++;
-          if(flipCount > 100){
-            r.enableShadow = true;
-            flipCount = 0;
-          }
-        }
       }
     }
     timer = t;

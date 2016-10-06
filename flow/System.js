@@ -65,14 +65,22 @@ Base.write("System",()=>{
       var v = Math.cos(animate*Math.PI)*0.5+0.5;
       Render.translate(0,(1-v)*50,()=>{
         Render.scale(1,v,()=>{
+          var txt = Render.text(oldCtrl.display,50,0,50);
           Render.shadowed(4,UI.theme.shadow,()=>{
-            Render.text(oldCtrl.display,50,0,50).left.fill(UI.theme.def);
+            txt.left.fill(UI.theme.def);
+          });
+          oldCtrl.description.forEach((e,i)=>{
+            Render.text(e,20,txt.size+20,50+i*20).left.fill(UI.theme.def);
           });
         });
       });
       Render.scale(1,1-v,()=>{
+        var txt = Render.text(curCtrl.display,50,0,50);
         Render.shadowed(4,UI.theme.shadow,()=>{
-          Render.text(curCtrl.display,50,0,50).left.fill(UI.theme.def);
+          txt.left.fill(UI.theme.def);
+        });
+        curCtrl.description.forEach((e,i)=>{
+          Render.text(e,20,txt.size+20,50+i*20).left.fill(UI.theme.def);
         });
       });
     })).place(80,10,1,1));
@@ -666,7 +674,8 @@ Base.write("System",()=>{
         draw : (col)=>{
           Render.bezier([0.2,0.8,0.2,0.1,0.8,0.1,0.8,0.8]).stroke(0.1)(col);
         },
-        execute : function*(f,v){}
+        execute : function*(f,v){},
+        description : ["Unimplemented :P"]
       }),
       Duplicate : ()=>({
         draw : (col)=>{
@@ -675,7 +684,8 @@ Base.write("System",()=>{
             Render.rect(0.5,0.5,0.3,0.3)
           ]).stroke(0.1)(col);
         },
-        execute : function*(f,v){}
+        execute : function*(f,v){},
+        description : ["Unimplemented :P"]
       }),
       Select : ()=>{
         var field;
@@ -739,7 +749,8 @@ Base.write("System",()=>{
           },
           finish : ()=>{
             //if(field)field.select.init(0,0,0,0);
-          }
+          },
+          description : ["Drag&Drop : Select a range"]
         };
       },
       Move : ()=>({
@@ -749,7 +760,8 @@ Base.write("System",()=>{
             Render.line(0.15,0.5,0.85,0.5)
           ]).stroke(0.1)(col);
         },
-        execute : function*(f,v){}
+        execute : function*(f,v){},
+        description : ["Unimplemented :P"]
       }),
       Rotate : ()=>({
         draw : (col)=>{
@@ -758,7 +770,8 @@ Base.write("System",()=>{
             Render.arc(0.5,0.5,0.3,Math.PI*3/2,Math.PI)
           ]).stroke(0.1)(col);
         },
-        execute : function*(f,v){}
+        execute : function*(f,v){},
+        description : ["Unimplemented :P"]
       }),
       Operate : ()=>({
         draw : (col)=>{
@@ -768,7 +781,8 @@ Base.write("System",()=>{
             });
           });
         },
-        execute : function*(f,v){}
+        execute : function*(f,v){},
+        description : ["Unimplemented :P"]
       }),
       Place : (e)=>({
         draw : (()=>{
@@ -794,7 +808,8 @@ Base.write("System",()=>{
           f.place(p.x,p.y,e);
           c.set("Connect",p);
           f.rewriteAction(s.control.current.execute);
-        }
+        },
+        description : ["Click a grid : Place the func"]
       }),
       Connect : (u)=>({
         draw : (col)=>{
@@ -873,7 +888,8 @@ Base.write("System",()=>{
           }
           state = 0;
           c.set("Connect");
-        }
+        },
+        description : ["Drag : Place wire"]
       }),
       Remove : ()=>({
         draw : (col)=>{
@@ -921,7 +937,8 @@ Base.write("System",()=>{
             }
           }
           state = 0;
-        }
+        },
+        description : ["Drag : Remove wire"]
       }),
       Name : ()=>({
         draw : (col)=>{
@@ -976,7 +993,8 @@ Base.write("System",()=>{
               break;
             }
           }
-        }
+        },
+        description : ["Click a func : Rearrange the I/O"]
       }),
       Delete : ()=>({
         draw : (col)=>{
@@ -989,7 +1007,8 @@ Base.write("System",()=>{
         },
         execute : function*(f,v){
           f.select.delete();
-        }
+        },
+        description : ["Click any point : Delete selected area"]
       })
     };
     Object.keys(c.list).forEach((k)=>{
@@ -998,7 +1017,7 @@ Base.write("System",()=>{
     c.name = {
       //Tile : ["Swap","Duplicate"],
       Field : ["Select","Connect","Remove","Name"],
-      Selection : ["Move","Rotate","Delete"]
+      Selection : [/*"Move","Rotate",*/"Delete"]
     };
     c.available = {
       //Tile : false,
