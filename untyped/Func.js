@@ -57,7 +57,7 @@ Base.write("Func",()=>{
     }else if(str === "F" || str === "False" || str === "f" || str === "false"){
       return {
         type : "boolean",
-        boolean : true
+        boolean : false
       };
     }else{
       var v = Number(str);
