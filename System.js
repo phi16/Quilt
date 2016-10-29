@@ -235,7 +235,11 @@ Base.write("System",()=>{
       init();
     });
     v.addChild(UI.create(UI.image(()=>{
-      if(e)Render.text(e.output,20,10,30).left.fill(UI.theme.def);
+      if(e){
+        e.output.forEach((str,i)=>{
+          Render.text(str,25,10,35+i*30).left.fill(UI.theme.def);
+        });
+      }
     })).place(0,0,1,1));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
@@ -582,7 +586,7 @@ Base.write("System",()=>{
                 q = {x:curX,y:curY};
               }else{
                 if(!f.exist(curX,curY)){
-                  f.place(curX,curY,"Discard");
+                  f.place(curX,curY,"1");
                 }
                 if(!f.exist(p.x,p.y)){
                   f.place(p.x,p.y,"Id");
@@ -1042,7 +1046,7 @@ Base.write("System",()=>{
           if(m.neighbor[i]){
             var n = m.neighbor[i].name;
             if(m.neighbor[i].type){
-              if(!m.arity[n])m.coarity[n] = [i];
+              if(!m.coarity[n])m.coarity[n] = [i];
               else m.coarity[n].push(i);
             }else{
               if(!m.arity[n])m.arity[n] = [i];
