@@ -227,286 +227,16 @@ Base.write("System",()=>{
   });
   Tile.registerTile("Execute",(v)=>{
     var e = null;
-    var evalTimer = null;
-    var enableButton = Base.void;
-    var all = 28*11;
     var init = ()=>{};
     s.field.listener.on("update",(n,d)=>{
       init = ()=>{
         e = Eval(d.field,d.map);
-        clearInterval(evalTimer);
-        evalTimer = null;
-        if(e.draw)d.field.evalDraw(e.draw);
       };
       init();
-      enableButton(e && (e.done || e.status.success));
     });
     v.addChild(UI.create(UI.image(()=>{
-      Render.shadowed(4,UI.theme.shadow,()=>{
-        Render.text("Status",25,10,30).left.fill(UI.theme.def);
-        Render.text("Stack",25,10,90).left.fill(UI.theme.def);
-        Render.text("Field",25,10,150).left.fill(UI.theme.def);
-      });
-      if(e){
-        if(e.status.error){
-          if(e.status.reason){
-            Render.text(e.status.error + " : " + e.status.reason,25,30,58).left.fill(UI.theme.invalid);
-          }else{
-            Render.text(e.status.error,25,30,58).left.fill(UI.theme.invalid);
-          }
-        }else{
-          Render.text(e.status.success,25,30,58).left.fill(UI.theme.frame);
-        }
-        e.field.mot();
-      }else{
-        Render.text("No field",25,30,58).left.fill(UI.theme.split);
-      }
-      Render.translate(32,98,()=>{
-        if(e){
-          e.field.lostMot.forEach((ix)=>{
-            Render.translate(ix.pos*22+12,12,()=>{
-              Render.scale(ix.size,ix.size,()=>{
-                Render.rect(-9,-9,18,18).dup((d)=>{
-                  Render.shadowed(4,UI.theme.shadow,()=>{
-                    d.stroke(3)(UI.theme.def);
-                    d.fill(v ? UI.theme.select : Color(1,0.8,0));
-                  });
-                });
-                Render.text(v?"1":"0",20,0,7).center.fill(UI.theme.def);
-              });
-            });
-          });
-          e.field.stack.forEach((v,i)=>{
-            var ix = e.field.stackMot[i];
-            Render.translate(ix.pos*22+12,12,()=>{
-              Render.scale(ix.size,ix.size,()=>{
-                Render.rect(-9,-9,18,18).dup((d)=>{
-                  Render.shadowed(4,UI.theme.shadow,()=>{
-                    d.stroke(3)(UI.theme.def);
-                    d.fill(v ? UI.theme.select : Color(1,0.8,0));
-                  });
-                });
-                Render.text(v?"1":"0",20,0,7).center.fill(UI.theme.def);
-              });
-            });
-          });
-        }
-        Render.shadowed(4,UI.theme.shadow,()=>{
-          Render.rect(0,0,v.rect.w,24).stroke(2)(UI.theme.def);
-        });
-      });
-      Render.translate(33,161,()=>{
-        Render.shadowed(4,UI.theme.shadow,()=>{
-          if(e){
-            var sz = all / e.field.size;
-            for(var i=0;i<e.field.size;i++){
-              for(var j=0;j<e.field.size;j++){
-                var elm = e.field.ix(i,j);
-                if(elm.typeMot > 0.001){
-                  Render.translate(sz*i+sz/2,sz*j+sz/2,()=>{
-                    Render.scale(elm.typeMot,elm.typeMot,()=>{
-                      Render.rect(-sz/2,-sz/2,sz,sz).fill(UI.theme.split);
-                    });
-                  })
-                }
-                if(elm.markMot > 0.001){
-                  Render.translate(sz*i+sz/2,sz*j+sz/2,()=>{
-                    Render.scale(elm.markMot,elm.markMot,()=>{
-                      Render.rect(-sz/4,-sz/4,sz/2,sz/2).dup((d)=>{
-                        d.fill(UI.theme.def,0.3);
-                        d.stroke(1)(UI.theme.def,0.6);
-                      });
-                    })
-                  })
-                }
-              }
-            }
-            var a = [];
-            for(var i=1;i<e.field.size;i++){
-              a.push(Render.line(0,sz*i,all,sz*i));
-              a.push(Render.line(sz*i,0,sz*i,all));
-            }
-            Render.meld(a).stroke(2)(UI.theme.def);
-            Render.translate(sz*e.field.goal.x+sz/2,sz*e.field.goal.y+sz/2,()=>{
-              Render.scale(sz/2,sz/2,()=>{
-                Render.cycle([0.6,0,0,0.6,-0.6,0,0,-0.6]).dup((d)=>{
-                  d.fill(Color(1,1,0));
-                  d.stroke(0.15)(UI.theme.frame);
-                });
-              });
-            });
-            Render.translate(sz*e.field.posMot.x+sz/2,sz*e.field.posMot.y+sz/2,()=>{
-              Render.scale(sz/2,sz/2,()=>{
-                Render.rotate(-Math.PI*e.field.posMot.d/2,()=>{
-                  Render.cycle([-0.65,-0.5,0.6,0,-0.65,0.5]).dup((d)=>{
-                    d.fill(UI.theme.impact);
-                    d.stroke(0.15)(UI.theme.def);
-                  });
-                });
-              });
-            });
-          }
-          Render.rect(-1,-1,all+2,all+2).stroke(4)(UI.theme.def);
-        });
-      });
+      if(e)Render.text(e.output,20,10,30).left.fill(UI.theme.def);
     })).place(0,0,1,1));
-    v.addChild(UI.create(UI.inherit(UI.button(()=>{
-      if(e)e.original.stack.push(0);
-    }),(v)=>{
-      v.addChild(UI.create(UI.image(()=>{
-        Render.text("0",20,10,17).center.fill(UI.theme.def);
-      })).place(0,0,1,1));
-    })).place(75,71,20,20));
-    v.addChild(UI.create(UI.inherit(UI.button(()=>{
-      if(e)e.original.stack.push(1);
-    }),(v)=>{
-      v.addChild(UI.create(UI.image(()=>{
-        Render.text("1",20,10,17).center.fill(UI.theme.def);
-      })).place(0,0,1,1));
-    })).place(100,71,20,20));
-    v.checkOtherButton = true;
-    var putColor;
-    v.onPress = (x,y)=>{
-      if(e){
-        if(32 <= x && 98 <= y && y <= 98+24){
-          var i = Math.floor((x-32)/22);
-          if(i < e.field.stack.length){
-            if(Mouse.right){
-              e.original.stack.remove(i);
-            }else if(Mouse.left){
-              e.original.stack.flip(i);
-            }
-          }else{
-            if(Mouse.right){
-              e.original.stack.pop();
-            }
-          }
-        }else{
-          var sz = all / e.field.size;
-          var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
-          if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
-            if(Mouse.left){
-              putColor = !e.field.ix(i,j).type;
-              e.original.field(i,j,putColor);
-              Mouse.drag = v;
-            }else if(Mouse.right){
-              if(e.field.pos.x==i && e.field.pos.y==j){
-                var nd = (e.field.pos.d+1)%4;
-                e.original.pos(i,j,nd);
-              }else{
-                var nd = 1;
-                e.original.pos(i,j,nd);
-              }
-            }else if(Mouse.center){
-              e.original.goal(i,j);
-            }
-          }
-        }
-      }
-    };
-    v.onHover = (x,y)=>{
-      if(e){
-        var sz = all / e.field.size;
-        var i = Math.floor((x-33)/sz), j = Math.floor((y-161)/sz);
-        if(i>=0 && j>=0 && i<e.field.size && j<e.field.size){
-          if(Mouse.drag == v){
-            e.original.field(i,j,putColor);
-            e.field.ix(i,j).type = putColor;
-          }
-        }
-      }
-    };
-    v.onRelease = ()=>{
-      Mouse.drag = null;
-    }
-    var evalEE = ()=>{
-      if(e && e.status.success){
-        if(e.eval.next().done){
-          clearInterval(evalTimer);
-          evalTimer = null;
-        }
-      }else{
-        clearInterval(evalTimer);
-        evalTimer = null;
-      }
-    };
-    var speed = -1;
-    function setEvalTimer(){
-      var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
-      var f = evalEE;
-      if(speed==1){
-        f = ()=>{
-          for(var i=0;i<5;i++)evalEE();
-        }
-      }
-      clearInterval(evalTimer);
-      evalTimer = setInterval(f,dur);
-    }
-    var basePos = 400-220+all;
-    var evalButton = UI.create(UI.inherit(UI.button(()=>{
-      if(e.done){
-        init();
-      }else{
-        if(evalTimer){
-          clearInterval(evalTimer);
-          evalTimer = null;
-        }else{
-          setEvalTimer();
-        }
-      }
-    }),(v)=>{
-      v.addChild(UI.create(UI.image(()=>{
-        if(e){
-          if(e.done){
-            Render.text("Initialize",30,6,0).left.fill(UI.theme.frame);
-          }else if(e.status.success){
-            if(!evalTimer){
-              Render.text("Execute",30,6,0).left.fill(UI.theme.frame);
-            }else{
-              Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
-            }
-          }else{
-            Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
-          }
-        }else{
-          Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
-        }
-      })).place(5,32,1,1));
-      v.enable = e && e.status.success;
-    })).place(10,basePos,120,40);
-    enableButton = (b)=>{
-      evalButton.enable = b;
-    };
-    v.addChild(evalButton);
-    var leftButton,rightButton;
-    leftButton = UI.create(UI.inherit(UI.button(()=>{
-      if(speed==1)rightButton.enable = true;
-      speed--;
-      if(speed==-1)leftButton.enable = false;
-      if(evalTimer)setEvalTimer();
-    }),(v)=>{
-      v.addChild(UI.create(UI.image(()=>{
-        var col = speed>=0 ? UI.theme.frame : UI.theme.split;
-        Render.text("<",30,-1,-10).left.fill(col);
-      })).place(5,30,1,1));
-    })).place(140,basePos+7,25,25);
-    rightButton = UI.create(UI.inherit(UI.button(()=>{
-      if(speed==-1)leftButton.enable = true;
-      speed++;
-      if(speed==1)rightButton.enable = false;
-      if(evalTimer)setEvalTimer();
-    }),(v)=>{
-      v.addChild(UI.create(UI.image(()=>{
-        var col = speed<=0 ? UI.theme.frame : UI.theme.split;
-        Render.text(">",30,-1,-10).left.fill(col);
-      })).place(5,30,1,1));
-    })).place(225,basePos+7,25,25);
-    v.addChild(leftButton);
-    v.addChild(rightButton);
-    v.addChild(UI.create(UI.image(()=>{
-      var str = speed==-1 ? "Slow" : speed==1 ? "Fast" : "Def";
-      Render.text(str,25,0,0).center.fill(UI.theme.def);
-    })).place(195,basePos+29,1,1));
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -630,8 +360,8 @@ Base.write("System",()=>{
   Tile.registerTile("Start",(v)=>{
     v.addChild(UI.create(UI.image(()=>{
       var w = v.parent.rect.w;
-      var title = Render.text("Quilt Flow",1,0,0);
-      var script = Render.text("Flowchart Based Visual Imperative Programming Language & Environment",0.135,0,0);
+      var title = Render.text("Quilt Linear",1,0,0);
+      var script = Render.text("Dagger Compact Category & String Diagram Based Visual Linear Equation Solver",0.145,0,0);
       var mult = w * 0.95 / title.size;
       Render.translate(w/2,0,()=>{
         Render.scale(mult,mult,()=>{
@@ -852,10 +582,10 @@ Base.write("System",()=>{
                 q = {x:curX,y:curY};
               }else{
                 if(!f.exist(curX,curY)){
-                  f.place(curX,curY,"Unit");
+                  f.place(curX,curY,"Discard");
                 }
                 if(!f.exist(p.x,p.y)){
-                  f.place(p.x,p.y,"Through");
+                  f.place(p.x,p.y,"Id");
                 }
                 f.connect(curX,curY,p.x,p.y);
                 f.autoAdjust(curX,curY);
@@ -868,11 +598,11 @@ Base.write("System",()=>{
                       var b = f.bridge(curX,curY,i);
                       if(b){
                         if(b.type){
-                          if(i==d2)b.name="To1";
-                          else b.name="To2";
+                          if(i==d2)b.name="Out1";
+                          else b.name="Out2";
                         }else{
-                          if(i==d1)b.name="From1";
-                          else b.name="From2";
+                          if(i==d1)b.name="In1";
+                          else b.name="In2";
                         }
                       }
                     }
@@ -1070,7 +800,7 @@ Base.write("System",()=>{
             var radi = 1.0;
             var width = 0.3 - 0.2 * r.selectMot;
             if(r.selectMot != 0){
-              if((r.name !== "Through" && r.name !== "Swap" && r.name !== "Merge" && r.name !== "Unit") || !r.valid){
+              if((r.name !== "Id" && r.name !== "Swap" && r.name !== "Duplicate" && r.name !== "Discard") || !r.valid){
                 Render.circle(0,0,0.2+width/2).stroke(width)(UI.theme.select);
               }
               Render.circle(0,0,0.05+width/2).stroke(width)(UI.theme.select);
@@ -1135,7 +865,7 @@ Base.write("System",()=>{
         r.neighbor.forEach((e,i)=>{
           if(e){
             if(e.name){
-              if(r.name!=="Swap" && e.name!=="From" && e.name!=="To"){
+              if(r.name!=="Swap" && e.name!=="In" && e.name!=="Out"){
                 var dx = 0.33, dy = 0.15;
                 var a = i*Math.PI/4;
                 [dx,dy] = [dx*Math.cos(a)+dy*Math.sin(a), -dx*Math.sin(a)+dy*Math.cos(a)];
@@ -1258,7 +988,7 @@ Base.write("System",()=>{
       }
     };
     f.autoAdjust = (x,y)=>{
-      if(f.at(x,y) == "Through" || f.at(x,y) == "Merge" || f.at(x,y) == "Unit" || f.at(x,y) == "Swap"){
+      if(f.at(x,y) == "Id" || f.at(x,y) == "Duplicate" || f.at(x,y) == "Discard" || f.at(x,y) == "Swap"){
         var a=0,ca=0;
         for(var i=0;i<8;i++){
           var b = f.bridge(x,y,i);
@@ -1268,11 +998,11 @@ Base.write("System",()=>{
           }
         }
         if(a==1 && ca==1){
-          f.place(x,y,"Through");
-        }else if(a==2 && ca==1){
-          f.place(x,y,"Merge");
-        }else if(a==0 && ca==1){
-          f.place(x,y,"Unit");
+          f.place(x,y,"Id");
+        }else if(a==1 && ca==2){
+          f.place(x,y,"Duplicate");
+        }else if(a==1 && ca==0){
+          f.place(x,y,"Discard");
         }else if(a==2 && ca==2){
           f.place(x,y,"Swap");
         }else if(a==0 && ca==0){
@@ -1347,9 +1077,6 @@ Base.write("System",()=>{
             outCount++;
           }
         });
-        if(!f.error && outCount!=1){
-          f.error = "There must be only one Begin func";
-        }
         f.validated = false;
         s.field.listener.push("update",{field:f,map:map});
       }
