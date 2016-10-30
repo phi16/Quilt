@@ -77,6 +77,8 @@ Base.write("Eval",()=>{
     var ones = varList.filter((k)=>k=="1");
     varList = [].concat(temps).concat(vars).concat(ones);
 
+    console.log("[Preparing...]");
+    console.log(varList);
     var matrix = [];
     equations.forEach((eq)=>{
       var row = [];
@@ -86,57 +88,96 @@ Base.write("Eval",()=>{
       });
       matrix.push(row);
     })
+    console.log(JSON.stringify(matrix));
     reduce(matrix,varList.length,equations.length);
-    var rowN = 0;
-    for(;rowN<matrix.length;rowN++){
-      if(Math.abs(matrix[rowN][rowN]) < 0.0001)break;
+    console.log(JSON.stringify(matrix));
+    var rowN = matrix.length;
+    for(;rowN>0;rowN--){
+      var t = true;
+      for(var j=0;j<varList.length;j++){
+        if(Math.abs(matrix[rowN-1][j])>0.0001){
+          t = false;
+          break;
+        }
+      }
+      if(!t){
+        break;
+      }
     }
+    console.log(rowN);
     var anyN = varList.length - rowN;
+    var varPos = [];
+    var varIdx = 0;
+    var rowP = 0;
+    while(varIdx < varList.length){
+      while(varIdx < varList.length && (rowP>=matrix.length || Math.abs(matrix[rowP][varIdx])<0.0001)){
+        varPos.push(varIdx);
+        varIdx++;
+      }
+      rowP++;
+      varIdx++;
+    }
+    console.log(JSON.stringify(varPos));
     var solutions = [];
-    for(var i=0;i<rowN;i++){
-      var s = [];
-      for(var k=0;k<anyN;k++){
-        s.push(-matrix[i][rowN+k]);
+    varIdx = 0;
+    var solIdx = 0;
+    for(var i=0;i<varList.length;i++){
+      if(i==varPos[varIdx]){
+        var s = [];
+        for(var k=0;k<anyN;k++){
+          s.push(varIdx==k ? 1 : 0);
+        }
+        solutions.push(s);
+        varIdx++;
+      }else{
+        var s = [];
+        for(var k=0;k<anyN;k++){
+          s.push(-matrix[solIdx][varPos[k]]);
+        }
+        solutions.push(s);
+        solIdx++;
       }
-      solutions.push(s);
     }
-    for(var i=0;i<anyN;i++){
-      var s = [];
-      for(var k=0;k<anyN;k++){
-        s.push(i==k ? 1 : 0);
-      }
-      solutions.push(s);
-    }
-    //console.log(JSON.stringify(matrix));
-    //console.log(JSON.stringify(solutions));
-    //console.log("[Solution]");
-    var varNames = varList.splice(varList.length-anyN,anyN);
+    console.log(JSON.stringify(solutions));
+    console.log("[Solution]");
     e.output = [];
-    for(var i=temps.length;i<varList.length;i++){
-      if(varList[i] == "1"){
-        e.output = ["No Solution"];
+    varIdx = 0;
+    for(var i=0;i<varList.length;i++){
+      if(i==varPos[varIdx]){
+        varIdx++;
+        continue;
+      }
+      if(i<temps.length)continue;
+      if(varList[i]=="1"){
+        e.output = ["No solution"];
         break;
       }
       var str = varList[i] + " = ";
       var first = true;
+      var poi = 0;
       solutions[i].forEach((s,j)=>{
-        if(s==0)return;
+        if(Math.abs(s)<0.0001)return;
         if(!first){
           if(s > 0)str += " + ";
           else str += " - ";
           s = Math.abs(s);
-          if(Math.abs(s-1) < 0.0001)str += varNames[j];
-          else if(varNames[j] == "1")str += s;
-          else str += s + " " + varNames[j];
+          if(Math.abs(s-1) < 0.0001)str += varList[varPos[j]];
+          else if(varList[varPos[j]] == "1")str += s;
+          else str += s + " " + varList[varPos[j]];
         }else{
-          if(Math.abs(s-1) < 0.0001)str += varNames[j];
-          else if(Math.abs(s+1) < 0.0001)str += "- " + varNames[j];
-          else if(varNames[j] == "1")str += s;
-          else str += s + " " + varNames[j];
+          if(Math.abs(s-1) < 0.0001)str += varList[varPos[j]];
+          else if(Math.abs(s+1) < 0.0001)str += "- " + varList[varPos[j]];
+          else if(varList[varPos[j]] == "1")str += s;
+          else str += s + " " + varList[varPos[j]];
           first = false;
         }
+        poi++;
       });
+      if(poi==0){
+        str += "0";
+      }
       e.output.push(str);
+      console.log(str);
     }
     if(e.output.length == 0)e.output = ["Any assignment is a solution"];
     return e;
