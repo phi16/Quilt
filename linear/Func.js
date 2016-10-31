@@ -242,7 +242,7 @@ Base.write("Func",()=>{
   });
   make("Negate","Operator",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(m.neighbor[d].name=="In"){
-      var res = yield* de(m.arity["Out"][0]);
+      var res = yield* de(m.coarity["Out"][0]);
       Object.keys(res).forEach((k)=>{
         res[k] *= -1;
       });
@@ -272,7 +272,7 @@ Base.write("Func",()=>{
   ([2,3,4,5,6]).forEach((n)=>{
     make(String(n),"Coefficient",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
       if(m.neighbor[d].name=="In"){
-        var res = yield* de(m.arity["Out"][0]);
+        var res = yield* de(m.coarity["Out"][0]);
         Object.keys(res).forEach((k)=>{
           res[k] /= n;
         });
