@@ -22,6 +22,12 @@ Base.write("Eval",()=>{
       e.ready = false;
       return e;
     }
+    Object.keys(map).forEach((k)=>{
+      if(map[[k]]){
+        delete map[[k]].state;
+        delete map[[k]].clock;
+      }
+    });
     var levelMap = {}, levelMap2 = {};
     e.getLevel = (x,y,b)=>{
       if(b >= 4){
