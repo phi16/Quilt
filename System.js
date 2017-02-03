@@ -364,8 +364,8 @@ Base.write("System",()=>{
   Tile.registerTile("Start",(v)=>{
     v.addChild(UI.create(UI.image(()=>{
       var w = v.parent.rect.w;
-      var title = Render.text("Quilt Linear",1,0,0);
-      var script = Render.text("Dagger Compact Category & String Diagram Based Visual Linear Equation Solver",0.145,0,0);
+      var title = Render.text("Quilt Circuit",1,0,0);
+      var script = Render.text("Simplest Synchronous Digital Logic Circuit Simulator",0.145,0,0);
       var mult = w * 0.95 / title.size;
       Render.translate(w/2,0,()=>{
         Render.scale(mult,mult,()=>{
@@ -586,7 +586,7 @@ Base.write("System",()=>{
                 q = {x:curX,y:curY};
               }else{
                 if(!f.exist(curX,curY)){
-                  f.place(curX,curY,"1");
+                  f.place(curX,curY,"L");
                 }
                 if(!f.exist(p.x,p.y)){
                   f.place(p.x,p.y,"Id");
@@ -704,7 +704,7 @@ Base.write("System",()=>{
                 if(nia){
                   noa = oa;
                 }else{
-                  nia = ia.reverse();                  
+                  nia = ia.reverse();
                 }
               }else{
                 nia = Base.nextPermutation(ia);
@@ -785,7 +785,7 @@ Base.write("System",()=>{
     var map = {}, selection = [];
     var action = null;
     var lastE,lastX,lastY;
-    var evalDraw = Base.void; 
+    var evalDraw = Base.void;
     function allDraw(f){
       Render.scale(size,size,()=>{
         for(var i in map){
