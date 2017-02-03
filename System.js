@@ -227,20 +227,135 @@ Base.write("System",()=>{
   });
   Tile.registerTile("Execute",(v)=>{
     var e = null;
+    var evalTimer = null;
+    var enableButton = Base.void;
     var init = ()=>{};
     s.field.listener.on("update",(n,d)=>{
       init = ()=>{
         e = Eval(d.field,d.map);
+        clearInterval(evalTimer);
+        evalTimer = null;
+        if(e.draw)d.field.evalDraw(e.draw);
+        else d.field.evalDraw(()=>{});
       };
       init();
+      enableButton(e && e.ready);
     });
+    var evalEE = ()=>{
+      if(e && e.ready){
+        e.exec();
+      }else{
+        clearInterval(evalTimer);
+        evalTimer = null;
+      }
+    };
+    var speed = -1;
+    function setEvalTimer(){
+      var dur = speed==-1 ? 400 : speed==0 ? 100 : 16;
+      var f = evalEE;
+      if(speed==1){
+        f = ()=>{
+          for(var i=0;i<5;i++)evalEE();
+        }
+      }
+      clearInterval(evalTimer);
+      evalTimer = setInterval(f,dur);
+    }
+    var basePos = 60;
+    var evalButton = UI.create(UI.inherit(UI.button(()=>{
+      if(e.done){
+        init();
+      }else{
+        if(evalTimer){
+          clearInterval(evalTimer);
+          evalTimer = null;
+        }else{
+          setEvalTimer();
+        }
+      }
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        if(e){
+          if(e.ready){
+            if(!evalTimer){
+              Render.text("Execute",30,6,0).left.fill(UI.theme.frame);
+            }else{
+              Render.text("Interrupt",30,0,0).left.fill(UI.theme.frame);
+            }
+          }else{
+            Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
+          }
+        }else{
+          Render.text("Disabled",30,0,0).left.fill(UI.theme.frame);
+        }
+      })).place(5,32,1,1));
+      v.enable = e && e.ready;
+    })).place(10,basePos,120,40);
+    enableButton = (b)=>{
+      evalButton.enable = b;
+    };
+    v.addChild(evalButton);
+    var leftButton,rightButton;
+    leftButton = UI.create(UI.inherit(UI.button(()=>{
+      if(speed==1)rightButton.enable = true;
+      speed--;
+      if(speed==-1)leftButton.enable = false;
+      if(evalTimer)setEvalTimer();
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        var col = speed>=0 ? UI.theme.frame : UI.theme.split;
+        Render.text("<",30,-1,-10).left.fill(col);
+      })).place(5,30,1,1));
+    })).place(140,basePos+7,25,25);
+    rightButton = UI.create(UI.inherit(UI.button(()=>{
+      if(speed==-1)leftButton.enable = true;
+      speed++;
+      if(speed==1)rightButton.enable = false;
+      if(evalTimer)setEvalTimer();
+    }),(v)=>{
+      v.addChild(UI.create(UI.image(()=>{
+        var col = speed<=0 ? UI.theme.frame : UI.theme.split;
+        Render.text(">",30,-1,-10).left.fill(col);
+      })).place(5,30,1,1));
+    })).place(225,basePos+7,25,25);
+    v.addChild(leftButton);
+    v.addChild(rightButton);
+    v.addChild(UI.create(UI.image(()=>{
+      var str = speed==-1 ? "Slow" : speed==1 ? "Fast" : "Def";
+      Render.text(str,25,0,0).center.fill(UI.theme.def);
+    })).place(195,basePos+29,1,1));
     v.addChild(UI.create(UI.image(()=>{
       if(e){
         e.output.forEach((str,i)=>{
           Render.text(str,25,10,35+i*30).left.fill(UI.theme.def);
         });
+        if(e.ready){
+          ["A","B","C","D","E","F","G","X","Y","Z"].forEach((n,i)=>{
+            let l = e.getVar(n);
+            let r = l==-1 ? "?" : l;
+            Render.text(n,25,30,140+i*30).right.fill(UI.theme.def);
+            Render.text(" = " + r,25,30,140+i*30).left.fill(UI.theme.def);
+          });
+        }
       }
     })).place(0,0,1,1));
+    ["A","B","C","D","E","F","G","X","Y","Z"].forEach((n,i)=>{
+      v.addChild(UI.create(UI.inherit(UI.button(()=>{
+        if(e && e.ready)e.setVar(n,1);
+      }),(v)=>{
+        v.addChild(UI.create(UI.image(()=>{
+          Render.text("H",20,12.5,20).center.fill(UI.theme.def);
+        })).place(0,0,1,1));
+      })).place(100,140+i*30-22,25,25));
+
+      v.addChild(UI.create(UI.inherit(UI.button(()=>{
+        if(e && e.ready)e.setVar(n,0);
+      }),(v)=>{
+        v.addChild(UI.create(UI.image(()=>{
+          Render.text("L",20,12.5,20).center.fill(UI.theme.def);
+        })).place(0,0,1,1));
+      })).place(140,140+i*30-22,25,25));
+    });
   },()=>{
     Render.shadowed(4,UI.theme.frame,()=>{
       Render.meld([
@@ -586,7 +701,7 @@ Base.write("System",()=>{
                 q = {x:curX,y:curY};
               }else{
                 if(!f.exist(curX,curY)){
-                  f.place(curX,curY,"L");
+                  f.place(curX,curY,"Id");
                 }
                 if(!f.exist(p.x,p.y)){
                   f.place(p.x,p.y,"Id");

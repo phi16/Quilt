@@ -48,22 +48,36 @@ Base.write("Func",()=>{
   System.func.addCategory("Special");
   System.func.addCategory("Input");
 
-  make("Id","Flow",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{
+  make("Id","Flow",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    ev.setLevel(p,d)(s.value);
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{
     Render.line(-0.3,-0.6,0.3,-0.6).stroke(0.2)(col);
     Render.line(0,-0.6,0,0.6).stroke(0.2)(col);
     Render.line(-0.3,0.6,0.3,0.6).stroke(0.2)(col);
   },null,Base.void),
-  make("Duplicate","Flow",["In"],["Out","Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{
+  make("Duplicate","Flow",["In"],["Out","Out"],function*(m,p,d,s,ev,e,de,err){
+    let v = s.value;
+    ev.setLevel(p,d)(v);
+    yield* de(m.coarity["Out"][0]);
+    s.value = v;
+    yield* de(m.coarity["Out"][1]);
+  },(col)=>{
     Render.scale(0.7,0.7,()=>{
       Render.cycle([0,-0.9,-0.7,0.7,0.7,0.7]).stroke(0.3)(col);
     });
   },null,Base.void);
-  make("Discard","Flow",["In"],[],function*(m,p,d,s,ev,e,de,err){},(col)=>{
+  make("Discard","Flow",["In"],[],function*(m,p,d,s,ev,e,de,err){
+    ev.setLevel(p,d)(s.value);
+  },(col)=>{
     Render.line(0,0.2,0,-0.7).stroke(0.2)(col);
     Render.line(0,0.5,0,0.7).stroke(0.2)(col);
   },null,Base.void);
   make("Swap","Flow",["In1","In2"],["Out1","Out2"],function*(m,p,d,s,ev,e,de,err){
-
+    ev.setLevel(p,d)(s.value);
+    if(m.neighbor[d].name=="In1")n = "Out1";
+    else n = "Out2";
+    yield* de(m.coarity[n][0]);
   },(col)=>{
     Render.meld([
       Render.line(-0.5,-0.5,0.5,0.5),
@@ -115,22 +129,115 @@ Base.write("Func",()=>{
     }
   });
 
-  make("Not","Operator",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("And","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("Or","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("Nand","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("Nor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("Xor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
+  make("Not","Operator",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    if(x!=-1)s.value = !x;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("And","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1)s.value = x && y;
+    else if(x==0 || y==0)s.value = 0;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("Or","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1)s.value = x || y;
+    else if(x==1 || y==1)s.value = 1;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("Nand","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1)s.value = !(x && y);
+    else if(x==0 || y==0)s.value = 1;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("Nor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1)s.value = !(x || y);
+    else if(x==1 || y==1)s.value = 0;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("Xor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1)s.value = x != y;
+    else s.value = -1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
 
-  make("SRFF","Special",["S","R"],["Q","N"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("JKFF","Special",["J","K"],["Q","N"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("DFF","Special",["D"],["Q","N"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
+  make("SRFF","Special",["S","R"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+  },(col)=>{});
+  make("JKFF","Special",["J","K"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+  },(col)=>{});
+  make("DFF","Special",["D"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+  },(col)=>{});
 
-  make("L","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("H","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
-  make("CK","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){},(col)=>{});
+  make("L","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1)return;
+    s.value = 0;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("H","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1)return;
+    s.value = 1;
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
+  make("CK","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1)return;
+    s.value = ev.clock();
+    yield* de(m.coarity["Out"][0]);
+  },(col)=>{});
   ["A","B","C","D","E","F","G","X","Y","Z"].forEach((n)=>{
     make(n,"Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
+      if(d!=-1)return;
+      s.value = ev.getVar(n);
+      yield* de(m.coarity["Out"][0]);
     },(col)=>{
       Render.text(n,1.8,0,0.65).center.fill(col);
     });

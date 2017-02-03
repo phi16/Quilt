@@ -7,7 +7,7 @@ Base.write("UI",()=>{
     front : Color(0,0.2,0),
     button : Color(0.2,0.5,0),
     shadow : Color(0,0.5,0),
-    notify : Color(0,0.7,0),
+    notify : Color(0,0.6,0),
     impact : Color(0,0.3,0),
     split : Color(0,0.3,0),
     def : Color(0.9,1,0.9),
