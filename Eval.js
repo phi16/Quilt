@@ -31,11 +31,12 @@ Base.write("Eval",()=>{
         b -= 4;
       }
       if(levelMap[[x,y,b]]===undefined){
-        levelMap[[x,y,b]] = -1;
+        levelMap[[x,y,b]] = 0;
       }
       return levelMap[[x,y,b]];
     };
     e.setLevel = (pp,b)=>(v)=>{
+      if(v==-1)return;
       var x = pp.x, y = pp.y;
       if(b >= 4){
         var p = Base.fromDir(b);
@@ -51,11 +52,11 @@ Base.write("Eval",()=>{
     };
     var varLevels = {};
     e.getVar = (n)=>{
-      if(varLevels[n]===undefined)return -1;
+      if(varLevels[n]===undefined)return 0;
       else return varLevels[n];
     };
     e.setVar = (n,l)=>{
-      varLevels[n] = l;
+      if(l!=-1)varLevels[n] = l;
     };
     e.exec = ()=>{
       clock++;
@@ -72,7 +73,6 @@ Base.write("Eval",()=>{
         }
       });
       levelMap = Base.clone(levelMap2);
-      console.log(JSON.stringify(levelMap));
     };
     e.output = ["Ready to execute"];
     e.ready = true;
@@ -83,13 +83,15 @@ Base.write("Eval",()=>{
           for(var i=0;i<8;i++){
             if(map[[k]].neighbor[i] && map[[k]].neighbor[i].type){
               var l = e.getLevel(a[0],a[1],i);
-              var p = Base.fromDir(i);
-              var col = l==-1 ? Color(0.9,0.5,0) : l==0 ? UI.theme.notify : UI.theme.def;
-              Render.translate(a[0],a[1],()=>{
-                Render.line(0,0,p.x,p.y).stroke(0.2)(col);
-                Render.circle(0,0,0.1).fill(col);
-                Render.circle(p.x,p.y,0.1).fill(col);
-              });
+              if(l!=-1){
+                var p = Base.fromDir(i);
+                var col = l==0 ? UI.theme.notify : UI.theme.def;
+                Render.translate(a[0],a[1],()=>{
+                  Render.line(0,0,p.x,p.y).stroke(0.2)(col);
+                  Render.circle(0,0,0.1).fill(col);
+                  Render.circle(p.x,p.y,0.1).fill(col);
+                });
+              }
             }
           }
         }

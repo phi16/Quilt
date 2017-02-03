@@ -45,8 +45,9 @@ Base.write("Func",()=>{
   }
   System.func.addCategory("Flow");
   System.func.addCategory("Operator");
-  System.func.addCategory("Special");
   System.func.addCategory("Input");
+  System.func.addCategory("Negative Edge Trigger");
+  System.func.addCategory("Composition");
 
   make("Id","Flow",["In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     ev.setLevel(p,d)(s.value);
@@ -138,7 +139,11 @@ Base.write("Func",()=>{
     if(x!=-1)s.value = !x;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.5,0,0.5,0])
+    ]).stroke(0.2)(col);
+  });
   make("And","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
@@ -150,7 +155,11 @@ Base.write("Func",()=>{
     else if(x==0 || y==0)s.value = 0;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,0.6,0,-0.4,0.4,0.6])
+    ]).stroke(0.2)(col);
+  });
   make("Or","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
@@ -162,7 +171,11 @@ Base.write("Func",()=>{
     else if(x==1 || y==1)s.value = 1;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,-0.6,0,0.4,0.4,-0.6])
+    ]).stroke(0.2)(col);
+  });
   make("Nand","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
@@ -174,7 +187,12 @@ Base.write("Func",()=>{
     else if(x==0 || y==0)s.value = 1;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,0.6,0,-0.1,0.4,0.6]),
+      Render.polygon([-0.4,-0.5,0.4,-0.5])
+    ]).stroke(0.2)(col);
+  });
   make("Nor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
@@ -186,7 +204,12 @@ Base.write("Func",()=>{
     else if(x==1 || y==1)s.value = 0;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.4,-0.3,0,0.4,0.4,-0.3]),
+      Render.polygon([-0.4,-0.5,0.4,-0.5])
+    ]).stroke(0.2)(col);
+  });
   make("Xor","Operator",["In","In"],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
@@ -197,42 +220,170 @@ Base.write("Func",()=>{
     if(x!=-1 && y!=-1)s.value = x != y;
     else s.value = -1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.meld([
+      Render.polygon([-0.5,0,0.5,0]),
+      Render.polygon([0,-0.5,0,0.5])
+    ]).stroke(0.2)(col);
+  });
 
-  make("SRFF","Special",["S","R"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+  make("SRFF","Negative Edge Trigger",["S","R","CK"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
       return;
     }
-  },(col)=>{});
-  make("JKFF","Special",["J","K"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(m.clock===undefined){
+      m.state = 0;
+      m.clock = 0;
+    }
+    let is = ev.getLevel(p.x,p.y,m.arity["S"][0]);
+    let ir = ev.getLevel(p.x,p.y,m.arity["R"][0]);
+    let ick = ev.getLevel(p.x,p.y,m.arity["CK"][0]);
+    if(is!=-1 && ir!=-1 && ick!=-1){
+      if(ick==0 && m.clock==1){
+        if(is)m.state = 1;
+        else if(ir)m.state = 0;
+      }
+      s.value = m.state;
+      yield* de(m.coarity["Q"][0]);
+      s.value = !m.state;
+      yield* de(m.coarity["N"][0]);
+      m.clock = ick;
+    }
+  },(col)=>{
+    Render.text("SR",1.2,0,0.4).center.fill(col);
+  });
+  make("JKFF","Negative Edge Trigger",["J","K","CK"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
       return;
     }
-  },(col)=>{});
-  make("DFF","Special",["D"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(m.clock===undefined){
+      m.state = 0;
+      m.clock = 0;
+    }
+    let ij = ev.getLevel(p.x,p.y,m.arity["J"][0]);
+    let ik = ev.getLevel(p.x,p.y,m.arity["K"][0]);
+    let ick = ev.getLevel(p.x,p.y,m.arity["CK"][0]);
+    if(ij!=-1 && ik!=-1 && ick!=-1){
+      if(ick==0 && m.clock==1){
+        if(ij&&ik)m.state = !m.state;
+        else if(ij)m.state = 1;
+        else if(ir)m.state = 0;
+      }
+      s.value = m.state;
+      yield* de(m.coarity["Q"][0]);
+      s.value = !m.state;
+      yield* de(m.coarity["N"][0]);
+      m.clock = ick;
+    }
+  },(col)=>{
+    Render.text("JK",1.2,0,0.4).center.fill(col);
+  });
+  make("DFF","Negative Edge Trigger",["D","CK"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1){
       ev.setLevel(p,d)(s.value);
       return;
     }
-  },(col)=>{});
+    if(m.clock===undefined){
+      m.state = 0;
+      m.clock = 0;
+    }
+    let id = ev.getLevel(p.x,p.y,m.arity["D"][0]);
+    let ick = ev.getLevel(p.x,p.y,m.arity["CK"][0]);
+    if(id!=-1 && ick!=-1){
+      if(ick==0 && m.clock==1){
+        m.state = id;
+      }
+      s.value = m.state;
+      yield* de(m.coarity["Q"][0]);
+      s.value = !m.state;
+      yield* de(m.coarity["N"][0]);
+      m.clock = ick;
+    }
+  },(col)=>{
+    Render.text("DF",1.2,0,0.4).center.fill(col);
+  });
+  make("TFF","Negative Edge Trigger",["T","CK"],["Q","N"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    if(m.clock===undefined){
+      m.state = 0;
+      m.clock = 0;
+    }
+    let id = ev.getLevel(p.x,p.y,m.arity["T"][0]);
+    let ick = ev.getLevel(p.x,p.y,m.arity["CK"][0]);
+    if(id!=-1 && ick!=-1){
+      if(ick==0 && m.clock==1){
+        if(id)m.state = !m.state;
+      }
+      s.value = m.state;
+      yield* de(m.coarity["Q"][0]);
+      s.value = !m.state;
+      yield* de(m.coarity["N"][0]);
+      m.clock = ick;
+    }
+  },(col)=>{
+    Render.text("TF",1.2,0,0.4).center.fill(col);
+  });
+
+  make("Half Adder","Composition",["In","In"],["S","C"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    if(x!=-1 && y!=-1){
+      s.value = x != y;
+      yield* de(m.coarity["S"][0]);
+      s.value = x && y;
+      yield* de(m.coarity["C"][0]);
+    }
+  },(col)=>{
+    Render.text("HA",1.2,0,0.4).center.fill(col);
+  });
+  make("Full Adder","Composition",["In","In","In"],["S","C"],function*(m,p,d,s,ev,e,de,err){
+    if(d!=-1){
+      ev.setLevel(p,d)(s.value);
+      return;
+    }
+    let x = ev.getLevel(p.x,p.y,m.arity["In"][0]);
+    let y = ev.getLevel(p.x,p.y,m.arity["In"][1]);
+    let z = ev.getLevel(p.x,p.y,m.arity["In"][2]);
+    if(x!=-1 && y!=-1 && z!=-1){
+      s.value = (x+y+z)%2;
+      yield* de(m.coarity["S"][0]);
+      s.value = x+y+z >= 2 ? 1 : 0;
+      yield* de(m.coarity["C"][0]);
+    }
+  },(col)=>{
+    Render.text("FA",1.2,0,0.4).center.fill(col);
+  });
 
   make("L","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1)return;
     s.value = 0;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.text("0",2,0,0.65).center.fill(col);
+  });
   make("H","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1)return;
     s.value = 1;
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.text("1",2,-0.07,0.65).center.fill(col);
+  });
   make("CK","Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
     if(d!=-1)return;
     s.value = ev.clock();
     yield* de(m.coarity["Out"][0]);
-  },(col)=>{});
+  },(col)=>{
+    Render.text("CK",1.2,0,0.4).center.fill(col);
+  });
   ["A","B","C","D","E","F","G","X","Y","Z"].forEach((n)=>{
     make(n,"Input",[],["Out"],function*(m,p,d,s,ev,e,de,err){
       if(d!=-1)return;
